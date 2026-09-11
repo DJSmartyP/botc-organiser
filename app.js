@@ -551,18 +551,20 @@ $("#createSessionButton").addEventListener("click", () => { resetCreateDialog();
 $("#backToChoice").addEventListener("click", resetCreateDialog);
 $("#addDateOption").addEventListener("click", () => addDateOption());
 $("#createSessionForm").addEventListener("change", async event => {
+  const form = event.currentTarget;
+  const changedField = event.target;
   if (event.target.name === "scriptMode") $("#scriptFields").hidden = event.target.value !== "chosen";
   if (event.target.name === "scriptSource") {
     const json = event.target.value === "json";
     $("#scriptJsonFields").hidden = !json; $("#scriptPdfFields").hidden = json;
   }
-  if (event.target.name === "scriptJsonFile" && event.target.files[0]) {
+  if (changedField.name === "scriptJsonFile" && changedField.files[0]) {
     const status = $("#scriptJsonStatus"); status.textContent = "Reading the grimoire…";
     try {
-      const parsed = await readScriptFile(event.target.files[0]);
+      const parsed = await readScriptFile(changedField.files[0]);
       status.textContent = `${parsed.characters.length} characters ready${parsed.author ? ` · by ${parsed.author}` : ""}.`;
-      if (!event.currentTarget.elements.scriptName.value && parsed.name) event.currentTarget.elements.scriptName.value = parsed.name;
-    } catch (error) { status.textContent = error.message; event.target.value = ""; }
+      if (!form.elements.scriptName.value && parsed.name) form.elements.scriptName.value = parsed.name;
+    } catch (error) { status.textContent = error.message; changedField.value = ""; }
   }
 });
 let inviteSlugEdited = false;
