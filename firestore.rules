@@ -1,0 +1,155 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isHumanAccount() {
+      return signedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    function isAdmin() {
+      return isHumanAccount() && request.auth.token.admin == true;
+    }
+
+    function session(sessionId) {
+      return get(/databases/$(database)/documents/sessions/$(sessionId));
+    }
+
+    function manages(sessionId) {
+      return isAdmin() || (isHumanAccount() && session(sessionId).data.ownerUid == request.auth.uid);
+    }
+
+    function validExperience(value) {
+      return value in ['Beginner', 'Experienced', 'Expert'];
+    }
+
+    function validSession() {
+      return request.resource.data.keys().hasOnly([
+        'ownerUid', 'organizerName', 'title', 'location', 'notes', 'capacity',
+        'visibility', 'status', 'fixedDate', 'selectedDate', 'selectedOptionId',
+        'dateOptions', 'scriptMode', 'scriptName', 'scriptUrl', 'inviteSlug', 'createdAt', 'updatedAt'
+      ])
+      && request.resource.data.ownerUid is string
+      && request.resource.data.organizerName is string
+      && request.resource.data.organizerName.size() <= 60
+      && request.resource.data.title is string
+      && request.resource.data.title.size() > 0
+      && request.resource.data.title.size() <= 80
+      && request.resource.data.location is string
+      && request.resource.data.location.size() <= 120
+      && request.resource.data.notes is string
+      && request.resource.data.notes.size() <= 600
+      && request.resource.data.capacity is int
+      && request.resource.data.capacity >= 5
+      && request.resource.data.capacity <= 20
+      && request.resource.data.visibility == 'public'
+      && request.resource.data.status in ['date_poll', 'find_players', 'closed']
+      && request.resource.data.scriptMode in ['tbd', 'chosen']
+      && request.resource.data.inviteSlug is string
+      && request.resource.data.inviteSlug.size() >= 4
+      && request.resource.data.inviteSlug.size() <= 48
+      && request.resource.data.dateOptions is list
+      && request.resource.data.dateOptions.size() <= 10;
+    }
+
+    // IDP-compatible human-readable links. Direct session-ID links remain valid.
+    match /inviteLinks/{slug} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if isHumanAccount()
+        && request.resource.data.keys().hasOnly(['sessionId', 'ownerUid', 'createdAt', 'updatedAt'])
+        && request.resource.data.ownerUid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/sessions/$(request.resource.data.sessionId)).data.ownerUid == request.auth.uid;
+      allow update: if isAdmin() || (isHumanAccount()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.sessionId == resource.data.sessionId);
+      allow delete: if isAdmin() || (isHumanAccount() && resource.data.ownerUid == request.auth.uid);
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isHumanAccount()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['displayName', 'email', 'role', 'createdAt'])
+        && request.resource.data.role == 'organizer';
+      allow update: if isHumanAccount()
+        && request.auth.uid == userId
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.email == resource.data.email;
+      allow delete: if isAdmin();
+    }
+
+    match /sessions/{sessionId} {
+      allow get: if resource.data.visibility == 'public' || manages(sessionId);
+      allow list: if isAdmin()
+        || (isHumanAccount() && resource.data.ownerUid == request.auth.uid)
+        || resource.data.visibility == 'public';
+      allow create: if isHumanAccount()
+        && request.resource.data.ownerUid == request.auth.uid
+        && validSession();
+      allow update: if manages(sessionId)
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && validSession();
+      allow delete: if manages(sessionId);
+
+      // Private player record. Public visitors cannot list or read these docs.
+      match /registrations/{playerId} {
+        allow read: if signedIn() && (resource.data.createdByUid == request.auth.uid || manages(sessionId));
+        allow create: if signedIn()
+          && (request.resource.data.createdByUid == request.auth.uid || manages(sessionId))
+          && request.resource.data.keys().hasOnly(['displayName', 'experience', 'createdByUid', 'responses', 'finalStatus', 'updatedAt'])
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() >= 2
+          && request.resource.data.displayName.size() <= 40
+          && validExperience(request.resource.data.experience);
+        allow update: if (signedIn()
+          && resource.data.createdByUid == request.auth.uid
+          && request.resource.data.createdByUid == resource.data.createdByUid
+          && request.resource.data.keys().hasOnly(['displayName', 'experience', 'createdByUid', 'responses', 'finalStatus', 'updatedAt'])
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() >= 2
+          && request.resource.data.displayName.size() <= 40
+          && validExperience(request.resource.data.experience))
+          || (manages(sessionId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['finalStatus', 'updatedAt']));
+        allow delete: if signedIn() && (resource.data.createdByUid == request.auth.uid || manages(sessionId));
+      }
+
+      // Anonymous response documents deliberately contain no name or contact data.
+      match /dateOptions/{optionId}/responses/{playerId} {
+        allow read: if session(sessionId).data.visibility == 'public';
+        allow create, update: if signedIn()
+          && (manages(sessionId)
+            || getAfter(/databases/$(database)/documents/sessions/$(sessionId)/registrations/$(playerId)).data.createdByUid == request.auth.uid)
+          && session(sessionId).data.status == 'date_poll'
+          && request.resource.data.keys().hasOnly(['response', 'updatedAt'])
+          && request.resource.data.response in ['available', 'maybe', 'unavailable'];
+        allow delete: if manages(sessionId)
+          || (signedIn() && get(/databases/$(database)/documents/sessions/$(sessionId)/registrations/$(playerId)).data.createdByUid == request.auth.uid);
+      }
+
+      // The public roster contains only explicitly consented display fields.
+      match /roster/{playerId} {
+        allow read: if session(sessionId).data.visibility == 'public';
+        allow create, update: if (
+          manages(sessionId)
+          || (signedIn()
+            && session(sessionId).data.status == 'find_players'
+            && getAfter(/databases/$(database)/documents/sessions/$(sessionId)/registrations/$(playerId)).data.createdByUid == request.auth.uid)
+        )
+        && request.resource.data.keys().hasOnly(['displayName', 'experience', 'interestStatus', 'updatedAt'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 2
+        && request.resource.data.displayName.size() <= 40
+        && validExperience(request.resource.data.experience)
+        && request.resource.data.interestStatus in ['confirmed', 'maybe'];
+        allow delete: if manages(sessionId)
+          || (signedIn() && get(/databases/$(database)/documents/sessions/$(sessionId)/registrations/$(playerId)).data.createdByUid == request.auth.uid);
+      }
+    }
+  }
+}

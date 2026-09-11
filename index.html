@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#100b12">
+  <meta name="description" content="Chaos Planner — a BOTC planner from Chaos On The Clocktower.">
+  <title>Chaos Planner · Chaos On The Clocktower</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Chaos Planner home">
+      <img src="assets/chaos-logo.png" alt="Chaos on the Clocktower">
+      <span><strong>Chaos Planner</strong><small>A BOTC Planner</small></span>
+    </a>
+    <nav class="header-actions" aria-label="Account">
+      <button id="dashboardButton" class="button button-ghost" type="button">Organiser sign in</button>
+      <button id="signOutButton" class="button button-ghost" type="button" hidden>Sign out</button>
+    </nav>
+  </header>
+
+  <main id="app" tabindex="-1">
+    <section id="homeView" class="view home-view">
+      <div class="eyebrow">Chaos Planner</div>
+      <h1>When the clock strikes, will your players be ready?</h1>
+      <p class="lede">Plan the date, share one link, and see who can brave the town square. Players join without creating an account.</p>
+      <div class="home-grid organiser-home-grid">
+        <article class="panel organiser-panel">
+          <span class="panel-number">For organisers and admins</span>
+          <h2>Bring a game together</h2>
+          <p>Choose a fixed night or ask your players which dates work, then send each player the custom session link. Players never need to visit this sign-in page.</p>
+          <button id="startOrganisingButton" class="button button-secondary" type="button">Open organiser portal</button>
+          <button id="demoSessionButton" class="text-button" type="button" hidden>Preview the player-link experience</button>
+        </article>
+      </div>
+    </section>
+
+    <section id="authView" class="view auth-view" hidden>
+      <button class="back-link" data-action="home" type="button">← Back to home</button>
+      <div class="panel auth-panel">
+        <div class="eyebrow">Organiser portal</div>
+        <h1 id="authTitle">Welcome back</h1>
+        <p id="authIntro">Sign in to create and manage your sessions.</p>
+        <form id="authForm" class="stack-form">
+          <label id="displayNameLabel" hidden>Display name<input id="displayName" name="displayName" autocomplete="name"></label>
+          <label>Email address<input id="email" name="email" type="email" autocomplete="email" required></label>
+          <label>Password<input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required></label>
+          <p id="authError" class="form-error" role="alert" hidden></p>
+          <button id="authSubmit" class="button button-primary button-wide" type="submit">Sign in</button>
+        </form>
+        <button id="toggleAuthMode" class="text-button" type="button">New organiser? Create an account</button>
+      </div>
+    </section>
+
+    <section id="dashboardView" class="view dashboard-view" hidden>
+      <div class="page-heading">
+        <div><div class="eyebrow">Organiser portal</div><h1>Your gatherings</h1></div>
+        <button id="createSessionButton" class="button button-primary" type="button">+ Create session</button>
+      </div>
+      <div id="dashboardNotice" class="notice" hidden></div>
+      <div id="sessionList" class="session-list" aria-live="polite"></div>
+    </section>
+
+    <section id="sessionView" class="view session-view" hidden>
+      <button class="back-link" data-action="home" type="button">← Back to home</button>
+      <div id="sessionContent" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>A BOTC Planner from Chaos On The Clocktower</span>
+    <a href="https://www.youtube.com/@SharedXPGaming" target="_blank" rel="noopener noreferrer">Watch Shared XP Gaming on YouTube ↗</a>
+  </footer>
+
+  <dialog id="createDialog" class="dialog">
+    <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
+    <div id="createChoice">
+      <div class="eyebrow">Create a session</div>
+      <h2>Do you know when you’re playing?</h2>
+      <div class="choice-grid">
+        <button class="choice-card" data-create-mode="fixed" type="button"><span class="choice-icon">◷</span><strong>I have a date</strong><small>Set the date and go straight to finding players.</small></button>
+        <button class="choice-card" data-create-mode="poll" type="button"><span class="choice-icon">☾</span><strong>I need to find a date</strong><small>Offer up to 10 options and let players respond.</small></button>
+      </div>
+    </div>
+    <div id="createFormPanel" hidden>
+      <button id="backToChoice" class="back-link" type="button">← Change choice</button>
+      <div class="eyebrow">New gathering</div>
+      <h2 id="createFormTitle">Set the date</h2>
+      <form id="createSessionForm" class="stack-form">
+        <label>Session name<input name="title" maxlength="80" placeholder="Friday night in Ravenswood Bluff" required></label>
+        <label>Custom player link
+          <input id="inviteSlug" name="inviteSlug" minlength="4" maxlength="48" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="friday-ravenswood-bluff" required>
+          <small id="invitePreview" class="field-hint">Generated from the session name. You can edit it before saving.</small>
+        </label>
+        <label>Location<input name="location" maxlength="120" placeholder="Venue or online details" required></label>
+        <div id="fixedDateFields"><label>Date and time<input name="fixedDate" type="datetime-local"></label></div>
+        <div id="pollDateFields" hidden>
+          <div class="label-row"><span>Date and time options</span><small>2–10 options</small></div>
+          <div id="dateOptionList" class="date-options"></div>
+          <button id="addDateOption" class="button button-small button-ghost" type="button">+ Add another option</button>
+        </div>
+        <label>Maximum players<input name="capacity" type="number" min="5" max="20" value="15" required></label>
+        <fieldset><legend>Script</legend>
+          <label class="radio-row"><input type="radio" name="scriptMode" value="tbd" checked> Script TBD</label>
+          <label class="radio-row"><input type="radio" name="scriptMode" value="chosen"> Chosen script</label>
+          <div id="scriptFields" class="nested-fields" hidden>
+            <label>Script name<input name="scriptName" maxlength="100"></label>
+            <label>Image, PDF or web link<input name="scriptUrl" type="url" placeholder="https://…"></label>
+          </div>
+        </fieldset>
+        <label>Notes <span class="optional">Optional</span><textarea name="notes" maxlength="600" rows="3" placeholder="Arrival details, what to bring, or accessibility information"></textarea></label>
+        <p id="createError" class="form-error" role="alert" hidden></p>
+        <button class="button button-primary button-wide" type="submit">Create and get share link</button>
+      </form>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,1 +1,81 @@
-Chaos on the Clocktower Organiser.
+# Chaos Planner
+
+**A BOTC Planner from Chaos On The Clocktower.** Organisers create sessions, optionally poll up to ten dates, and invite players with a public link. Players open that link directly—never the organiser login—and can register themselves and additional people without creating conventional accounts. Organisers and admins can also add as many players as needed from the management view.
+
+Chaos Planner uses the same custom-link convention as the IDP app: a readable `?join=friday-ravenswood-bluff` URL resolves through the top-level `inviteLinks` collection. The direct `?session=FIRESTORE_DOCUMENT_ID` format remains supported as a fallback.
+
+The site is a static, mobile-first app for GitHub Pages. Firebase Authentication and Cloud Firestore provide identity and authoritative shared data. The placeholder configuration starts a clearly labelled in-memory preview; it does not use `localStorage` and does not persist data.
+
+## Firebase setup
+
+1. Create a Firebase project at <https://console.firebase.google.com/>.
+2. Add a Web app in **Project settings → Your apps**.
+3. Copy its values into `firebase-config.js`, replacing every obvious placeholder.
+4. In **Authentication → Sign-in method**, enable:
+   - Email/Password for organisers.
+   - Anonymous for players. This is invisible to players and only gives Firestore a secure per-device writer identity; players do not create or manage accounts.
+5. Create a Cloud Firestore database in production mode.
+6. Install the Firebase CLI, sign in, select the project, and deploy the included rules:
+
+   ```sh
+   npm install -g firebase-tools
+   firebase login
+   firebase use --add
+   firebase deploy --only firestore:rules,firestore:indexes
+   ```
+
+Do not launch with test-mode rules. `firestore.rules` is the security boundary and must be deployed before the public site.
+
+### Admin access
+
+Normal sign-ups are always organisers. Admin status is a privileged Firebase custom claim and cannot be granted from the browser. Set it from a trusted Admin SDK environment, then have that user sign out and in again:
+
+```js
+await getAuth().setCustomUserClaims("FIREBASE_USER_UID", { admin: true });
+```
+
+Admins can manage every session. Organisers can manage only sessions whose `ownerUid` matches their authenticated UID.
+
+## Privacy model
+
+- Session documents contain public event information only. Never put organiser email addresses or player contact details in them.
+- `/users` is readable only by that user and admins.
+- `/registrations` is readable only by the anonymous or signed-in identity that created that player entry, the session owner, and admins. One identity can securely create multiple player records.
+- Date-response documents are publicly countable but contain only `available`, `maybe`, or `unavailable`; no names or contact information.
+- `/inviteLinks/{slug}` can be fetched only by a signed-in or anonymous Firebase identity and cannot be listed. It contains only the target session ID and owner UID.
+- The public roster contains only the player name and experience they explicitly consented to display, plus confirmed/maybe status.
+- Firebase anonymous authentication prevents one player from overwriting another player’s response without requiring a visible account.
+
+Review these choices against your privacy notice and local data-protection obligations before collecting real data.
+
+## GitHub Pages setup
+
+1. Push these files to the repository’s default branch.
+2. In GitHub, open **Settings → Pages**.
+3. Choose **Deploy from a branch**, select `main` and `/ (root)`, then save.
+4. Add the resulting Pages domain (for example `djsmartyp.github.io`) to **Firebase Authentication → Settings → Authorised domains**.
+5. Open the Pages URL and verify organiser sign-in, anonymous player registration, and Firestore permission errors in a private browser window.
+
+Because the app uses relative asset paths and query-string routing, it works from the repository subpath without a custom 404 page or build step.
+
+## Local checks
+
+Run the domain tests:
+
+```sh
+npm test
+```
+
+Serve the folder over HTTP (ES modules do not work reliably from `file://`):
+
+```sh
+npm run serve
+```
+
+With placeholder Firebase settings, use **Preview a sample session**. Once configured, exercise both the organiser and player flows using separate browser profiles.
+
+## Brand asset
+
+The header loads `assets/chaos-logo.png`. Replace that file in place to update the logo without changing any code. The supplied asset contains no event date, time, or Twitch branding.
+
+Shared XP Gaming: <https://www.youtube.com/@SharedXPGaming>
