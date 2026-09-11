@@ -180,7 +180,7 @@ async function openInvite(slug) {
   try {
     const normalized = normalizeInviteSlug(slug);
     const requestedScript = new URL(location.href).searchParams.get("script");
-    const url = new URL(location.href); url.search = ""; url.searchParams.set("join", normalized); if (requestedScript) url.searchParams.set("script", requestedScript); history.replaceState({}, "", url);
+    const url = new URL(location.href); url.search = ""; if (localDemo) url.searchParams.set("demo", "1"); url.searchParams.set("join", normalized); if (requestedScript) url.searchParams.set("script", requestedScript); history.replaceState({}, "", url);
     await openSession(await resolveInvite(normalized), true);
   }
   catch (error) { $("#sessionContent").innerHTML = `<div class="panel error-panel"><h1>Link not found</h1><p>${escapeHtml(error.message)}</p></div>`; }
@@ -373,6 +373,7 @@ async function openSession(id, preserveUrl = false) {
     const script = activeSession.scripts?.find(item => item.id === requestedScript);
     if (!preserveUrl) {
       const url = new URL(location.href); url.search = ""; url.searchParams.set("session", id);
+      if (localDemo) url.searchParams.set("demo", "1");
       if (script) url.searchParams.set("script", script.id);
       history.replaceState({}, "", url);
     }
@@ -388,7 +389,7 @@ function renderSession(session) {
   $(".header-actions").hidden = !manager;
   const date = session.selectedDate || session.fixedDate;
   const scriptCount = session.scripts?.length || 0;
-  const script = scriptCount ? `<button class="inline-link" data-scroll-scripts type="button">${scriptCount} planned script${scriptCount === 1 ? "" : "s"}</button>` : "Script TBD";
+  const script = scriptCount ? `<button class="inline-link" data-scroll-scripts type="button">${scriptCount} script${scriptCount === 1 ? "" : "s"} on offer</button>` : "Script TBD";
   $("#sessionContent").innerHTML = `
     <article class="session-hero panel">
       <div class="eyebrow">${session.status === "date_poll" ? "Finding a date" : "Finding players"}</div>
@@ -426,17 +427,17 @@ function renderCharacterGroups(scriptData) {
 
 function renderPlannedScripts(session, manager) {
   const scripts = session.scripts || [];
-  const cards = scripts.map(script => `<article class="planned-script-card">
-    <div><span class="script-source-badge">${script.sourceType === "json" ? "Interactive script" : "PDF script"}</span><h3>${escapeHtml(script.name)}</h3>${script.author ? `<p>By ${escapeHtml(script.author)}</p>` : ""}</div>
-    <button class="button button-small button-secondary" data-view-script="${escapeHtml(script.id)}" type="button">View script</button>
-  </article>`).join("");
-  return `<section id="plannedScripts" class="stage-section planned-scripts-section"><div class="section-heading"><div><div class="eyebrow">The grimoire</div><h2>Planned scripts</h2><p>${scripts.length ? `${scripts.length} possible game${scripts.length === 1 ? "" : "s"} for this gathering.` : "No scripts have been planned yet."}</p></div></div>
-    ${scripts.length ? `<div class="planned-script-list">${cards}</div>` : ""}
-    ${manager ? `<form id="plannedScriptForm" class="panel planned-script-form"><div><h3>Add another script</h3><p>Upload JSON for the full character view, or add a name and PDF link.</p></div>
+  const rows = scripts.map(script => `<button class="planned-script-row" data-view-script="${escapeHtml(script.id)}" type="button">
+    <span class="planned-script-name"><strong>${escapeHtml(script.name)}</strong>${script.author ? `<small>By ${escapeHtml(script.author)}</small>` : ""}</span>
+    <span class="script-source-badge">${script.sourceType === "json" ? "Characters" : "PDF"}</span><span class="script-row-arrow" aria-hidden="true">→</span>
+  </button>`).join("");
+  const addForm = manager ? `<details class="panel planned-script-manager"><summary>Add another script</summary><form id="plannedScriptForm" class="planned-script-form"><p>Upload JSON for the character view, or add a script name and PDF link.</p>
       <div class="script-methods"><label class="radio-row"><input type="radio" name="plannedSource" value="json" checked> BOTC JSON</label><label class="radio-row"><input type="radio" name="plannedSource" value="pdf"> Name + PDF</label></div>
       <div data-planned-json><label>BOTC script JSON<input name="scriptJsonFile" type="file" accept=".json,application/json"></label></div>
       <div data-planned-pdf class="form-grid" hidden><label>Script name<input name="scriptName" maxlength="100"></label><label>PDF link<input name="scriptUrl" type="url" inputmode="url" placeholder="https://…/script.pdf"></label></div>
-      <p id="scriptUploadError" class="form-error" role="alert" hidden></p><button class="button button-secondary" type="submit">Add planned script</button></form>` : ""}</section>`;
+      <p id="scriptUploadError" class="form-error" role="alert" hidden></p><button class="button button-secondary" type="submit">Add planned script</button></form></details>` : "";
+  return `<section id="plannedScripts" class="planned-scripts-section"><div class="script-offer-panel panel"><div class="script-offer-heading"><div><span class="eyebrow">Before you choose dates</span><h2>Scripts on offer</h2></div><p>${scripts.length ? "Check the possible games, then choose every date you can make." : "No scripts have been added yet. You can still choose your dates below."}</p></div>
+    ${scripts.length ? `<div class="planned-script-list">${rows}</div>` : ""}</div>${addForm}</section>`;
 }
 
 function renderScriptDetail(session, script) {
@@ -444,7 +445,7 @@ function renderScriptDetail(session, script) {
   const pdfUrl = safeExternalUrl(script.pdfUrl);
   const characters = script.scriptData?.characters || [];
   $("#sessionContent").innerHTML = `<section id="scriptSheet" class="script-detail-view">
-    <button class="back-link no-print" data-back-session type="button">← Back to ${escapeHtml(session.title)}</button>
+    <button class="back-link no-print" data-back-session type="button">← Back to scripts & dates</button>
     <header class="script-detail-header panel"><div><div class="eyebrow">Planned script</div><h1>${escapeHtml(script.name)}</h1>${script.author ? `<p>By ${escapeHtml(script.author)}</p>` : ""}</div>
       <div class="script-detail-actions no-print">${characters.length ? '<button class="button button-ghost" data-print-script type="button">Print / save as PDF</button>' : ""}${pdfUrl ? `<a class="button button-secondary" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">Open PDF ↗</a>` : ""}</div></header>
     ${characters.length ? `<div class="script-section">${renderCharacterGroups(script.scriptData)}</div><p class="catalogue-credit no-print">Character details and icons use the current <a href="https://release.botc.app/resources/" target="_blank" rel="noopener noreferrer">official BOTC toolmaker resources ↗</a>, with the Townsquare catalogue as a fallback.</p>` : pdfUrl ? `<div class="pdf-frame-wrap"><iframe class="pdf-frame" src="${escapeHtml(pdfUrl)}" title="${escapeHtml(script.name)} PDF"></iframe><p>If the PDF does not appear here, use “Open PDF” above.</p></div>` : '<div class="notice">This script has no character data or PDF link.</div>'}
@@ -675,7 +676,7 @@ async function createSession(form) {
       id = sessionRef.id;
     }
     $("#createDialog").close(); resetCreateDialog(); await renderDashboard();
-    const url = new URL(location.href); url.search = ""; url.searchParams.set("join", inviteSlug); history.replaceState({}, "", url);
+    const url = new URL(location.href); url.search = ""; if (localDemo) url.searchParams.set("demo", "1"); url.searchParams.set("join", inviteSlug); history.replaceState({}, "", url);
     await openSession(id, true);
   } catch (error) { errorBox.textContent = error.message; errorBox.hidden = false; }
 }
@@ -691,7 +692,7 @@ document.addEventListener("click", async event => {
     if (script) { const url = new URL(location.href); url.searchParams.set("script", script.id); history.pushState({}, "", url); renderScriptDetail(activeSession, script); }
     return;
   }
-  if (event.target.closest("[data-back-session]")) { const url = new URL(location.href); url.searchParams.delete("script"); history.pushState({}, "", url); renderSession(activeSession); return; }
+  if (event.target.closest("[data-back-session]")) { const url = new URL(location.href); url.searchParams.delete("script"); history.pushState({}, "", url); renderSession(activeSession); $("#plannedScripts")?.scrollIntoView({ block: "start" }); return; }
   if (event.target.closest("[data-scroll-scripts]")) { $("#plannedScripts")?.scrollIntoView({ behavior: "smooth" }); return; }
   if (event.target.closest("[data-print-script]")) { document.body.classList.add("printing-script"); window.print(); setTimeout(() => document.body.classList.remove("printing-script"), 500); return; }
   if (event.target.id === "copyLinkButton") { await navigator.clipboard.writeText(buildSessionLink(activeSession.id, activeSession.inviteSlug)); showToast("Player link copied."); }

@@ -2,6 +2,8 @@
 
 **A BOTC Planner from Chaos On The Clocktower.** Organisers create sessions, optionally poll up to ten dates, and invite players with a public link. Players open that link directly—never the organiser login—and can register themselves and additional people without creating conventional accounts. Organisers and admins can also add as many players as needed from the management view.
 
+Chaos Planner is an unofficial community tool. Blood on the Clocktower and its game content are owned by Steven Medway and The Pandemonium Institute; the planner is not affiliated with or endorsed by TPI. Review TPI's [Community Created Content Policy](https://bloodontheclocktower.com/pages/community-created-content-policy) before redistributing or commercialising the project.
+
 The organiser dashboard is designed for a growing library of sessions: compact rows, at-a-glance totals, search by event/venue/storyteller/link, status filters, upcoming/recent/name sorting, and progressive batches of 25 results. Admins see the same tools across every organiser's gathering.
 
 Chaos Planner uses the same custom-link convention as the IDP app: a readable `?join=friday-ravenswood-bluff` URL resolves through the top-level `inviteLinks` collection. The direct `?session=FIRESTORE_DOCUMENT_ID` format remains supported as a fallback.
