@@ -1,5 +1,5 @@
 import { firebaseConfig } from "./firebase-config.js";
-import { buildDateOptions, dateIndicator, gameSize, inviteSlugError, normalizeInviteSlug, normalizeSessionCode, promotedStatus, validatePlayer } from "./domain.js";
+import { buildDateOptions, dateIndicator, gameSize, inviteSlugError, normalizeInviteSlug, normalizeSessionCode, parseScriptJson, promotedStatus, validatePlayer } from "./domain.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -13,6 +13,7 @@ let createMode = "fixed";
 let activeSession = null;
 let demoSessions = [];
 let demoManager = false;
+let characterCataloguePromise = null;
 
 const sampleSession = {
   id: "sample-night",
@@ -24,9 +25,17 @@ const sampleSession = {
   status: "date_poll",
   visibility: "public",
   capacity: 15,
-  scriptMode: "tbd",
-  scriptName: "",
+  scriptMode: "chosen",
+  scriptName: "Trouble Brewing",
   scriptUrl: "",
+  scriptData: {
+    name: "Trouble Brewing", author: "The Pandemonium Institute", characters: [
+      { id: "washerwoman", name: "Washerwoman", team: "townsfolk", ability: "You start knowing that 1 of 2 players is a particular Townsfolk.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/washerwoman.png" },
+      { id: "recluse", name: "Recluse", team: "outsider", ability: "You might register as evil and as a Minion or Demon, even if dead.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/recluse.png" },
+      { id: "poisoner", name: "Poisoner", team: "minion", ability: "Each night, choose a player: they are poisoned tonight and tomorrow day.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/poisoner.png" },
+      { id: "imp", name: "Imp", team: "demon", ability: "Each night, choose a player: they die. If you kill yourself this way, a Minion becomes the Imp.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/imp.png" }
+    ]
+  },
   inviteSlug: "ravenswood-night",
   dateOptions: [
     { id: "option-1", startAt: futureLocal(5, 19) },
@@ -99,6 +108,24 @@ function escapeHtml(value = "") {
   const div = document.createElement("div");
   div.textContent = value;
   return div.innerHTML;
+}
+
+function safeExternalUrl(value) {
+  try { const url = new URL(String(value || "")); return url.protocol === "https:" ? url.href : ""; }
+  catch { return ""; }
+}
+
+async function loadCharacterCatalogue() {
+  characterCataloguePromise ||= fetch("https://raw.githubusercontent.com/bra1n/townsquare/develop/src/roles.json")
+    .then(response => response.ok ? response.json() : Promise.reject(new Error("Catalogue unavailable")))
+    .catch(() => []);
+  return characterCataloguePromise;
+}
+
+async function readScriptFile(file) {
+  if (!file) return null;
+  if (file.size > 250000) throw new Error("Keep the script JSON under 250 KB.");
+  return parseScriptJson(await file.text(), await loadCharacterCatalogue());
 }
 
 function formatDate(value) {
@@ -241,7 +268,8 @@ function renderSession(session) {
   const manager = isManager(session);
   $(".header-actions").hidden = !manager;
   const date = session.selectedDate || session.fixedDate;
-  const script = session.scriptMode === "chosen" ? `<a class="script-link" href="${escapeHtml(session.scriptUrl || "#")}" ${session.scriptUrl ? 'target="_blank" rel="noopener"' : ""}>${escapeHtml(session.scriptName || "Chosen script")}${session.scriptUrl ? " ↗" : ""}</a>` : "Script TBD";
+  const scriptUrl = safeExternalUrl(session.scriptUrl);
+  const script = session.scriptMode === "chosen" ? `${scriptUrl ? `<a class="script-link" href="${escapeHtml(scriptUrl)}" target="_blank" rel="noopener noreferrer">` : ""}${escapeHtml(session.scriptName || session.scriptData?.name || "Chosen script")}${scriptUrl ? " ↗</a>" : ""}` : "Script TBD";
   $("#sessionContent").innerHTML = `
     <article class="session-hero panel">
       <div class="eyebrow">${session.status === "date_poll" ? "Finding a date" : "Finding players"}</div>
@@ -255,8 +283,42 @@ function renderSession(session) {
       ${session.notes ? `<p class="session-notes">${escapeHtml(session.notes)}</p>` : ""}
       <div class="share-row"><button id="copyLinkButton" class="button button-ghost" type="button">Copy player link</button><code>${escapeHtml(session.inviteSlug || session.id)}</code>${session.inviteSlug ? '<span class="status-pill">Custom link</span>' : ""}</div>
     </article>
+    ${renderScriptPanel(session, manager)}
     ${session.status === "date_poll" ? renderDatePoll(session, manager) : renderFindPlayers(session, manager)}
   `;
+}
+
+function renderScriptPanel(session, manager) {
+  const characters = session.scriptData?.characters || [];
+  const teams = [
+    ["townsfolk", "Townsfolk"], ["outsider", "Outsiders"], ["minion", "Minions"], ["demon", "Demons"],
+    ["traveller", "Travellers"], ["fabled", "Fabled"], ["unknown", "Other"]
+  ];
+  const groups = teams.map(([team, label]) => {
+    const members = characters.filter(character => character.team === team);
+    if (!members.length) return "";
+    return `<section class="script-team script-team-${team}"><h3>${label}<span>${members.length}</span></h3><div class="character-grid">${members.map(character => {
+      const icon = safeExternalUrl(character.iconUrl);
+      return `<article class="character-card">${icon ? `<img src="${escapeHtml(icon)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false">` : ""}<span class="character-fallback" ${icon ? "hidden" : ""}>${escapeHtml(character.name?.[0] || "?")}</span><div><strong>${escapeHtml(character.name)}</strong>${character.ability ? `<p>${escapeHtml(character.ability)}</p>` : ""}</div></article>`;
+    }).join("")}</div></section>`;
+  }).join("");
+  if (!characters.length && !manager) return "";
+  return `<section class="stage-section script-section"><div class="section-heading"><div><div class="eyebrow">The grimoire</div><h2>${escapeHtml(session.scriptData?.name || session.scriptName || "Game script")}</h2>${session.scriptData?.author ? `<p>By ${escapeHtml(session.scriptData.author)}</p>` : ""}</div></div>
+    ${groups || '<div class="notice">No character list has been uploaded yet.</div>'}
+    ${manager ? `<form id="scriptUploadForm" class="panel script-upload-form"><div><h3>Add or replace script JSON</h3><p>Upload a BOTC Script Tool JSON. Only the character fields needed for display are saved.</p></div><label>JSON file<input name="scriptJsonFile" type="file" accept=".json,application/json" required></label><p id="scriptUploadError" class="form-error" role="alert" hidden></p><button class="button button-secondary" type="submit">Save script to session</button></form>` : ""}
+    ${characters.length ? '<p class="catalogue-credit">Character data and icons are loaded from the open-source <a href="https://github.com/bra1n/townsquare" target="_blank" rel="noopener noreferrer">BOTC Townsquare catalogue ↗</a> when available.</p>' : ""}</section>`;
+}
+
+async function saveSessionScript(form) {
+  const errorBox = $("#scriptUploadError"); errorBox.hidden = true;
+  try {
+    const scriptData = await readScriptFile(new FormData(form).get("scriptJsonFile"));
+    const updates = { scriptMode: "chosen", scriptName: scriptData.name || activeSession.scriptName || "Uploaded script", scriptData };
+    if (demoMode) Object.assign(activeSession, updates);
+    else await firebase.updateDoc(firebase.doc(firebase.db, "sessions", activeSession.id), { ...updates, updatedAt: firebase.serverTimestamp() });
+    showToast("Script saved to the session.");
+    activeSession = await loadSession(activeSession.id); renderSession(activeSession);
+  } catch (error) { errorBox.textContent = error.message; errorBox.hidden = false; }
 }
 
 function renderDatePoll(session, manager) {
@@ -383,6 +445,7 @@ async function finalizeDate(optionId) {
 function resetCreateDialog() {
   $("#createChoice").hidden = false; $("#createFormPanel").hidden = true;
   $("#createSessionForm").reset(); $("#dateOptionList").innerHTML = ""; $("#createError").hidden = true;
+  $("#scriptJsonStatus").textContent = "Upload a Script Tool JSON to show its characters on the session page.";
   inviteSlugEdited = false; updateInvitePreview();
 }
 
@@ -413,17 +476,19 @@ async function createSession(form) {
     const dateOptions = createMode === "poll" ? buildDateOptions(formData.getAll("dateOption")) : [];
     if (createMode === "poll" && dateOptions.length < 2) throw new Error("Add at least two date and time options.");
     const scriptMode = formData.get("scriptMode");
+    const scriptFile = formData.get("scriptJsonFile");
+    const scriptData = scriptMode === "chosen" && scriptFile?.size ? await readScriptFile(scriptFile) : null;
     const inviteSlug = normalizeInviteSlug(formData.get("inviteSlug"));
     const slugError = inviteSlugError(inviteSlug);
     if (slugError) throw new Error(slugError);
-    if (scriptMode === "chosen" && !formData.get("scriptName")?.trim()) throw new Error("Give the chosen script a name.");
+    if (scriptMode === "chosen" && !formData.get("scriptName")?.trim() && !scriptData?.name) throw new Error("Give the chosen script a name, or upload JSON with a script name.");
     const data = {
       ownerUid: demoMode ? "demo-organiser" : currentUser.uid,
       organizerName: demoMode ? "Demo Storyteller" : currentProfile.displayName,
       title: formData.get("title").trim(), location: formData.get("location").trim(), notes: formData.get("notes").trim(),
       capacity: Number(formData.get("capacity")), visibility: "public", status: createMode === "poll" ? "date_poll" : "find_players",
       fixedDate: createMode === "fixed" ? formData.get("fixedDate") : null, dateOptions,
-      scriptMode, scriptName: scriptMode === "chosen" ? formData.get("scriptName").trim() : "", scriptUrl: scriptMode === "chosen" ? formData.get("scriptUrl").trim() : "", inviteSlug
+      scriptMode, scriptName: scriptMode === "chosen" ? (formData.get("scriptName").trim() || scriptData?.name || "Uploaded script") : "", scriptUrl: scriptMode === "chosen" ? formData.get("scriptUrl").trim() : "", scriptData, inviteSlug
     };
     let id;
     if (demoMode) {
@@ -476,13 +541,26 @@ $("#authForm").addEventListener("submit", async event => {
 $("#createSessionButton").addEventListener("click", () => { resetCreateDialog(); $("#createDialog").showModal(); });
 $("#backToChoice").addEventListener("click", resetCreateDialog);
 $("#addDateOption").addEventListener("click", () => addDateOption());
-$("#createSessionForm").addEventListener("change", event => { if (event.target.name === "scriptMode") $("#scriptFields").hidden = event.target.value !== "chosen"; });
+$("#createSessionForm").addEventListener("change", async event => {
+  if (event.target.name === "scriptMode") $("#scriptFields").hidden = event.target.value !== "chosen";
+  if (event.target.name === "scriptJsonFile" && event.target.files[0]) {
+    const status = $("#scriptJsonStatus"); status.textContent = "Reading the grimoire…";
+    try {
+      const parsed = await readScriptFile(event.target.files[0]);
+      status.textContent = `${parsed.characters.length} characters ready${parsed.author ? ` · by ${parsed.author}` : ""}.`;
+      if (!event.currentTarget.elements.scriptName.value && parsed.name) event.currentTarget.elements.scriptName.value = parsed.name;
+    } catch (error) { status.textContent = error.message; event.target.value = ""; }
+  }
+});
 let inviteSlugEdited = false;
 $("#createSessionForm").elements.title.addEventListener("input", event => { if (!inviteSlugEdited) { $("#inviteSlug").value = normalizeInviteSlug(event.target.value); updateInvitePreview(); } });
 $("#inviteSlug").addEventListener("input", () => { inviteSlugEdited = true; updateInvitePreview(); });
 $("#inviteSlug").addEventListener("blur", () => { $("#inviteSlug").value = normalizeInviteSlug($("#inviteSlug").value); updateInvitePreview(); });
 $("#createSessionForm").addEventListener("submit", event => { event.preventDefault(); createSession(event.currentTarget); });
-$("#sessionContent").addEventListener("submit", event => { if (event.target.id === "playerForm") { event.preventDefault(); submitPlayer(event.target); } });
+$("#sessionContent").addEventListener("submit", event => {
+  if (event.target.id === "playerForm") { event.preventDefault(); submitPlayer(event.target); }
+  if (event.target.id === "scriptUploadForm") { event.preventDefault(); saveSessionScript(event.target); }
+});
 
 await initialiseFirebase();
 updateAccountUi();

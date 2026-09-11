@@ -113,6 +113,10 @@
           <div id="scriptFields" class="nested-fields" hidden>
             <label>Script name<input name="scriptName" maxlength="100"></label>
             <label>Image, PDF or web link<input name="scriptUrl" type="url" placeholder="https://…"></label>
+            <label>BOTC script JSON <span class="optional">Optional</span>
+              <input id="scriptJsonFile" name="scriptJsonFile" type="file" accept=".json,application/json">
+              <small id="scriptJsonStatus" class="field-hint">Upload a Script Tool JSON to show its characters on the session page.</small>
+            </label>
           </div>
         </fieldset>
         <label>Notes <span class="optional">Optional</span><textarea name="notes" maxlength="600" rows="3" placeholder="Arrival details, what to bring, or accessibility information"></textarea></label>

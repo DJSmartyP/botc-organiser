@@ -26,11 +26,24 @@ service cloud.firestore {
       return value in ['Beginner', 'Experienced', 'Expert'];
     }
 
+    function validScriptData(value) {
+      return value == null || (
+        value is map
+        && value.keys().hasOnly(['name', 'author', 'characters'])
+        && value.name is string
+        && value.name.size() <= 100
+        && value.author is string
+        && value.author.size() <= 80
+        && value.characters is list
+        && value.characters.size() <= 80
+      );
+    }
+
     function validSession() {
       return request.resource.data.keys().hasOnly([
         'ownerUid', 'organizerName', 'title', 'location', 'notes', 'capacity',
         'visibility', 'status', 'fixedDate', 'selectedDate', 'selectedOptionId',
-        'dateOptions', 'scriptMode', 'scriptName', 'scriptUrl', 'inviteSlug', 'createdAt', 'updatedAt'
+        'dateOptions', 'scriptMode', 'scriptName', 'scriptUrl', 'scriptData', 'inviteSlug', 'createdAt', 'updatedAt'
       ])
       && request.resource.data.ownerUid is string
       && request.resource.data.organizerName is string
@@ -48,6 +61,7 @@ service cloud.firestore {
       && request.resource.data.visibility == 'public'
       && request.resource.data.status in ['date_poll', 'find_players', 'closed']
       && request.resource.data.scriptMode in ['tbd', 'chosen']
+      && (!request.resource.data.keys().hasAny(['scriptData']) || validScriptData(request.resource.data.scriptData))
       && request.resource.data.inviteSlug is string
       && request.resource.data.inviteSlug.size() >= 4
       && request.resource.data.inviteSlug.size() <= 48

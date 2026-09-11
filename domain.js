@@ -1,5 +1,60 @@
 export const EXPERIENCE_LEVELS = ["Beginner", "Experienced", "Expert"];
 export const RESPONSES = ["available", "maybe", "unavailable"];
+export const SCRIPT_TEAMS = ["townsfolk", "outsider", "minion", "demon", "traveller", "fabled", "unknown"];
+
+const TEAM_ALIASES = {
+  townsfolk: "townsfolk", outsider: "outsider", outsiders: "outsider",
+  minion: "minion", minions: "minion", demon: "demon", demons: "demon",
+  traveler: "traveller", traveller: "traveller", fabled: "fabled"
+};
+
+function cleanText(value, max) {
+  return String(value || "").trim().slice(0, max);
+}
+
+function safeImageUrl(value) {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  try {
+    const url = new URL(String(candidate || ""));
+    return url.protocol === "https:" ? url.href.slice(0, 500) : "";
+  } catch { return ""; }
+}
+
+export function normalizeScriptTeam(value) {
+  return TEAM_ALIASES[String(value || "").toLowerCase()] || "unknown";
+}
+
+export function parseScriptJson(raw, catalogue = []) {
+  let source;
+  try { source = typeof raw === "string" ? JSON.parse(raw) : raw; }
+  catch { throw new Error("That file is not valid JSON."); }
+  if (!Array.isArray(source)) throw new Error("A BOTC script JSON must contain a list of characters.");
+
+  const known = new Map(catalogue.map(character => [String(character.id || "").toLowerCase(), character]));
+  const meta = source.find(item => item && typeof item === "object" && item.id === "_meta") || {};
+  const characters = source.filter(item => item !== meta && (typeof item === "string" || (item && typeof item === "object" && item.id !== "_meta"))).slice(0, 80).map(item => {
+    const id = cleanText(typeof item === "string" ? item : item.id, 80).toLowerCase();
+    const supplied = typeof item === "object" ? item : {};
+    const reference = known.get(id) || {};
+    const fallbackName = id.replace(/[-_]+/g, " ").replace(/\b\w/g, letter => letter.toUpperCase());
+    const providedIcon = safeImageUrl(supplied.image || supplied.imageUrl || reference.image || reference.imageUrl);
+    const catalogueIcon = reference.id ? `https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/${encodeURIComponent(id)}.png` : "";
+    return {
+      id,
+      name: cleanText(supplied.name || reference.name || fallbackName || "Unknown character", 80),
+      team: normalizeScriptTeam(supplied.team || reference.team),
+      ability: cleanText(supplied.ability || reference.ability, 500),
+      iconUrl: providedIcon || catalogueIcon
+    };
+  }).filter(character => character.id || character.name);
+
+  if (!characters.length) throw new Error("That script does not contain any characters.");
+  return {
+    name: cleanText(meta.name, 100),
+    author: cleanText(meta.author, 80),
+    characters
+  };
+}
 
 export function dateIndicator(available) {
   if (available >= 7) return { label: "Full Town game possible", tone: "full" };

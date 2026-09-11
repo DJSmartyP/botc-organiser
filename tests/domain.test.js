@@ -1,0 +1,65 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { buildDateOptions, dateIndicator, gameSize, inviteSlugError, normalizeInviteSlug, normalizeSessionCode, parseScriptJson, promotedStatus, validatePlayer } from "../domain.js";
+
+test("date thresholds exclude maybe responses", () => {
+  assert.equal(dateIndicator(4).label, "Not enough players yet");
+  assert.equal(dateIndicator(5).label, "Teensyville possible");
+  assert.equal(dateIndicator(6).label, "Teensyville possible");
+  assert.equal(dateIndicator(7).label, "Full Town game possible");
+});
+
+test("registered player thresholds match the game formats", () => {
+  assert.equal(gameSize(4), "Gathering players");
+  assert.equal(gameSize(5), "Teensyville Game");
+  assert.equal(gameSize(6), "Teensyville Game");
+  assert.equal(gameSize(7), "Full Town Game");
+});
+
+test("session codes can be pasted as codes or links", () => {
+  assert.equal(normalizeSessionCode("abc_123"), "abc_123");
+  assert.equal(normalizeSessionCode("https://example.com/?session=night-7"), "night-7");
+});
+
+test("custom player links follow the IDP slug format", () => {
+  assert.equal(normalizeInviteSlug(" Friday Night: Trouble Brewing! "), "friday-night-trouble-brewing");
+  assert.equal(inviteSlugError("fri"), "Use at least 4 letters or numbers for the custom player link.");
+  assert.equal(inviteSlugError("friday-night"), "");
+});
+
+test("date options are capped at ten and given stable ids", () => {
+  const values = Array.from({ length: 12 }, (_, i) => `2026-10-${String(i + 1).padStart(2, "0")}T19:00`);
+  const result = buildDateOptions(values);
+  assert.equal(result.length, 10);
+  assert.equal(result[0].id, "option-1");
+  assert.equal(result[9].id, "option-10");
+});
+
+test("final-date promotion preserves available and maybe states", () => {
+  assert.equal(promotedStatus("available"), "confirmed");
+  assert.equal(promotedStatus("maybe"), "maybe");
+  assert.equal(promotedStatus("unavailable"), null);
+});
+
+test("player details are constrained to public-safe fields", () => {
+  assert.deepEqual(validatePlayer({ displayName: "  Rowan  ", experience: "Beginner" }), { displayName: "Rowan", experience: "Beginner" });
+  assert.throws(() => validatePlayer({ displayName: "R", experience: "Expert" }));
+  assert.throws(() => validatePlayer({ displayName: "Rowan", experience: "Legend" }));
+});
+
+test("BOTC script JSON resolves standard character ids and metadata", () => {
+  const parsed = parseScriptJson(JSON.stringify([{ id: "_meta", name: "Test Script", author: "Chaos" }, "washerwoman", "poisoner"]), [
+    { id: "washerwoman", name: "Washerwoman", team: "townsfolk", ability: "Learn that one of two players is a Townsfolk." },
+    { id: "poisoner", name: "Poisoner", team: "minion", ability: "Choose a player each night." }
+  ]);
+  assert.equal(parsed.name, "Test Script");
+  assert.equal(parsed.characters[0].team, "townsfolk");
+  assert.equal(parsed.characters[1].team, "minion");
+});
+
+test("BOTC script JSON supports embedded custom characters and rejects invalid files", () => {
+  const parsed = parseScriptJson([{ id: "custom-demon", name: "Night Beast", team: "demons", ability: "Each night, choose a player." }]);
+  assert.equal(parsed.characters[0].team, "demon");
+  assert.throws(() => parseScriptJson("not json"), /valid JSON/);
+  assert.throws(() => parseScriptJson({}), /list of characters/);
+});

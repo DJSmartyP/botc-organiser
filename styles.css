@@ -151,6 +151,26 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .share-row { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin-top: 1.25rem; }
 .share-row code { color: var(--muted); }
 .stage-section { padding: clamp(2.5rem, 6vw, 4.5rem) 0 0; }
+.script-section { display: grid; gap: 1rem; }
+.script-team { overflow: hidden; border: 1px solid var(--team-border); border-radius: 14px; background: linear-gradient(145deg, var(--team-bg), rgba(12,9,14,.96)); }
+.script-team h3 { display: flex; align-items: center; justify-content: space-between; margin: 0; padding: .8rem 1rem; color: #fff; background: var(--team-head); font-size: 1.35rem; }
+.script-team h3 span { font: 700 .72rem Inter, sans-serif; opacity: .75; }
+.script-team-townsfolk { --team-head: #173f78; --team-bg: rgba(23,63,120,.24); --team-border: rgba(70,129,201,.5); }
+.script-team-outsider { --team-head: #397eac; --team-bg: rgba(57,126,172,.22); --team-border: rgba(109,178,222,.52); }
+.script-team-minion { --team-head: #a94f1d; --team-bg: rgba(169,79,29,.22); --team-border: rgba(224,131,70,.52); }
+.script-team-demon { --team-head: #8f202b; --team-bg: rgba(143,32,43,.24); --team-border: rgba(214,74,78,.54); }
+.script-team-traveller, .script-team-fabled, .script-team-unknown { --team-head: #5c426b; --team-bg: rgba(92,66,107,.22); --team-border: rgba(157,125,172,.48); }
+.character-grid { display: grid; gap: .55rem; padding: .75rem; }
+.character-card { display: grid; grid-template-columns: 50px 1fr; align-items: start; gap: .75rem; min-width: 0; padding: .7rem; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; background: rgba(0,0,0,.2); }
+.character-card img, .character-fallback { width: 50px; height: 50px; border-radius: 50%; }
+.character-card img { object-fit: contain; background: rgba(255,255,255,.92); }
+.character-fallback { display: grid; place-items: center; color: var(--gold); background: rgba(255,255,255,.08); font: 700 1.4rem "Cormorant Garamond", serif; }
+.character-card strong { display: block; font-family: "Cormorant Garamond", serif; font-size: 1.2rem; }
+.character-card p { margin: .2rem 0 0; color: #c4babe; font-size: .78rem; line-height: 1.45; }
+.script-upload-form { display: grid; gap: 1rem; margin-top: 1rem; padding: 1.15rem; }
+.script-upload-form h3 { margin-bottom: .2rem; }
+.script-upload-form p { margin-bottom: 0; color: var(--muted); font-size: .85rem; }
+.catalogue-credit { margin: .2rem 0 0; color: var(--muted); font-size: .72rem; }
 .section-heading { display: flex; flex-direction: column; gap: .4rem; margin-bottom: 1.2rem; }
 .section-heading h2 { margin-bottom: .3rem; }
 .section-heading p { max-width: 570px; margin: 0; color: var(--muted); }
@@ -228,6 +248,9 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
   .date-card-head { flex-direction: row; align-items: center; justify-content: space-between; }
   .form-grid { grid-template-columns: repeat(2, 1fr); }
   .roster-grid { grid-template-columns: repeat(2, 1fr); }
+  .character-grid { grid-template-columns: repeat(2, 1fr); }
+  .script-upload-form { grid-template-columns: 1.2fr 1fr auto; align-items: end; }
+  .script-upload-form .form-error { grid-column: 1 / -1; }
   .site-footer { flex-direction: row; justify-content: space-between; }
 }
 
