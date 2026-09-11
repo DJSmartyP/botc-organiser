@@ -50,7 +50,7 @@ Review these choices against your privacy notice and local data-protection oblig
 
 ## Script JSON and character display
 
-For a chosen script, an organiser can upload a JSON file while creating a session or add/replace it later from the session page. Files exported by the [official BOTC Script Tool](https://script.bloodontheclocktower.com/) are supported: an optional `_meta` object followed by character IDs or complete character objects.
+For a chosen script, the organiser chooses one of two routes: upload JSON, or enter a script name and HTTPS PDF link. JSON is the recommended route because it creates the full colour-coded character display; that display includes a **Print / save as PDF** action. Files exported by the [official BOTC Script Tool](https://script.bloodontheclocktower.com/) are supported: an optional `_meta` object followed by character IDs or complete character objects. The script name is read from `_meta.name`, with the JSON filename used as a fallback.
 
 The file is parsed in the browser and only sanitised display fields are stored: character ID, name, team, ability, and an HTTPS icon URL. Files are limited to 250 KB and 80 displayed characters. Standard character data and icons are resolved at upload time from the open-source [BOTC Townsquare](https://github.com/bra1n/townsquare) catalogue when available. For a custom character, include its fields directly and use an HTTPS `image` or `imageUrl` value if an icon is available.
 

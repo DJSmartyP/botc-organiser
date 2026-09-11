@@ -254,6 +254,9 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
 .radio-row { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .5rem; margin-bottom: .65rem; }
 .radio-row input { width: 18px; min-height: 18px; }
 .nested-fields { display: grid; gap: .8rem; margin-top: 1rem; }
+.script-methods { display: grid; gap: .25rem; padding-bottom: .75rem; border-bottom: 1px solid var(--line); }
+.recommended { justify-self: start; padding: .12rem .38rem; border: 1px solid rgba(216,189,124,.35); border-radius: 999px; color: var(--gold); font-size: .75rem; font-weight: 700; }
+.print-script-button { align-self: flex-start; }
 .optional { color: var(--muted); font-weight: 400; }
 .label-row { display: flex; justify-content: space-between; color: #d8cfc4; font-size: .9rem; font-weight: 600; }
 .label-row small { color: var(--muted); }
@@ -286,3 +289,21 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+
+@media print {
+  @page { margin: 12mm; }
+  body.printing-script { color: #171017; background: #fff; }
+  body.printing-script::before, body.printing-script::after, body.printing-script .ambient,
+  body.printing-script .site-header, body.printing-script .site-footer, body.printing-script .back-link,
+  body.printing-script .session-hero, body.printing-script .stage-section:not(#scriptSheet),
+  body.printing-script .print-script-button, body.printing-script .script-upload-form,
+  body.printing-script .catalogue-credit { display: none !important; }
+  body.printing-script main, body.printing-script .view, body.printing-script #scriptSheet { width: 100%; max-width: none; min-height: 0; margin: 0; padding: 0; }
+  body.printing-script #scriptSheet { display: grid !important; color: #171017; }
+  body.printing-script #scriptSheet h2, body.printing-script #scriptSheet h3,
+  body.printing-script #scriptSheet strong { color: #171017; text-shadow: none; }
+  body.printing-script .script-team { break-inside: avoid; border-color: #777; background: #fff; box-shadow: none; }
+  body.printing-script .script-team h3 { color: #fff; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  body.printing-script .character-card { break-inside: avoid; border-color: #ccc; background: #fff; }
+  body.printing-script .character-card p { color: #333; }
+}

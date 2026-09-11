@@ -105,12 +105,20 @@
           <label class="radio-row"><input type="radio" name="scriptMode" value="tbd" checked> Script TBD</label>
           <label class="radio-row"><input type="radio" name="scriptMode" value="chosen"> Chosen script</label>
           <div id="scriptFields" class="nested-fields" hidden>
-            <label>Script name<input name="scriptName" maxlength="100"></label>
-            <label>Image, PDF or web link<input name="scriptUrl" type="url" placeholder="https://…"></label>
-            <label>BOTC script JSON <span class="optional">Optional</span>
-              <input id="scriptJsonFile" name="scriptJsonFile" type="file" accept=".json,application/json">
-              <small id="scriptJsonStatus" class="field-hint">Upload a Script Tool JSON to show its characters on the session page.</small>
-            </label>
+            <div class="script-methods" role="group" aria-label="How to add the script">
+              <label class="radio-row"><input type="radio" name="scriptSource" value="json" checked> Upload BOTC JSON <span class="recommended">Recommended</span></label>
+              <label class="radio-row"><input type="radio" name="scriptSource" value="pdf"> Enter script name + PDF link</label>
+            </div>
+            <div id="scriptJsonFields">
+              <label>BOTC script JSON
+                <input id="scriptJsonFile" name="scriptJsonFile" type="file" accept=".json,application/json">
+                <small id="scriptJsonStatus" class="field-hint">The script name and character list will be read automatically. Players can print or save the displayed sheet as a PDF.</small>
+              </label>
+            </div>
+            <div id="scriptPdfFields" class="nested-fields" hidden>
+              <label>Script name<input name="scriptName" maxlength="100"></label>
+              <label>PDF link<input name="scriptUrl" type="url" inputmode="url" placeholder="https://…/script.pdf"></label>
+            </div>
           </div>
         </fieldset>
         <label>Notes <span class="optional">Optional</span><textarea name="notes" maxlength="600" rows="3" placeholder="Arrival details, what to bring, or accessibility information"></textarea></label>
