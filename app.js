@@ -13,6 +13,8 @@ let createMode = "fixed";
 let activeSession = null;
 let demoSessions = [];
 let demoManager = false;
+let dashboardSessions = [];
+let dashboardVisibleLimit = 25;
 let characterCataloguePromise = null;
 
 const sampleSession = {
@@ -127,9 +129,15 @@ function safeExternalUrl(value) {
 }
 
 async function loadCharacterCatalogue() {
-  characterCataloguePromise ||= fetch("https://raw.githubusercontent.com/bra1n/townsquare/develop/src/roles.json")
-    .then(response => response.ok ? response.json() : Promise.reject(new Error("Catalogue unavailable")))
-    .catch(() => []);
+  characterCataloguePromise ||= Promise.all([
+    fetch("https://release.botc.app/resources/data/roles.json").then(response => response.ok ? response.json() : []).catch(() => []),
+    fetch("https://raw.githubusercontent.com/bra1n/townsquare/develop/src/roles.json").then(response => response.ok ? response.json() : []).catch(() => [])
+  ]).then(([official, community]) => {
+    const roles = new Map();
+    community.forEach(role => roles.set(String(role.id || "").toLowerCase(), role));
+    official.forEach(role => roles.set(String(role.id || "").toLowerCase(), role));
+    return [...roles.values()];
+  });
   return characterCataloguePromise;
 }
 
@@ -231,19 +239,68 @@ async function renderDashboard() {
     const snapshot = await getDocs(q);
     sessions = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
   }
-  if (!sessions.length) {
+  dashboardSessions = sessions;
+  dashboardVisibleLimit = 25;
+  $("#dashboardTitle").textContent = currentProfile?.role === "admin" ? "All gatherings" : "Your gatherings";
+  renderDashboardSessions();
+}
+
+function dashboardDate(session) {
+  const value = session.selectedDate || session.fixedDate || session.dateOptions?.map(option => option.startAt).sort()[0];
+  const date = value?.toDate ? value.toDate() : value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date : null;
+}
+
+function timestampValue(value) {
+  if (value?.toMillis) return value.toMillis();
+  const date = value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date.getTime() : 0;
+}
+
+function statusLabel(status) {
+  return status === "date_poll" ? "Finding a date" : status === "closed" ? "Closed" : "Finding players";
+}
+
+function renderDashboardSessions() {
+  const list = $("#sessionList");
+  const query = $("#sessionSearch").value.trim().toLowerCase();
+  const status = $("#sessionStatusFilter").value;
+  const sort = $("#sessionSort").value;
+  const matches = dashboardSessions.filter(session => {
+    const haystack = [session.title, session.location, session.organizerName, session.inviteSlug].join(" ").toLowerCase();
+    return (!query || haystack.includes(query)) && (status === "all" || session.status === status);
+  }).sort((left, right) => {
+    if (sort === "name") return String(left.title).localeCompare(String(right.title));
+    if (sort === "updated") return timestampValue(right.updatedAt || right.createdAt) - timestampValue(left.updatedAt || left.createdAt);
+    return (dashboardDate(left)?.getTime() ?? Number.MAX_SAFE_INTEGER) - (dashboardDate(right)?.getTime() ?? Number.MAX_SAFE_INTEGER);
+  });
+  const totals = Object.fromEntries(["date_poll", "find_players", "closed"].map(key => [key, dashboardSessions.filter(session => session.status === key).length]));
+  const visible = matches.slice(0, dashboardVisibleLimit);
+  $("#dashboardStats").innerHTML = `<div><strong>${dashboardSessions.length}</strong><span>Total</span></div><div><strong>${totals.date_poll}</strong><span>Finding dates</span></div><div><strong>${totals.find_players}</strong><span>Finding players</span></div><div><strong>${totals.closed}</strong><span>Closed</span></div>`;
+  $("#sessionResultCount").textContent = visible.length === matches.length ? `${matches.length} shown` : `${visible.length} of ${matches.length} shown`;
+  if (!dashboardSessions.length) {
     list.innerHTML = '<div class="empty-state"><span>☾</span><h2>No gatherings yet</h2><p>Create your first session and invite the town.</p></div>';
     return;
   }
-  list.innerHTML = sessions.map(session => {
-    const date = session.selectedDate || session.fixedDate;
+  if (!matches.length) {
+    list.innerHTML = '<div class="empty-state compact"><p>No gatherings match those filters.</p></div>';
+    return;
+  }
+  list.innerHTML = visible.map(session => {
+    const date = dashboardDate(session);
+    const isAdmin = currentProfile?.role === "admin";
     return `<article class="session-card">
-      <div><span class="status-pill">${session.status === "date_poll" ? "Finding a date" : "Finding players"}</span><h2>${escapeHtml(session.title)}</h2>
-      <p>${date ? formatDate(date) : `${session.dateOptions?.length || 0} dates proposed`} · ${escapeHtml(session.location)}</p>
-      <div class="share-box"><input readonly value="${escapeHtml(buildSessionLink(session.id, session.inviteSlug))}" aria-label="Player link"><button class="button button-small button-ghost" data-copy-session="${session.id}" data-copy-slug="${escapeHtml(session.inviteSlug || "")}" type="button">Copy link</button></div></div>
-      <button class="button button-secondary" data-open-session="${session.id}" type="button">Manage</button>
+      <div class="session-card-main"><div class="session-card-top"><span class="status-pill status-${escapeHtml(session.status)}">${statusLabel(session.status)}</span>${isAdmin ? `<span class="session-owner">${escapeHtml(session.organizerName || "Organiser")}</span>` : ""}</div>
+      <h2>${escapeHtml(session.title)}</h2><div class="session-card-meta"><span>◷ ${date ? formatDate(date) : `${session.dateOptions?.length || 0} dates proposed`}</span><span>⌖ ${escapeHtml(session.location || "Location TBD")}</span><span>♟ Up to ${Number(session.capacity) || 0}</span></div>
+      <code class="session-slug">${escapeHtml(session.inviteSlug || session.id)}</code></div>
+      <div class="session-card-actions"><button class="button button-small button-ghost" data-copy-session="${session.id}" data-copy-slug="${escapeHtml(session.inviteSlug || "")}" type="button">Copy player link</button><button class="button button-small button-secondary" data-open-session="${session.id}" type="button">Manage</button></div>
     </article>`;
-  }).join("");
+  }).join("") + (visible.length < matches.length ? '<button class="button button-ghost dashboard-load-more" data-load-more type="button">Show 25 more</button>' : "");
+}
+
+function updateDashboardFilters() {
+  dashboardVisibleLimit = 25;
+  renderDashboardSessions();
 }
 
 async function loadSession(id) {
@@ -278,7 +335,12 @@ function normalizeSessionScripts(session, stored = session.scripts || []) {
 
 async function loadScripts(session) {
   const snapshot = await firebase.getDocs(firebase.collection(firebase.db, "sessions", session.id, "scripts"));
-  return normalizeSessionScripts(session, snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })));
+  const catalogue = await loadCharacterCatalogue();
+  return normalizeSessionScripts(session, snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))).map(script => {
+    if (!script.scriptData?.characters?.length) return script;
+    const source = [{ id: "_meta", name: script.scriptData.name || script.name, author: script.scriptData.author || script.author }, ...script.scriptData.characters];
+    return { ...script, scriptData: parseScriptJson(source, catalogue) };
+  });
 }
 
 async function loadDateCounts(session) {
@@ -349,7 +411,7 @@ function renderCharacterGroups(scriptData) {
   const characters = scriptData?.characters || [];
   const teams = [
     ["townsfolk", "Townsfolk"], ["outsider", "Outsiders"], ["minion", "Minions"], ["demon", "Demons"],
-    ["traveller", "Travellers"], ["fabled", "Fabled"], ["unknown", "Other"]
+    ["traveller", "Travellers"], ["fabled", "Fabled"], ["loric", "Loric"], ["unknown", "Other"]
   ];
   const groups = teams.map(([team, label]) => {
     const members = characters.filter(character => character.team === team);
@@ -385,7 +447,7 @@ function renderScriptDetail(session, script) {
     <button class="back-link no-print" data-back-session type="button">← Back to ${escapeHtml(session.title)}</button>
     <header class="script-detail-header panel"><div><div class="eyebrow">Planned script</div><h1>${escapeHtml(script.name)}</h1>${script.author ? `<p>By ${escapeHtml(script.author)}</p>` : ""}</div>
       <div class="script-detail-actions no-print">${characters.length ? '<button class="button button-ghost" data-print-script type="button">Print / save as PDF</button>' : ""}${pdfUrl ? `<a class="button button-secondary" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">Open PDF ↗</a>` : ""}</div></header>
-    ${characters.length ? `<div class="script-section">${renderCharacterGroups(script.scriptData)}</div><p class="catalogue-credit no-print">Character data and icons are loaded from the open-source <a href="https://github.com/bra1n/townsquare" target="_blank" rel="noopener noreferrer">BOTC Townsquare catalogue ↗</a> when available.</p>` : pdfUrl ? `<div class="pdf-frame-wrap"><iframe class="pdf-frame" src="${escapeHtml(pdfUrl)}" title="${escapeHtml(script.name)} PDF"></iframe><p>If the PDF does not appear here, use “Open PDF” above.</p></div>` : '<div class="notice">This script has no character data or PDF link.</div>'}
+    ${characters.length ? `<div class="script-section">${renderCharacterGroups(script.scriptData)}</div><p class="catalogue-credit no-print">Character details and icons use the current <a href="https://release.botc.app/resources/" target="_blank" rel="noopener noreferrer">official BOTC toolmaker resources ↗</a>, with the Townsquare catalogue as a fallback.</p>` : pdfUrl ? `<div class="pdf-frame-wrap"><iframe class="pdf-frame" src="${escapeHtml(pdfUrl)}" title="${escapeHtml(script.name)} PDF"></iframe><p>If the PDF does not appear here, use “Open PDF” above.</p></div>` : '<div class="notice">This script has no character data or PDF link.</div>'}
   </section>`;
 }
 
@@ -634,11 +696,15 @@ document.addEventListener("click", async event => {
   if (event.target.closest("[data-print-script]")) { document.body.classList.add("printing-script"); window.print(); setTimeout(() => document.body.classList.remove("printing-script"), 500); return; }
   if (event.target.id === "copyLinkButton") { await navigator.clipboard.writeText(buildSessionLink(activeSession.id, activeSession.inviteSlug)); showToast("Player link copied."); }
   const copy = event.target.closest("[data-copy-session]"); if (copy) { await navigator.clipboard.writeText(buildSessionLink(copy.dataset.copySession, copy.dataset.copySlug)); showToast("Player link copied."); }
+  if (event.target.closest("[data-load-more]")) { dashboardVisibleLimit += 25; renderDashboardSessions(); }
 });
 
 $("#demoSessionButton").addEventListener("click", () => { demoManager = false; openSession("sample-night"); });
 $("#dashboardButton").addEventListener("click", openDashboard);
 $("#startOrganisingButton").addEventListener("click", openDashboard);
+$("#sessionSearch").addEventListener("input", updateDashboardFilters);
+$("#sessionStatusFilter").addEventListener("change", updateDashboardFilters);
+$("#sessionSort").addEventListener("change", updateDashboardFilters);
 $("#googleSignInButton").addEventListener("click", signInWithGoogle);
 $("#signOutButton").addEventListener("click", async () => { await firebase?.signOut(firebase.auth); showView("homeView"); });
 $("#createSessionButton").addEventListener("click", () => { resetCreateDialog(); $("#createDialog").showModal(); });

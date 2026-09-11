@@ -2,6 +2,8 @@
 
 **A BOTC Planner from Chaos On The Clocktower.** Organisers create sessions, optionally poll up to ten dates, and invite players with a public link. Players open that link directly—never the organiser login—and can register themselves and additional people without creating conventional accounts. Organisers and admins can also add as many players as needed from the management view.
 
+The organiser dashboard is designed for a growing library of sessions: compact rows, at-a-glance totals, search by event/venue/storyteller/link, status filters, upcoming/recent/name sorting, and progressive batches of 25 results. Admins see the same tools across every organiser's gathering.
+
 Chaos Planner uses the same custom-link convention as the IDP app: a readable `?join=friday-ravenswood-bluff` URL resolves through the top-level `inviteLinks` collection. The direct `?session=FIRESTORE_DOCUMENT_ID` format remains supported as a fallback.
 
 The site is a static, mobile-first app for GitHub Pages. Firebase Authentication and Cloud Firestore provide identity and authoritative shared data. The placeholder configuration starts a clearly labelled in-memory preview; it does not use `localStorage` and does not persist data.
@@ -56,7 +58,7 @@ Planned scripts are stored in `/sessions/{sessionId}/scripts`, where they are pu
 
 Files exported by the [official BOTC Script Tool](https://script.bloodontheclocktower.com/) are supported: an optional `_meta` object followed by character IDs or complete character objects. The script name is read from `_meta.name`, with the JSON filename used as a fallback.
 
-The file is parsed in the browser and only sanitised display fields are stored: character ID, name, team, ability, and an HTTPS icon URL. Files are limited to 250 KB and 80 displayed characters. Standard character data and icons are resolved at upload time from the open-source [BOTC Townsquare](https://github.com/bra1n/townsquare) catalogue when available. For a custom character, include its fields directly and use an HTTPS `image` or `imageUrl` value if an icon is available.
+The file is parsed in the browser and only sanitised display fields are stored: character ID, name, team, ability, and an HTTPS icon URL. Files are limited to 250 KB and 80 displayed characters. Released characters are resolved from the current [official BOTC toolmaker resources](https://release.botc.app/resources/), including their team, ability and deterministic official icon URL. The open-source [BOTC Townsquare](https://github.com/bra1n/townsquare) catalogue remains a fallback. Already-uploaded entries with missing metadata are enriched again when opened, so newer characters no longer remain in “Other”. For a custom character, include its fields directly and use an HTTPS `image` or `imageUrl` value if an icon is available.
 
 Characters are grouped and colour-coded on the public session page: deep blue Townsfolk, lighter blue Outsiders, orange Minions, and red Demons. Travellers, Fabled, and unknown custom teams use a neutral purple treatment.
 

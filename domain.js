@@ -1,11 +1,11 @@
 export const EXPERIENCE_LEVELS = ["Beginner", "Experienced", "Expert"];
 export const RESPONSES = ["available", "maybe", "unavailable"];
-export const SCRIPT_TEAMS = ["townsfolk", "outsider", "minion", "demon", "traveller", "fabled", "unknown"];
+export const SCRIPT_TEAMS = ["townsfolk", "outsider", "minion", "demon", "traveller", "fabled", "loric", "unknown"];
 
 const TEAM_ALIASES = {
   townsfolk: "townsfolk", outsider: "outsider", outsiders: "outsider",
   minion: "minion", minions: "minion", demon: "demon", demons: "demon",
-  traveler: "traveller", traveller: "traveller", fabled: "fabled"
+  traveler: "traveller", traveller: "traveller", fabled: "fabled", loric: "loric"
 };
 
 function cleanText(value, max) {
@@ -24,6 +24,14 @@ export function normalizeScriptTeam(value) {
   return TEAM_ALIASES[String(value || "").toLowerCase()] || "unknown";
 }
 
+function officialIconUrl(reference, id) {
+  const edition = String(reference.edition || "").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  if (!edition || !id) return "";
+  const team = normalizeScriptTeam(reference.team);
+  const alignment = ["townsfolk", "outsider"].includes(team) ? "_g" : ["minion", "demon"].includes(team) ? "_e" : "";
+  return `https://release.botc.app/resources/characters/${encodeURIComponent(edition)}/${encodeURIComponent(id)}${alignment}.webp`;
+}
+
 export function parseScriptJson(raw, catalogue = []) {
   let source;
   try { source = typeof raw === "string" ? JSON.parse(raw) : raw; }
@@ -38,11 +46,12 @@ export function parseScriptJson(raw, catalogue = []) {
     const reference = known.get(id) || {};
     const fallbackName = id.replace(/[-_]+/g, " ").replace(/\b\w/g, letter => letter.toUpperCase());
     const providedIcon = safeImageUrl(supplied.image || supplied.imageUrl || reference.image || reference.imageUrl);
-    const catalogueIcon = reference.id ? `https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/${encodeURIComponent(id)}.png` : "";
+    const catalogueIcon = reference.id ? officialIconUrl(reference, id) || `https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/${encodeURIComponent(id)}.png` : "";
+    const suppliedTeam = normalizeScriptTeam(supplied.team);
     return {
       id,
       name: cleanText(supplied.name || reference.name || fallbackName || "Unknown character", 80),
-      team: normalizeScriptTeam(supplied.team || reference.team),
+      team: suppliedTeam === "unknown" ? normalizeScriptTeam(reference.team) : suppliedTeam,
       ability: cleanText(supplied.ability || reference.ability, 500),
       iconUrl: providedIcon || catalogueIcon
     };

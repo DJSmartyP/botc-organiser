@@ -55,10 +55,17 @@
 
     <section id="dashboardView" class="view dashboard-view" hidden>
       <div class="page-heading">
-        <div><div class="eyebrow">Organiser portal</div><h1>Your gatherings</h1></div>
+        <div><div class="eyebrow">Organiser portal</div><h1 id="dashboardTitle">Your gatherings</h1></div>
         <button id="createSessionButton" class="button button-primary" type="button">+ Create session</button>
       </div>
       <div id="dashboardNotice" class="notice" hidden></div>
+      <div id="dashboardStats" class="dashboard-stats" aria-label="Session overview"></div>
+      <div class="dashboard-tools panel" aria-label="Filter sessions">
+        <label class="dashboard-search"><span>Search</span><input id="sessionSearch" type="search" placeholder="Name, venue, storyteller or link…" autocomplete="off"></label>
+        <label><span>Status</span><select id="sessionStatusFilter"><option value="all">All statuses</option><option value="date_poll">Finding a date</option><option value="find_players">Finding players</option><option value="closed">Closed</option></select></label>
+        <label><span>Sort</span><select id="sessionSort"><option value="upcoming">Upcoming first</option><option value="updated">Recently updated</option><option value="name">Name A–Z</option></select></label>
+        <span id="sessionResultCount" class="result-count" aria-live="polite"></span>
+      </div>
       <div id="sessionList" class="session-list" aria-live="polite"></div>
     </section>
 

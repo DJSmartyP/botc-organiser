@@ -57,6 +57,21 @@ test("BOTC script JSON resolves standard character ids and metadata", () => {
   assert.equal(parsed.characters[1].team, "minion");
 });
 
+test("official role references place newer and previously unresolved characters in the right teams", () => {
+  const parsed = parseScriptJson([{ id: "alsaahir", name: "Alsaahir", team: "unknown", ability: "", iconUrl: "" }, "hermit", "wizard", "gnome", "duchess"], [
+    { id: "alsaahir", name: "Alsaahir", team: "townsfolk", edition: "carousel" },
+    { id: "hermit", name: "Hermit", team: "outsider", edition: "carousel" },
+    { id: "wizard", name: "Wizard", team: "minion", edition: "carousel" },
+    { id: "gnome", name: "Gnome", team: "traveller", edition: "carousel" },
+    { id: "duchess", name: "Duchess", team: "fabled", edition: "fabled" }
+  ]);
+  assert.deepEqual(parsed.characters.map(character => character.team), ["townsfolk", "outsider", "minion", "traveller", "fabled"]);
+  assert.equal(parsed.characters[0].iconUrl, "https://release.botc.app/resources/characters/carousel/alsaahir_g.webp");
+  assert.equal(parsed.characters[2].iconUrl, "https://release.botc.app/resources/characters/carousel/wizard_e.webp");
+  assert.equal(parsed.characters[3].iconUrl, "https://release.botc.app/resources/characters/carousel/gnome.webp");
+  assert.equal(parsed.characters[4].iconUrl, "https://release.botc.app/resources/characters/fabled/duchess.webp");
+});
+
 test("BOTC script JSON supports embedded custom characters and rejects invalid files", () => {
   const parsed = parseScriptJson([{ id: "custom-demon", name: "Night Beast", team: "demons", ability: "Each night, choose a player." }]);
   assert.equal(parsed.characters[0].team, "demon");
