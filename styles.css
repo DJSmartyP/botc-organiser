@@ -57,7 +57,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 a { color: var(--gold); }
 h1, h2, h3, p { margin-top: 0; }
 h1, h2, h3 { color: var(--ink); font-family: Cinzel, Georgia, serif; line-height: 1.08; text-wrap: balance; }
-h1 { margin-bottom: .8rem; font-family: "Cinzel Decorative", Cinzel, Georgia, serif; font-size: clamp(1.9rem, 6vw, 3.6rem); font-weight: 700; letter-spacing: -.025em; text-shadow: 0 2px 0 #000, 0 0 32px rgba(210,74,81,.12); }
+h1 { margin-bottom: .8rem; font-family: "Cinzel Decorative", Cinzel, Georgia, serif; font-size: clamp(1.85rem, 5vw, 3rem); font-weight: 700; letter-spacing: -.025em; text-shadow: 0 2px 0 #000, 0 0 32px rgba(210,74,81,.12); }
 h2 { margin-bottom: .5rem; font-size: clamp(1.3rem, 3.5vw, 1.9rem); letter-spacing: .015em; }
 h3 { letter-spacing: .02em; }
 :where(h1, h2, h3, p, strong, small, code, label, a) { overflow-wrap: anywhere; }
@@ -191,7 +191,7 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .session-hero { position: relative; overflow: hidden; padding: clamp(1.1rem, 3vw, 1.8rem); }
 .session-hero { border-top: 2px solid rgba(210,74,81,.62); }
 .session-hero::after { content: "☾"; position: absolute; top: -1.7rem; right: 1rem; z-index: 0; color: rgba(159,45,53,.13); font: 14rem/1 Georgia, serif; }
-.session-hero h1 { max-width: 800px; font-size: clamp(1.8rem, 6vw, 3.2rem); }
+.session-hero h1 { max-width: 800px; font-size: clamp(1.75rem, 5vw, 2.8rem); }
 .session-facts { display: grid; gap: .7rem; padding-top: .75rem; border-top: 1px solid var(--line); }
 .session-facts div { display: grid; min-width: 0; gap: .2rem; }
 .session-facts span { color: var(--gold); font-size: .75rem; letter-spacing: .13em; text-transform: uppercase; }
@@ -224,7 +224,7 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .planned-script-form p { margin: 0; color: var(--muted); }
 .script-detail-view { display: grid; gap: 1.25rem; }
 .script-detail-header { display: flex; flex-direction: column; align-items: flex-start; gap: .9rem; padding: clamp(1rem, 3vw, 1.6rem); border-top: 2px solid rgba(210,74,81,.62); }
-.script-detail-header h1 { margin-bottom: .4rem; font-size: clamp(1.8rem, 5vw, 3rem); }
+.script-detail-header h1 { margin-bottom: .4rem; font-size: clamp(1.75rem, 4.5vw, 2.75rem); }
 .script-detail-header p { margin: 0; color: var(--muted); font: 1.1rem "IM Fell English", Georgia, serif; }
 .script-detail-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
 .script-detail-actions .button { display: inline-flex; align-items: center; text-decoration: none; }
