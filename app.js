@@ -4,7 +4,8 @@ import { buildDateOptions, dateIndicator, gameSize, inviteSlugError, normalizeIn
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const views = $$(".view");
-const demoMode = firebaseConfig.apiKey === "REPLACE_ME" || firebaseConfig.projectId === "YOUR_PROJECT_ID";
+const localDemo = ["localhost", "127.0.0.1"].includes(location.hostname) && new URL(location.href).searchParams.get("demo") === "1";
+const demoMode = localDemo || firebaseConfig.apiKey === "REPLACE_ME" || firebaseConfig.projectId === "YOUR_PROJECT_ID";
 let firebase = null;
 let currentUser = null;
 let currentProfile = null;
@@ -35,6 +36,7 @@ const sampleSession = {
       { id: "imp", name: "Imp", team: "demon", ability: "Each night, choose a player: they die. If you kill yourself this way, a Minion becomes the Imp.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/imp.png" }
     ]
   },
+  scripts: [],
   inviteSlug: "ravenswood-night",
   dateOptions: [
     { id: "option-1", startAt: futureLocal(5, 19) },
@@ -48,6 +50,16 @@ const sampleSession = {
   },
   roster: []
 };
+
+sampleSession.scripts = [
+  { id: "trouble-brewing", name: "Trouble Brewing", author: "The Pandemonium Institute", sourceType: "json", pdfUrl: "", scriptData: sampleSession.scriptData },
+  { id: "bad-moon-rising", name: "Bad Moon Rising", author: "The Pandemonium Institute", sourceType: "json", pdfUrl: "", scriptData: { name: "Bad Moon Rising", author: "The Pandemonium Institute", characters: [
+    { id: "grandmother", name: "Grandmother", team: "townsfolk", ability: "You start knowing a good player and their character. If the Demon kills them, you die too.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/grandmother.png" },
+    { id: "lunatic", name: "Lunatic", team: "outsider", ability: "You think you are a Demon, but you are not. The Demon knows who you are and who you choose at night.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/lunatic.png" },
+    { id: "devilsadvocate", name: "Devil's Advocate", team: "minion", ability: "Each night, choose a living player. If executed tomorrow, they do not die.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/devilsadvocate.png" },
+    { id: "shabaloth", name: "Shabaloth", team: "demon", ability: "Each night, choose 2 players: they die. A dead player you chose last night might be regurgitated.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/shabaloth.png" }
+  ] } }
+];
 
 function futureLocal(days, hour, minute = 0) {
   const date = new Date();
@@ -159,7 +171,8 @@ async function openInvite(slug) {
   $("#sessionContent").innerHTML = '<div class="loading">Following the player link…</div>';
   try {
     const normalized = normalizeInviteSlug(slug);
-    const url = new URL(location.href); url.search = ""; url.searchParams.set("join", normalized); history.replaceState({}, "", url);
+    const requestedScript = new URL(location.href).searchParams.get("script");
+    const url = new URL(location.href); url.search = ""; url.searchParams.set("join", normalized); if (requestedScript) url.searchParams.set("script", requestedScript); history.replaceState({}, "", url);
     await openSession(await resolveInvite(normalized), true);
   }
   catch (error) { $("#sessionContent").innerHTML = `<div class="panel error-panel"><h1>Link not found</h1><p>${escapeHtml(error.message)}</p></div>`; }
@@ -234,13 +247,38 @@ async function renderDashboard() {
 }
 
 async function loadSession(id) {
-  if (demoMode) return demoSessions.find(session => session.id === id) || null;
+  if (demoMode) {
+    const session = demoSessions.find(item => item.id === id) || null;
+    if (session) session.scripts = normalizeSessionScripts(session);
+    return session;
+  }
   const snap = await firebase.getDoc(firebase.doc(firebase.db, "sessions", id));
   if (!snap.exists()) return null;
   const session = { id: snap.id, ...snap.data() };
+  session.scripts = await loadScripts(session);
   if (session.status === "date_poll") session.counts = await loadDateCounts(session);
   if (session.status === "find_players") session.roster = await loadRoster(session.id);
   return session;
+}
+
+function normalizeSessionScripts(session, stored = session.scripts || []) {
+  if (session.scriptMode !== "chosen") return stored;
+  const legacy = {
+    id: "legacy-script",
+    name: session.scriptName || session.scriptData?.name || "Planned script",
+    author: session.scriptData?.author || "",
+    sourceType: session.scriptData?.characters?.length ? "json" : "pdf",
+    pdfUrl: session.scriptUrl || "",
+    scriptData: session.scriptData || null,
+    legacy: true
+  };
+  if (stored.some(script => script.name === legacy.name)) return stored;
+  return [...stored, legacy];
+}
+
+async function loadScripts(session) {
+  const snapshot = await firebase.getDocs(firebase.collection(firebase.db, "sessions", session.id, "scripts"));
+  return normalizeSessionScripts(session, snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })));
 }
 
 async function loadDateCounts(session) {
@@ -269,21 +307,26 @@ async function openSession(id, preserveUrl = false) {
   try {
     activeSession = await loadSession(id);
     if (!activeSession) throw new Error("That session could not be found.");
-    renderSession(activeSession);
+    const requestedScript = new URL(location.href).searchParams.get("script");
+    const script = activeSession.scripts?.find(item => item.id === requestedScript);
     if (!preserveUrl) {
-      const url = new URL(location.href); url.search = ""; url.searchParams.set("session", id); history.replaceState({}, "", url);
+      const url = new URL(location.href); url.search = ""; url.searchParams.set("session", id);
+      if (script) url.searchParams.set("script", script.id);
+      history.replaceState({}, "", url);
     }
+    if (script) renderScriptDetail(activeSession, script); else renderSession(activeSession);
   } catch (error) {
     $("#sessionContent").innerHTML = `<div class="panel error-panel"><h1>Session not found</h1><p>${escapeHtml(error.message)}</p></div>`;
   }
 }
 
 function renderSession(session) {
+  document.title = `${session.title} · Chaos Planner`;
   const manager = isManager(session);
   $(".header-actions").hidden = !manager;
   const date = session.selectedDate || session.fixedDate;
-  const scriptUrl = safeExternalUrl(session.scriptUrl);
-  const script = session.scriptMode === "chosen" ? `${scriptUrl ? `<a class="script-link" href="${escapeHtml(scriptUrl)}" target="_blank" rel="noopener noreferrer">` : ""}${escapeHtml(session.scriptName || session.scriptData?.name || "Chosen script")}${scriptUrl ? " ↗</a>" : ""}` : "Script TBD";
+  const scriptCount = session.scripts?.length || 0;
+  const script = scriptCount ? `<button class="inline-link" data-scroll-scripts type="button">${scriptCount} planned script${scriptCount === 1 ? "" : "s"}</button>` : "Script TBD";
   $("#sessionContent").innerHTML = `
     <article class="session-hero panel">
       <div class="eyebrow">${session.status === "date_poll" ? "Finding a date" : "Finding players"}</div>
@@ -297,13 +340,13 @@ function renderSession(session) {
       ${session.notes ? `<p class="session-notes">${escapeHtml(session.notes)}</p>` : ""}
       <div class="share-row"><button id="copyLinkButton" class="button button-ghost" type="button">Copy player link</button><code>${escapeHtml(session.inviteSlug || session.id)}</code>${session.inviteSlug ? '<span class="status-pill">Custom link</span>' : ""}</div>
     </article>
-    ${renderScriptPanel(session, manager)}
+    ${renderPlannedScripts(session, manager)}
     ${session.status === "date_poll" ? renderDatePoll(session, manager) : renderFindPlayers(session, manager)}
   `;
 }
 
-function renderScriptPanel(session, manager) {
-  const characters = session.scriptData?.characters || [];
+function renderCharacterGroups(scriptData) {
+  const characters = scriptData?.characters || [];
   const teams = [
     ["townsfolk", "Townsfolk"], ["outsider", "Outsiders"], ["minion", "Minions"], ["demon", "Demons"],
     ["traveller", "Travellers"], ["fabled", "Fabled"], ["unknown", "Other"]
@@ -316,23 +359,57 @@ function renderScriptPanel(session, manager) {
       return `<article class="character-card">${icon ? `<img src="${escapeHtml(icon)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false">` : ""}<span class="character-fallback" ${icon ? "hidden" : ""}>${escapeHtml(character.name?.[0] || "?")}</span><div><strong>${escapeHtml(character.name)}</strong>${character.ability ? `<p>${escapeHtml(character.ability)}</p>` : ""}</div></article>`;
     }).join("")}</div></section>`;
   }).join("");
-  if (!characters.length && !manager) return "";
-  return `<section id="scriptSheet" class="stage-section script-section"><div class="section-heading"><div><div class="eyebrow">The grimoire</div><h2>${escapeHtml(session.scriptData?.name || session.scriptName || "Game script")}</h2>${session.scriptData?.author ? `<p>By ${escapeHtml(session.scriptData.author)}</p>` : ""}</div>${characters.length ? '<button class="button button-ghost print-script-button" data-print-script type="button">Print / save as PDF</button>' : ""}</div>
-    ${groups || '<div class="notice">No character list has been uploaded yet.</div>'}
-    ${manager ? `<form id="scriptUploadForm" class="panel script-upload-form"><div><h3>Add or replace script JSON</h3><p>Upload a BOTC Script Tool JSON. Only the character fields needed for display are saved.</p></div><label>JSON file<input name="scriptJsonFile" type="file" accept=".json,application/json" required></label><p id="scriptUploadError" class="form-error" role="alert" hidden></p><button class="button button-secondary" type="submit">Save script to session</button></form>` : ""}
-    ${characters.length ? '<p class="catalogue-credit">Character data and icons are loaded from the open-source <a href="https://github.com/bra1n/townsquare" target="_blank" rel="noopener noreferrer">BOTC Townsquare catalogue ↗</a> when available.</p>' : ""}</section>`;
+  return groups;
 }
 
-async function saveSessionScript(form) {
+function renderPlannedScripts(session, manager) {
+  const scripts = session.scripts || [];
+  const cards = scripts.map(script => `<article class="planned-script-card">
+    <div><span class="script-source-badge">${script.sourceType === "json" ? "Interactive script" : "PDF script"}</span><h3>${escapeHtml(script.name)}</h3>${script.author ? `<p>By ${escapeHtml(script.author)}</p>` : ""}</div>
+    <button class="button button-small button-secondary" data-view-script="${escapeHtml(script.id)}" type="button">View script</button>
+  </article>`).join("");
+  return `<section id="plannedScripts" class="stage-section planned-scripts-section"><div class="section-heading"><div><div class="eyebrow">The grimoire</div><h2>Planned scripts</h2><p>${scripts.length ? `${scripts.length} possible game${scripts.length === 1 ? "" : "s"} for this gathering.` : "No scripts have been planned yet."}</p></div></div>
+    ${scripts.length ? `<div class="planned-script-list">${cards}</div>` : ""}
+    ${manager ? `<form id="plannedScriptForm" class="panel planned-script-form"><div><h3>Add another script</h3><p>Upload JSON for the full character view, or add a name and PDF link.</p></div>
+      <div class="script-methods"><label class="radio-row"><input type="radio" name="plannedSource" value="json" checked> BOTC JSON</label><label class="radio-row"><input type="radio" name="plannedSource" value="pdf"> Name + PDF</label></div>
+      <div data-planned-json><label>BOTC script JSON<input name="scriptJsonFile" type="file" accept=".json,application/json"></label></div>
+      <div data-planned-pdf class="form-grid" hidden><label>Script name<input name="scriptName" maxlength="100"></label><label>PDF link<input name="scriptUrl" type="url" inputmode="url" placeholder="https://…/script.pdf"></label></div>
+      <p id="scriptUploadError" class="form-error" role="alert" hidden></p><button class="button button-secondary" type="submit">Add planned script</button></form>` : ""}</section>`;
+}
+
+function renderScriptDetail(session, script) {
+  document.title = `${script.name} · ${session.title}`;
+  const pdfUrl = safeExternalUrl(script.pdfUrl);
+  const characters = script.scriptData?.characters || [];
+  $("#sessionContent").innerHTML = `<section id="scriptSheet" class="script-detail-view">
+    <button class="back-link no-print" data-back-session type="button">← Back to ${escapeHtml(session.title)}</button>
+    <header class="script-detail-header panel"><div><div class="eyebrow">Planned script</div><h1>${escapeHtml(script.name)}</h1>${script.author ? `<p>By ${escapeHtml(script.author)}</p>` : ""}</div>
+      <div class="script-detail-actions no-print">${characters.length ? '<button class="button button-ghost" data-print-script type="button">Print / save as PDF</button>' : ""}${pdfUrl ? `<a class="button button-secondary" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">Open PDF ↗</a>` : ""}</div></header>
+    ${characters.length ? `<div class="script-section">${renderCharacterGroups(script.scriptData)}</div><p class="catalogue-credit no-print">Character data and icons are loaded from the open-source <a href="https://github.com/bra1n/townsquare" target="_blank" rel="noopener noreferrer">BOTC Townsquare catalogue ↗</a> when available.</p>` : pdfUrl ? `<div class="pdf-frame-wrap"><iframe class="pdf-frame" src="${escapeHtml(pdfUrl)}" title="${escapeHtml(script.name)} PDF"></iframe><p>If the PDF does not appear here, use “Open PDF” above.</p></div>` : '<div class="notice">This script has no character data or PDF link.</div>'}
+  </section>`;
+}
+
+async function savePlannedScript(form) {
   const errorBox = $("#scriptUploadError"); errorBox.hidden = true;
   try {
-    const scriptFile = new FormData(form).get("scriptJsonFile");
-    const scriptData = await readScriptFile(scriptFile);
-    const filename = scriptFile?.name?.replace(/\.json$/i, "").replace(/[-_]+/g, " ").trim();
-    const updates = { scriptMode: "chosen", scriptName: scriptData.name || filename || "Uploaded script", scriptUrl: "", scriptData };
-    if (demoMode) Object.assign(activeSession, updates);
-    else await firebase.updateDoc(firebase.doc(firebase.db, "sessions", activeSession.id), { ...updates, updatedAt: firebase.serverTimestamp() });
-    showToast("Script saved to the session.");
+    if ((activeSession.scripts || []).length >= 10) throw new Error("A session can have up to 10 planned scripts.");
+    const fields = new FormData(form); const sourceType = fields.get("plannedSource");
+    let scriptData = null; let name = ""; let author = ""; let pdfUrl = "";
+    if (sourceType === "json") {
+      const scriptFile = fields.get("scriptJsonFile");
+      if (!scriptFile?.size) throw new Error("Choose a BOTC script JSON file.");
+      scriptData = await readScriptFile(scriptFile);
+      name = scriptData.name || scriptFile.name.replace(/\.json$/i, "").replace(/[-_]+/g, " ").trim() || "Uploaded script";
+      author = scriptData.author || "";
+    } else {
+      name = String(fields.get("scriptName") || "").trim(); pdfUrl = safeExternalUrl(fields.get("scriptUrl"));
+      if (!name) throw new Error("Enter the script name.");
+      if (!pdfUrl) throw new Error("Enter a valid HTTPS PDF link.");
+    }
+    const script = { name, author, sourceType, pdfUrl, scriptData };
+    if (demoMode) activeSession.scripts.push({ id: `script-${crypto.randomUUID()}`, ...script });
+    else await firebase.addDoc(firebase.collection(firebase.db, "sessions", activeSession.id, "scripts"), { ...script, createdAt: firebase.serverTimestamp(), updatedAt: firebase.serverTimestamp() });
+    showToast("Planned script added.");
     activeSession = await loadSession(activeSession.id); renderSession(activeSession);
   } catch (error) { errorBox.textContent = error.message; errorBox.hidden = false; }
 }
@@ -509,20 +586,29 @@ async function createSession(form) {
       title: formData.get("title").trim(), location: formData.get("location").trim(), notes: formData.get("notes").trim(),
       capacity: Number(formData.get("capacity")), visibility: "public", status: createMode === "poll" ? "date_poll" : "find_players",
       fixedDate: createMode === "fixed" ? formData.get("fixedDate") : null, dateOptions,
-      scriptMode, scriptName: scriptMode === "chosen" ? (scriptSource === "json" ? jsonScriptName : formData.get("scriptName").trim()) : "", scriptUrl: scriptMode === "chosen" && scriptSource === "pdf" ? safeExternalUrl(formData.get("scriptUrl")) : "", scriptData, inviteSlug
+      scriptMode, scriptName: scriptMode === "chosen" ? (scriptSource === "json" ? jsonScriptName : formData.get("scriptName").trim()) : "", scriptUrl: scriptMode === "chosen" && scriptSource === "pdf" ? safeExternalUrl(formData.get("scriptUrl")) : "", scriptData: null, inviteSlug
     };
+    const initialScript = scriptMode === "chosen" ? {
+      name: data.scriptName,
+      author: scriptData?.author || "",
+      sourceType: scriptSource,
+      pdfUrl: data.scriptUrl,
+      scriptData
+    } : null;
     let id;
     if (demoMode) {
       if (demoSessions.some(session => session.inviteSlug === inviteSlug)) throw new Error("That custom player link is already in use. Try another name.");
-      id = `demo-${Math.random().toString(36).slice(2, 8)}`; demoSessions.unshift({ id, ...data, counts: Object.fromEntries(dateOptions.map(option => [option.id, { available: 0, maybe: 0, unavailable: 0 }])), roster: [] });
+      id = `demo-${Math.random().toString(36).slice(2, 8)}`; demoSessions.unshift({ id, ...data, scripts: initialScript ? [{ id: `script-${crypto.randomUUID()}`, ...initialScript }] : [], counts: Object.fromEntries(dateOptions.map(option => [option.id, { available: 0, maybe: 0, unavailable: 0 }])), roster: [] });
     } else {
       const sessionRef = firebase.doc(firebase.collection(firebase.db, "sessions"));
       const inviteRef = firebase.doc(firebase.db, "inviteLinks", inviteSlug);
+      const scriptRef = initialScript ? firebase.doc(firebase.collection(firebase.db, "sessions", sessionRef.id, "scripts")) : null;
       await firebase.runTransaction(firebase.db, async transaction => {
         const existing = await transaction.get(inviteRef);
         if (existing.exists()) throw new Error("That custom player link is already in use. Try another name.");
         transaction.set(inviteRef, { sessionId: sessionRef.id, ownerUid: currentUser.uid, createdAt: firebase.serverTimestamp(), updatedAt: firebase.serverTimestamp() });
         transaction.set(sessionRef, { ...data, createdAt: firebase.serverTimestamp(), updatedAt: firebase.serverTimestamp() });
+        if (scriptRef) transaction.set(scriptRef, { ...initialScript, createdAt: firebase.serverTimestamp(), updatedAt: firebase.serverTimestamp() });
       });
       id = sessionRef.id;
     }
@@ -537,6 +623,14 @@ document.addEventListener("click", async event => {
   const open = event.target.closest("[data-open-session]"); if (open) { await openSession(open.dataset.openSession); return; }
   const finalize = event.target.closest("[data-finalize]"); if (finalize) { await finalizeDate(finalize.dataset.finalize); return; }
   const mode = event.target.closest("[data-create-mode]"); if (mode) chooseCreateMode(mode.dataset.createMode);
+  const viewScript = event.target.closest("[data-view-script]");
+  if (viewScript) {
+    const script = activeSession.scripts?.find(item => item.id === viewScript.dataset.viewScript);
+    if (script) { const url = new URL(location.href); url.searchParams.set("script", script.id); history.pushState({}, "", url); renderScriptDetail(activeSession, script); }
+    return;
+  }
+  if (event.target.closest("[data-back-session]")) { const url = new URL(location.href); url.searchParams.delete("script"); history.pushState({}, "", url); renderSession(activeSession); return; }
+  if (event.target.closest("[data-scroll-scripts]")) { $("#plannedScripts")?.scrollIntoView({ behavior: "smooth" }); return; }
   if (event.target.closest("[data-print-script]")) { document.body.classList.add("printing-script"); window.print(); setTimeout(() => document.body.classList.remove("printing-script"), 500); return; }
   if (event.target.id === "copyLinkButton") { await navigator.clipboard.writeText(buildSessionLink(activeSession.id, activeSession.inviteSlug)); showToast("Player link copied."); }
   const copy = event.target.closest("[data-copy-session]"); if (copy) { await navigator.clipboard.writeText(buildSessionLink(copy.dataset.copySession, copy.dataset.copySlug)); showToast("Player link copied."); }
@@ -574,7 +668,18 @@ $("#inviteSlug").addEventListener("blur", () => { $("#inviteSlug").value = norma
 $("#createSessionForm").addEventListener("submit", event => { event.preventDefault(); createSession(event.currentTarget); });
 $("#sessionContent").addEventListener("submit", event => {
   if (event.target.id === "playerForm") { event.preventDefault(); submitPlayer(event.target); }
-  if (event.target.id === "scriptUploadForm") { event.preventDefault(); saveSessionScript(event.target); }
+  if (event.target.id === "plannedScriptForm") { event.preventDefault(); savePlannedScript(event.target); }
+});
+$("#sessionContent").addEventListener("change", event => {
+  if (event.target.name !== "plannedSource") return;
+  const form = event.target.closest("form"); const json = event.target.value === "json";
+  $("[data-planned-json]", form).hidden = !json; $("[data-planned-pdf]", form).hidden = json;
+});
+window.addEventListener("popstate", () => {
+  if (!activeSession || $("#sessionView").hidden) return;
+  const scriptId = new URL(location.href).searchParams.get("script");
+  const script = activeSession.scripts?.find(item => item.id === scriptId);
+  if (script) renderScriptDetail(activeSession, script); else renderSession(activeSession);
 });
 
 await initialiseFirebase();

@@ -50,7 +50,11 @@ Review these choices against your privacy notice and local data-protection oblig
 
 ## Script JSON and character display
 
-For a chosen script, the organiser chooses one of two routes: upload JSON, or enter a script name and HTTPS PDF link. JSON is the recommended route because it creates the full colour-coded character display; that display includes a **Print / save as PDF** action. Files exported by the [official BOTC Script Tool](https://script.bloodontheclocktower.com/) are supported: an optional `_meta` object followed by character IDs or complete character objects. The script name is read from `_meta.name`, with the JSON filename used as a fallback.
+Each session can list up to ten possible planned scripts. The main session page shows a compact list; selecting an entry opens a dedicated script view, keeping the player and date information uncluttered. Organisers can add either uploaded JSON or a script name and HTTPS PDF link. JSON is the recommended route because it creates the full colour-coded character display; that display includes a **Print / save as PDF** action. PDF entries open in the dedicated view and also have a direct-open fallback.
+
+Planned scripts are stored in `/sessions/{sessionId}/scripts`, where they are publicly readable alongside the public session but writable only by that session's organiser or an admin. Older sessions with the previous single-script fields remain visible automatically.
+
+Files exported by the [official BOTC Script Tool](https://script.bloodontheclocktower.com/) are supported: an optional `_meta` object followed by character IDs or complete character objects. The script name is read from `_meta.name`, with the JSON filename used as a fallback.
 
 The file is parsed in the browser and only sanitised display fields are stored: character ID, name, team, ability, and an HTTPS icon URL. Files are limited to 250 KB and 80 displayed characters. Standard character data and icons are resolved at upload time from the open-source [BOTC Townsquare](https://github.com/bra1n/townsquare) catalogue when available. For a custom character, include its fields directly and use an HTTPS `image` or `imageUrl` value if an icon is available.
 
@@ -80,7 +84,7 @@ Serve the folder over HTTP (ES modules do not work reliably from `file://`):
 npm run serve
 ```
 
-With placeholder Firebase settings, use **Preview a sample session**. Once configured, exercise both the organiser and player flows using separate browser profiles.
+For a local sample after Firebase is configured, open `http://127.0.0.1:4173/?demo=1&session=sample-night`. The `demo=1` switch works only on localhost. Exercise the live organiser and player flows using separate browser profiles.
 
 ## Brand asset
 

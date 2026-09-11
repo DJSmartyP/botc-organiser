@@ -22,6 +22,11 @@ service cloud.firestore {
       return isAdmin() || (isHumanAccount() && session(sessionId).data.ownerUid == request.auth.uid);
     }
 
+    function managesAfter(sessionId) {
+      return isAdmin() || (isHumanAccount()
+        && getAfter(/databases/$(database)/documents/sessions/$(sessionId)).data.ownerUid == request.auth.uid);
+    }
+
     function validExperience(value) {
       return value in ['Beginner', 'Experienced', 'Expert'];
     }
@@ -69,6 +74,21 @@ service cloud.firestore {
       && request.resource.data.dateOptions.size() <= 10;
     }
 
+    function validPlannedScript() {
+      return request.resource.data.keys().hasOnly([
+        'name', 'author', 'sourceType', 'pdfUrl', 'scriptData', 'createdAt', 'updatedAt'
+      ])
+      && request.resource.data.name is string
+      && request.resource.data.name.size() > 0
+      && request.resource.data.name.size() <= 100
+      && request.resource.data.author is string
+      && request.resource.data.author.size() <= 80
+      && request.resource.data.sourceType in ['json', 'pdf']
+      && request.resource.data.pdfUrl is string
+      && request.resource.data.pdfUrl.size() <= 500
+      && validScriptData(request.resource.data.scriptData);
+    }
+
     // IDP-compatible human-readable links. Direct session-ID links remain valid.
     match /inviteLinks/{slug} {
       allow get: if signedIn();
@@ -109,6 +129,13 @@ service cloud.firestore {
         && request.resource.data.ownerUid == resource.data.ownerUid
         && validSession();
       allow delete: if manages(sessionId);
+
+      // Public planned scripts contain only display data. Only session managers write them.
+      match /scripts/{scriptId} {
+        allow read: if session(sessionId).data.visibility == 'public' || manages(sessionId);
+        allow create, update: if managesAfter(sessionId) && validPlannedScript();
+        allow delete: if manages(sessionId);
+      }
 
       // Private player record. Public visitors cannot list or read these docs.
       match /registrations/{playerId} {
