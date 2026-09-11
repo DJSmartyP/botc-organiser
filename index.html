@@ -46,16 +46,10 @@
       <button class="back-link" data-action="home" type="button">← Back to home</button>
       <div class="panel auth-panel">
         <div class="eyebrow">Organiser portal</div>
-        <h1 id="authTitle">Welcome back</h1>
-        <p id="authIntro">Sign in to create and manage your sessions.</p>
-        <form id="authForm" class="stack-form">
-          <label id="displayNameLabel" hidden>Display name<input id="displayName" name="displayName" autocomplete="name"></label>
-          <label>Email address<input id="email" name="email" type="email" autocomplete="email" required></label>
-          <label>Password<input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required></label>
-          <p id="authError" class="form-error" role="alert" hidden></p>
-          <button id="authSubmit" class="button button-primary button-wide" type="submit">Sign in</button>
-        </form>
-        <button id="toggleAuthMode" class="text-button" type="button">New organiser? Create an account</button>
+        <h1>Enter the storyteller’s chamber</h1>
+        <p>Organisers and admins sign in with Google to create and manage sessions. Players never use this screen.</p>
+        <p id="authError" class="form-error" role="alert" hidden></p>
+        <button id="googleSignInButton" class="button button-primary button-wide google-sign-in" type="button"><span aria-hidden="true">G</span> Continue with Google</button>
       </div>
     </section>
 

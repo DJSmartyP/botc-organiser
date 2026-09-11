@@ -12,7 +12,7 @@ The site is a static, mobile-first app for GitHub Pages. Firebase Authentication
 2. Add a Web app in **Project settings → Your apps**.
 3. Copy its values into `firebase-config.js`, replacing every obvious placeholder.
 4. In **Authentication → Sign-in method**, enable:
-   - Email/Password for organisers.
+   - Google for organisers and admins. Choose a project support email when prompted.
    - Anonymous for players. This is invisible to players and only gives Firestore a secure per-device writer identity; players do not create or manage accounts.
 5. Create a Cloud Firestore database in production mode.
 6. Install the Firebase CLI, sign in, select the project, and deploy the included rules:
@@ -28,7 +28,7 @@ Do not launch with test-mode rules. `firestore.rules` is the security boundary a
 
 ### Admin access
 
-Normal sign-ups are always organisers. Admin status is a privileged Firebase custom claim and cannot be granted from the browser. Set it from a trusted Admin SDK environment, then have that user sign out and in again:
+The first time someone signs in with Google, the app creates their private `/users/{uid}` profile with the organiser role. Admin status is a privileged Firebase custom claim and cannot be granted from the browser. Set it from a trusted Admin SDK environment, then have that user sign out and in again:
 
 ```js
 await getAuth().setCustomUserClaims("FIREBASE_USER_UID", { admin: true });

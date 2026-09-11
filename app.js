@@ -8,7 +8,6 @@ const demoMode = firebaseConfig.apiKey === "REPLACE_ME" || firebaseConfig.projec
 let firebase = null;
 let currentUser = null;
 let currentProfile = null;
-let authMode = "signin";
 let createMode = "fixed";
 let activeSession = null;
 let demoSessions = [];
@@ -166,28 +165,43 @@ async function openInvite(slug) {
   catch (error) { $("#sessionContent").innerHTML = `<div class="panel error-panel"><h1>Link not found</h1><p>${escapeHtml(error.message)}</p></div>`; }
 }
 
-function setAuthMode(mode) {
-  authMode = mode;
-  const signup = mode === "signup";
-  $("#authTitle").textContent = signup ? "Create an organiser account" : "Welcome back";
-  $("#authIntro").textContent = signup ? "Your account keeps your sessions under your control." : "Sign in to create and manage your sessions.";
-  $("#displayNameLabel").hidden = !signup;
-  $("#displayName").required = signup;
-  $("#password").autocomplete = signup ? "new-password" : "current-password";
-  $("#authSubmit").textContent = signup ? "Create account" : "Sign in";
-  $("#toggleAuthMode").textContent = signup ? "Already have an account? Sign in" : "New organiser? Create an account";
-  $("#authError").hidden = true;
-}
-
 async function openDashboard() {
   if (!demoMode && (!currentUser || currentUser.isAnonymous)) {
-    setAuthMode("signin");
+    $("#authError").hidden = true;
     showView("authView");
     return;
   }
   if (demoMode) demoManager = true;
   showView("dashboardView");
   await renderDashboard();
+}
+
+async function signInWithGoogle() {
+  const errorBox = $("#authError"); errorBox.hidden = true;
+  try {
+    const provider = new firebase.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    const result = await firebase.signInWithPopup(firebase.auth, provider);
+    const userRef = firebase.doc(firebase.db, "users", result.user.uid);
+    const existing = await firebase.getDoc(userRef);
+    if (!existing.exists()) {
+      await firebase.setDoc(userRef, {
+        displayName: (result.user.displayName || "Organiser").slice(0, 60),
+        email: (result.user.email || "").toLowerCase(),
+        role: "organizer",
+        createdAt: firebase.serverTimestamp()
+      });
+    }
+    currentUser = result.user;
+    const token = await result.user.getIdTokenResult();
+    currentProfile = existing.exists() ? existing.data() : { displayName: result.user.displayName || "Organiser", role: "organizer" };
+    if (token.claims.admin === true) currentProfile.role = "admin";
+    updateAccountUi();
+    await openDashboard();
+  } catch (error) {
+    errorBox.textContent = error.code === "auth/popup-closed-by-user" ? "Google sign-in was cancelled." : "Google sign-in could not be completed. Please try again.";
+    errorBox.hidden = false;
+  }
 }
 
 async function renderDashboard() {
@@ -523,21 +537,8 @@ document.addEventListener("click", async event => {
 $("#demoSessionButton").addEventListener("click", () => { demoManager = false; openSession("sample-night"); });
 $("#dashboardButton").addEventListener("click", openDashboard);
 $("#startOrganisingButton").addEventListener("click", openDashboard);
-$("#toggleAuthMode").addEventListener("click", () => setAuthMode(authMode === "signin" ? "signup" : "signin"));
+$("#googleSignInButton").addEventListener("click", signInWithGoogle);
 $("#signOutButton").addEventListener("click", async () => { await firebase?.signOut(firebase.auth); showView("homeView"); });
-$("#authForm").addEventListener("submit", async event => {
-  event.preventDefault(); const errorBox = $("#authError"); errorBox.hidden = true;
-  try {
-    const data = Object.fromEntries(new FormData(event.currentTarget));
-    if (authMode === "signup") {
-      const result = await firebase.createUserWithEmailAndPassword(firebase.auth, data.email, data.password);
-      await firebase.updateProfile(result.user, { displayName: data.displayName.trim() });
-      await firebase.setDoc(firebase.doc(firebase.db, "users", result.user.uid), { displayName: data.displayName.trim(), email: data.email.toLowerCase(), role: "organizer", createdAt: firebase.serverTimestamp() });
-      currentProfile = { displayName: data.displayName.trim(), role: "organizer" };
-    } else await firebase.signInWithEmailAndPassword(firebase.auth, data.email, data.password);
-    await openDashboard();
-  } catch (error) { errorBox.textContent = error.code?.replace("auth/", "").replaceAll("-", " ") || error.message; errorBox.hidden = false; }
-});
 $("#createSessionButton").addEventListener("click", () => { resetCreateDialog(); $("#createDialog").showModal(); });
 $("#backToChoice").addEventListener("click", resetCreateDialog);
 $("#addDateOption").addEventListener("click", () => addDateOption());
