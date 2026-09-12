@@ -29,3 +29,13 @@ test("script printing targets a compact single landscape sheet", () => {
   assert.match(css, /body\.printing-script \.no-print \{ display: none !important; \}/);
   assert.match(app, /class="print-script-footer"/);
 });
+
+test("events have a visible and manager-editable difficulty signal", () => {
+  assert.match(html, /name="difficulty" value="Beginner" checked/);
+  assert.match(html, /New players warmly welcomed/);
+  assert.match(app, /function renderDifficultyBadge/);
+  assert.match(app, /id="sessionDifficulty"/);
+  assert.match(app, /updateSessionDifficulty/);
+  assert.match(css, /\.difficulty-picker/);
+  assert.match(css, /\.difficulty-badge/);
+});
