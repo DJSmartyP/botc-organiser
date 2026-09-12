@@ -94,9 +94,10 @@ service cloud.firestore {
       && request.resource.data.name.size() <= 100
       && request.resource.data.author is string
       && request.resource.data.author.size() <= 80
-      && request.resource.data.sourceType in ['json', 'pdf']
+      && request.resource.data.sourceType == 'json'
       && request.resource.data.pdfUrl is string
-      && request.resource.data.pdfUrl.size() <= 500
+      && request.resource.data.pdfUrl == ''
+      && request.resource.data.scriptData is map
       && validScriptData(request.resource.data.scriptData);
     }
 
