@@ -50,7 +50,9 @@ test("final-date promotion preserves available and maybe states", () => {
 });
 
 test("player details are constrained to public-safe fields", () => {
-  assert.deepEqual(validatePlayer({ displayName: "  Rowan  ", experience: "Beginner" }), { displayName: "Rowan", experience: "Beginner" });
+  assert.deepEqual(validatePlayer({ displayName: "  Rowan  ", experience: "Fresh Blood" }), { displayName: "Rowan", experience: "Fresh Blood" });
+  assert.deepEqual(validatePlayer({ displayName: "Morgan", experience: "Criminal Mastermind" }), { displayName: "Morgan", experience: "Criminal Mastermind" });
+  assert.deepEqual(validatePlayer({ displayName: "Legacy Player", experience: "Experienced" }), { displayName: "Legacy Player", experience: "Experienced" });
   assert.throws(() => validatePlayer({ displayName: "R", experience: "Expert" }));
   assert.throws(() => validatePlayer({ displayName: "Rowan", experience: "Legend" }));
 });

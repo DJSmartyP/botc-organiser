@@ -47,8 +47,8 @@ describe("Firestore privacy and role rules", { skip: !hasEmulator }, () => {
   it("lets an anonymous player register themselves but not impersonate another uid", async () => {
     const db = anonymous("anon-two");
     const batch = writeBatch(db);
-    batch.set(doc(db, "sessions", "owned", "registrations", "player-two"), { displayName: "Player Two", experience: "Experienced", createdByUid: "anon-two", finalStatus: "confirmed" });
-    batch.set(doc(db, "sessions", "owned", "roster", "player-two"), { displayName: "Player Two", experience: "Experienced", interestStatus: "confirmed" });
+    batch.set(doc(db, "sessions", "owned", "registrations", "player-two"), { displayName: "Player Two", experience: "Repeat Offender", createdByUid: "anon-two", finalStatus: "confirmed" });
+    batch.set(doc(db, "sessions", "owned", "roster", "player-two"), { displayName: "Player Two", experience: "Repeat Offender", interestStatus: "confirmed" });
     await assertSucceeds(batch.commit());
     await assertFails(setDoc(doc(db, "sessions", "owned", "registrations", "impostor"), { displayName: "Impostor", experience: "Expert", createdByUid: "someone-else", finalStatus: "confirmed" }));
   });

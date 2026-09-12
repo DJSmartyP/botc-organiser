@@ -1,4 +1,5 @@
-export const EXPERIENCE_LEVELS = ["Beginner", "Experienced", "Expert"];
+// Keep the original values valid so existing Firestore registrations continue to load.
+export const EXPERIENCE_LEVELS = ["Fresh Blood", "Repeat Offender", "Criminal Mastermind", "Beginner", "Experienced", "Expert"];
 export const RESPONSES = ["available", "maybe", "unavailable"];
 export const SCRIPT_TEAMS = ["townsfolk", "outsider", "minion", "demon", "traveller", "fabled", "loric", "unknown"];
 

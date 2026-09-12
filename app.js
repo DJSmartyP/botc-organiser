@@ -407,9 +407,9 @@ function sessionNeedsAttention(session) {
 }
 
 const difficultyDetails = {
-  Beginner: { level: 1, hint: "Features the three base scripts" },
-  Intermediate: { level: 2, hint: "May include more complex scripts" },
-  Advanced: { level: 3, hint: "May include homebrew scripts or alternative game modes" }
+  Beginner: { level: 1, hint: "Official base scripts or carefully selected beginner-friendly custom scripts. Suitable for new and learning players." },
+  Intermediate: { level: 2, hint: "More complex base or custom scripts featuring mechanics such as madness, character changes, multiple Demons or jinxes." },
+  Advanced: { level: 3, hint: "Homebrew characters, experimental content or alternative formats such as Musical Chairs and Whalebuffet. Expect unusual rules, intricate interactions and less predictable balance." }
 };
 
 function eventDifficulty(value) {
@@ -417,22 +417,31 @@ function eventDifficulty(value) {
 }
 
 const experienceDetails = {
-  Beginner: "New to the game or still learning the ropes.",
-  Experienced: "Has played before and is comfortable with the basic rules.",
-  Expert: "A Storyteller or player who has played extensively."
+  "Fresh Blood": "New to Clocktower or still learning how the game flows.",
+  "Repeat Offender": "Comfortable with the core rules and more involved mechanics such as madness, character changes and unusual information.",
+  "Criminal Mastermind": "Highly experienced, confident interpreting unfamiliar scripts and complex interactions, or has experience as a Storyteller."
 };
+
+function playerExperience(value) {
+  return ({ Beginner: "Fresh Blood", Experienced: "Repeat Offender", Expert: "Criminal Mastermind" })[value] || value;
+}
+
+function experienceClass(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "");
+}
 
 function experienceOptions() {
   return `<option value="">Choose one</option>${Object.entries(experienceDetails).map(([level, description]) => `<option value="${level}">${level} — ${escapeHtml(description.replace(/\.$/, ""))}</option>`).join("")}`;
 }
 
 function renderExperienceGuide() {
-  return `<div class="experience-guide">${Object.entries(experienceDetails).map(([level, description]) => `<div class="experience-level-${level.toLowerCase()}"><strong>${level}</strong><span>${escapeHtml(description)}</span></div>`).join("")}</div>`;
+  return `<div class="experience-guide">${Object.entries(experienceDetails).map(([level, description]) => `<div class="experience-level-${experienceClass(level)}"><strong>${level}</strong><span>${escapeHtml(description)}</span></div>`).join("")}</div>`;
 }
 
 function renderExperienceBadge(value) {
-  const description = experienceDetails[value];
-  return description ? `<span class="experience-badge experience-${value.toLowerCase()}" title="${escapeHtml(description)}">${escapeHtml(value)}</span>` : `<span class="experience-badge">${escapeHtml(value || "Unknown")}</span>`;
+  const normalized = playerExperience(value);
+  const description = experienceDetails[normalized];
+  return description ? `<span class="experience-badge experience-${experienceClass(normalized)}" title="${escapeHtml(description)}">${escapeHtml(normalized)}</span>` : `<span class="experience-badge">${escapeHtml(normalized || "Unknown")}</span>`;
 }
 
 function renderDifficultyBadge(value) {
@@ -633,7 +642,7 @@ function renderSession(session) {
         <div><span>Storyteller${storytellerNames(session).includes(",") ? "s" : ""}</span><strong>${escapeHtml(storytellerNames(session))}</strong></div>
         <div><span>Script</span><strong>${script}</strong></div>
         <div><span>Time zone</span><strong>${escapeHtml(sessionTimezone(session))}</strong></div>
-        <div class="difficulty-fact"><span>Difficulty</span><strong>${renderDifficultyBadge(session.difficulty)}</strong>${manager ? `<select id="sessionDifficulty" class="difficulty-select" aria-label="Change event difficulty"><option value="">Choose level</option>${Object.keys(difficultyDetails).map(value => `<option value="${value}"${eventDifficulty(session.difficulty) === value ? " selected" : ""}>${value}</option>`).join("")}</select>` : ""}</div>
+        <div class="difficulty-fact"><span>Difficulty</span><strong>${renderDifficultyBadge(session.difficulty)}</strong>${difficultyDetails[eventDifficulty(session.difficulty)] ? `<small class="difficulty-description">${escapeHtml(difficultyDetails[eventDifficulty(session.difficulty)].hint)}</small>` : ""}${manager ? `<select id="sessionDifficulty" class="difficulty-select" aria-label="Change event difficulty"><option value="">Choose level</option>${Object.keys(difficultyDetails).map(value => `<option value="${value}"${eventDifficulty(session.difficulty) === value ? " selected" : ""}>${value}</option>`).join("")}</select>` : ""}</div>
       </div>
       ${session.notes ? `<p class="session-notes">${escapeHtml(session.notes)}</p>` : ""}
       ${lifecycleNotice}
@@ -810,7 +819,7 @@ function renderOwnedRegistrations(session) {
   if (!registrations.length) return "";
   return `<section class="owned-registrations panel"><div class="section-heading"><div><div class="eyebrow">Your entries</div><h2>Edit registrations</h2></div><p>You can change names${session.status === "date_poll" ? " and date responses" : ""}. Experience is fixed after registration.</p></div>
     <div class="owned-registration-list">${registrations.map(player => `<details class="owned-registration"><summary><span><strong>${escapeHtml(player.displayName)}</strong>${renderExperienceBadge(player.experience)}</span><span>Edit</span></summary>
-      <form class="edit-player-form" data-player-id="${escapeHtml(player.id)}"><div class="form-grid"><label>Name<input name="displayName" value="${escapeHtml(player.displayName)}" minlength="2" maxlength="40" required></label><label>Experience<input value="${escapeHtml(player.experience)}" disabled></label></div>
+      <form class="edit-player-form" data-player-id="${escapeHtml(player.id)}"><div class="form-grid"><label>Name<input name="displayName" value="${escapeHtml(player.displayName)}" minlength="2" maxlength="40" required></label><label>Experience<input value="${escapeHtml(playerExperience(player.experience))}" disabled></label></div>
       ${session.status === "date_poll" ? `<div class="manager-response-list">${session.dateOptions.map(option => `<label>${formatDate(option.startAt, sessionTimezone(session))}${responseSelect(`response-${option.id}`, player.responses?.[option.id])}</label>`).join("")}</div>` : ""}
       <p class="form-error" role="alert" hidden></p><button class="button button-small button-secondary" type="submit">Save changes</button></form></details>`).join("")}</div>
   </section>`;
@@ -1145,7 +1154,7 @@ async function finalizeDate(optionId) {
     activeSession.status = "find_players"; activeSession.selectedDate = option.startAt;
     const names = ["Alex", "Morgan", "Sam", "Quinn", "Jamie", "Avery", "Taylor", "Casey", "Jordan", "Drew"];
     const maybeNames = ["Riley", "Robin", "Ash", "Kit"];
-    const levels = ["Beginner", "Experienced", "Expert"];
+    const levels = ["Fresh Blood", "Repeat Offender", "Criminal Mastermind"];
     const selectedCounts = activeSession.counts[optionId] || { available: 0, maybe: 0 };
     activeSession.roster = [
       ...names.slice(0, selectedCounts.available).map((displayName, index) => ({ id: `confirmed-${index}`, displayName, experience: levels[index % levels.length], interestStatus: "confirmed" })),

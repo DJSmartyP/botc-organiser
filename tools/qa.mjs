@@ -50,7 +50,7 @@ try {
   assert.equal(await page.locator("#editSessionForm [name='title']").inputValue(), "A night in Ravenswood Bluff");
   await page.keyboard.press("Escape");
   await page.locator("#playerForm input[name='displayName']").fill("QA Player");
-  await page.locator("#playerForm select[name='experience']").selectOption("Experienced");
+  await page.locator("#playerForm select[name='experience']").selectOption("Repeat Offender");
   for (const select of await page.locator("#playerForm select[name^='manager-response']").all()) await select.selectOption("available");
   await page.locator("#playerForm input[name='consent']").check();
   await page.locator("#playerForm button[type='submit']").click();
@@ -110,6 +110,7 @@ try {
   await creationPage.locator("#createSessionForm button[type='submit']").click();
   await creationPage.locator(".session-hero h1").filter({ hasText: "Recurring Ravenswood QA" }).waitFor();
   assert.match(await creationPage.locator(".session-facts").innerText(), /Avery, Morgan/);
+  assert.match(await creationPage.locator(".difficulty-description").innerText(), /official base scripts/i);
   assert.match(await creationPage.locator(".planned-script-card").innerText(), /Trouble Brewing/);
   assert.match(await creationPage.locator(".planned-script-card").innerText(), /22 characters/);
   await creationPage.locator(".script-edition-logo").waitFor();
@@ -119,10 +120,10 @@ try {
   creationPage.once("dialog", dialog => dialog.accept());
   await creationPage.locator("[data-finalize]").first().click();
   await creationPage.locator("#playerForm input[name='displayName']").fill("Expert Storyteller");
-  await creationPage.locator("#playerForm select[name='experience']").selectOption("Expert");
+  await creationPage.locator("#playerForm select[name='experience']").selectOption("Criminal Mastermind");
   await creationPage.locator("#playerForm input[name='consent']").check();
   await creationPage.locator("#playerForm button[type='submit']").click();
-  await creationPage.locator(".experience-badge.experience-expert").first().waitFor();
+  await creationPage.locator(".experience-badge.experience-criminal-mastermind").first().waitFor();
   await creationPage.locator(".experience-key > summary").click();
   await assertFits(creationPage, "mobile colour-coded experience roster");
   await creationPage.close();

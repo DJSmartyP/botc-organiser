@@ -50,16 +50,17 @@ test("admins have an organiser directory with direct session management", () => 
 });
 
 test("player experience levels are explained at selection and roster review", () => {
-  assert.match(app, /Beginner: "New to the game or still learning the ropes\."/);
-  assert.match(app, /Experienced: "Has played before and is comfortable with the basic rules\."/);
-  assert.match(app, /Expert: "A Storyteller or player who has played extensively\."/);
+  assert.match(app, /"Fresh Blood": "New to Clocktower or still learning how the game flows\."/);
+  assert.match(app, /"Repeat Offender": "Comfortable with the core rules and more involved mechanics such as madness, character changes and unusual information\."/);
+  assert.match(app, /"Criminal Mastermind": "Highly experienced, confident interpreting unfamiliar scripts and complex interactions, or has experience as a Storyteller\."/);
+  assert.match(app, /Beginner: "Fresh Blood", Experienced: "Repeat Offender", Expert: "Criminal Mastermind"/);
   assert.match(app, /function renderExperienceGuide/);
   assert.match(app, /function renderExperienceBadge/);
   assert.match(app, /Experience level guide/);
   assert.match(css, /\.experience-guide/);
-  assert.match(css, /\.experience-badge\.experience-beginner/);
-  assert.match(css, /\.experience-badge\.experience-experienced/);
-  assert.match(css, /\.experience-badge\.experience-expert/);
+  assert.match(css, /\.experience-badge\.experience-fresh-blood/);
+  assert.match(css, /\.experience-badge\.experience-repeat-offender/);
+  assert.match(css, /\.experience-badge\.experience-criminal-mastermind/);
 });
 
 test("homepage links to the Chaos playlist and complete tutorial", () => {
@@ -88,7 +89,9 @@ test("events have a visible and manager-editable difficulty signal", () => {
   assert.match(html, /name="difficulty" value="Beginner" checked/);
   assert.match(html, /name="difficulty" value="Intermediate"/);
   assert.match(html, /name="difficulty" value="Advanced"/);
-  assert.match(html, /Features the three base scripts/);
+  assert.match(html, /Base or beginner-friendly custom scripts/);
+  assert.match(app, /Official base scripts or carefully selected beginner-friendly custom scripts/);
+  assert.match(app, /class="difficulty-description"/);
   assert.match(app, /Experienced: "Intermediate", Expert: "Advanced"/);
   assert.match(app, /function renderDifficultyBadge/);
   assert.match(app, /id="sessionDifficulty"/);

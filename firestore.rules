@@ -28,7 +28,7 @@ service cloud.firestore {
     }
 
     function validExperience(value) {
-      return value in ['Beginner', 'Experienced', 'Expert'];
+      return value in ['Fresh Blood', 'Repeat Offender', 'Criminal Mastermind', 'Beginner', 'Experienced', 'Expert'];
     }
 
     function validRoster() {
