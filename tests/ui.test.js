@@ -40,10 +40,11 @@ test("events have a visible and manager-editable difficulty signal", () => {
   assert.match(css, /\.difficulty-badge/);
 });
 
-test("new scripts are JSON-only and explain homebrew token artwork", () => {
+test("new scripts are JSON-only and homebrew characters use initials", () => {
   assert.doesNotMatch(html, /name="scriptSource"/);
   assert.doesNotMatch(html, /name="scriptUrl"/);
   assert.doesNotMatch(app, /name="plannedSource"/);
-  assert.match(html, /homebrew token artwork/);
+  assert.match(html, /homebrew characters use their initial/i);
   assert.match(app, /sourceType: "json", pdfUrl: ""/);
+  assert.match(app, /function officialTokenUrl/);
 });
