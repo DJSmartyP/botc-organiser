@@ -12,20 +12,6 @@ function cleanText(value, max) {
   return String(value || "").trim().slice(0, max);
 }
 
-function safeImageUrl(value) {
-  const candidates = Array.isArray(value) ? value : [value];
-  for (const candidate of candidates) {
-    try {
-      const url = new URL(String(candidate || ""));
-      if (url.protocol !== "https:") continue;
-      const githubBlob = url.hostname === "github.com" && url.pathname.match(/^\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/);
-      if (githubBlob) return `https://raw.githubusercontent.com/${githubBlob[1]}/${githubBlob[2]}/${githubBlob[3]}/${githubBlob[4]}`.slice(0, 500);
-      return url.href.slice(0, 500);
-    } catch { /* Try the next declared image. */ }
-  }
-  return "";
-}
-
 export function normalizeScriptTeam(value) {
   return TEAM_ALIASES[String(value || "").toLowerCase()] || "unknown";
 }
@@ -51,15 +37,14 @@ export function parseScriptJson(raw, catalogue = []) {
     const supplied = typeof item === "object" ? item : {};
     const reference = known.get(id) || {};
     const fallbackName = id.replace(/[-_]+/g, " ").replace(/\b\w/g, letter => letter.toUpperCase());
-    const providedIcon = safeImageUrl(supplied.image || supplied.imageUrl || supplied.icon || supplied.iconUrl || supplied.token || supplied.tokenUrl || reference.image || reference.imageUrl || reference.icon || reference.iconUrl);
-    const catalogueIcon = reference.id ? officialIconUrl(reference, id) || `https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/${encodeURIComponent(id)}.png` : "";
+    const catalogueIcon = reference.id && reference._officialAsset === true ? officialIconUrl(reference, id) : "";
     const suppliedTeam = normalizeScriptTeam(supplied.team);
     return {
       id,
       name: cleanText(supplied.name || reference.name || fallbackName || "Unknown character", 80),
       team: suppliedTeam === "unknown" ? normalizeScriptTeam(reference.team) : suppliedTeam,
       ability: cleanText(supplied.ability || reference.ability, 500),
-      iconUrl: providedIcon || catalogueIcon
+      iconUrl: catalogueIcon
     };
   }).filter(character => character.id || character.name);
 
