@@ -28,6 +28,7 @@ const sampleSession = {
   status: "date_poll",
   visibility: "public",
   capacity: 15,
+  difficulty: "Beginner",
   scriptMode: "chosen",
   scriptName: "Trouble Brewing",
   scriptUrl: "",
@@ -265,6 +266,19 @@ function statusLabel(status) {
   return status === "date_poll" ? "Finding a date" : status === "closed" ? "Closed" : "Finding players";
 }
 
+const difficultyDetails = {
+  Beginner: { level: 1, hint: "New players welcome" },
+  Experienced: { level: 2, hint: "Some rules confidence helps" },
+  Expert: { level: 3, hint: "For seasoned townsfolk" }
+};
+
+function renderDifficultyBadge(value) {
+  const detail = difficultyDetails[value];
+  if (!detail) return '<span class="difficulty-badge difficulty-unset"><span class="difficulty-moons" aria-hidden="true"><i></i><i></i><i></i></span>Difficulty TBD</span>';
+  const moons = [1, 2, 3].map(index => `<i class="${index <= detail.level ? "is-lit" : ""}"></i>`).join("");
+  return `<span class="difficulty-badge difficulty-${value.toLowerCase()}" title="${detail.hint}"><span class="difficulty-moons" aria-hidden="true">${moons}</span>${value}</span>`;
+}
+
 function renderDashboardSessions() {
   const list = $("#sessionList");
   const query = $("#sessionSearch").value.trim().toLowerCase();
@@ -295,7 +309,7 @@ function renderDashboardSessions() {
     const isAdmin = currentProfile?.role === "admin";
     return `<article class="session-card">
       <div class="session-card-main"><div class="session-card-top"><span class="status-pill status-${escapeHtml(session.status)}">${statusLabel(session.status)}</span>${isAdmin ? `<span class="session-owner">${escapeHtml(session.organizerName || "Organiser")}</span>` : ""}</div>
-      <h2>${escapeHtml(session.title)}</h2><div class="session-card-meta"><span>◷ ${date ? formatDate(date) : `${session.dateOptions?.length || 0} dates proposed`}</span><span>⌖ ${escapeHtml(session.location || "Location TBD")}</span><span>♟ Up to ${Number(session.capacity) || 0}</span></div>
+      <h2>${escapeHtml(session.title)}</h2><div class="session-card-meta"><span>◷ ${date ? formatDate(date) : `${session.dateOptions?.length || 0} dates proposed`}</span><span>⌖ ${escapeHtml(session.location || "Location TBD")}</span><span>♟ Up to ${Number(session.capacity) || 0}</span>${renderDifficultyBadge(session.difficulty)}</div>
       <code class="session-slug">${escapeHtml(session.inviteSlug || session.id)}</code></div>
       <div class="session-card-actions"><button class="button button-small button-ghost" data-copy-session="${session.id}" data-copy-slug="${escapeHtml(session.inviteSlug || "")}" type="button">Copy player link</button><button class="button button-small button-secondary" data-open-session="${session.id}" type="button">Manage</button><button class="button button-small button-danger" data-delete-session="${session.id}" type="button">Delete</button></div>
     </article>`;
@@ -415,6 +429,7 @@ function renderSession(session) {
         <div><span>Location</span><strong>${escapeHtml(session.location)}</strong></div>
         <div><span>Storyteller</span><strong>${escapeHtml(session.organizerName || "Organiser")}</strong></div>
         <div><span>Script</span><strong>${script}</strong></div>
+        <div class="difficulty-fact"><span>Difficulty</span><strong>${renderDifficultyBadge(session.difficulty)}</strong>${manager ? `<select id="sessionDifficulty" class="difficulty-select" aria-label="Change event difficulty"><option value="">Choose level</option>${Object.keys(difficultyDetails).map(value => `<option value="${value}"${session.difficulty === value ? " selected" : ""}>${value}</option>`).join("")}</select>` : ""}</div>
       </div>
       ${session.notes ? `<p class="session-notes">${escapeHtml(session.notes)}</p>` : ""}
       <div class="share-row"><button id="copyLinkButton" class="button button-ghost" type="button">Copy player link</button><code>${escapeHtml(session.inviteSlug || session.id)}</code>${session.inviteSlug ? '<span class="status-pill">Custom link</span>' : ""}${manager ? `<button class="button button-danger" data-delete-session="${escapeHtml(session.id)}" type="button">Delete event</button>` : ""}</div>
@@ -723,6 +738,22 @@ async function deleteSession(sessionId) {
   } catch (error) { showToast(`Could not delete event: ${error.message}`); }
 }
 
+async function updateSessionDifficulty(value) {
+  if (!difficultyDetails[value] || !activeSession || !isManager(activeSession)) return;
+  try {
+    if (demoMode) {
+      activeSession.difficulty = value;
+    } else {
+      await firebase.updateDoc(firebase.doc(firebase.db, "sessions", activeSession.id), { difficulty: value, updatedAt: firebase.serverTimestamp() });
+      activeSession.difficulty = value;
+    }
+    const dashboardCopy = dashboardSessions.find(session => session.id === activeSession.id);
+    if (dashboardCopy) dashboardCopy.difficulty = value;
+    renderSession(activeSession);
+    showToast(`Difficulty set to ${value}.`);
+  } catch (error) { showToast(`Could not change difficulty: ${error.message}`); }
+}
+
 async function finalizeDate(optionId) {
   const option = activeSession.dateOptions.find(item => item.id === optionId);
   if (!option || !confirm(`Choose ${formatDate(option.startAt)} as the final date?`)) return;
@@ -802,7 +833,7 @@ async function createSession(form) {
       ownerUid: demoMode ? "demo-organiser" : currentUser.uid,
       organizerName: demoMode ? "Demo Storyteller" : currentProfile.displayName,
       title: formData.get("title").trim(), location: formData.get("location").trim(), notes: formData.get("notes").trim(),
-      capacity: Number(formData.get("capacity")), visibility: "public", status: createMode === "poll" ? "date_poll" : "find_players",
+      capacity: Number(formData.get("capacity")), difficulty: formData.get("difficulty"), visibility: "public", status: createMode === "poll" ? "date_poll" : "find_players",
       fixedDate: createMode === "fixed" ? formData.get("fixedDate") : null, dateOptions,
       scriptMode, scriptName: scriptMode === "chosen" ? (scriptSource === "json" ? jsonScriptName : formData.get("scriptName").trim()) : "", scriptUrl: scriptMode === "chosen" && scriptSource === "pdf" ? safeExternalUrl(formData.get("scriptUrl")) : "", scriptData: null, inviteSlug
     };
@@ -897,6 +928,7 @@ $("#sessionContent").addEventListener("submit", event => {
   if (event.target.id === "plannedScriptForm") { event.preventDefault(); savePlannedScript(event.target); }
 });
 $("#sessionContent").addEventListener("change", event => {
+  if (event.target.id === "sessionDifficulty") { updateSessionDifficulty(event.target.value); return; }
   if (event.target.name !== "plannedSource") return;
   const form = event.target.closest("form"); const json = event.target.value === "json";
   $("[data-planned-json]", form).hidden = !json; $("[data-planned-pdf]", form).hidden = json;
