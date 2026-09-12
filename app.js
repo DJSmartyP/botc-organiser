@@ -412,6 +412,20 @@ const difficultyDetails = {
   Expert: { level: 3, hint: "For seasoned townsfolk" }
 };
 
+const experienceDetails = {
+  Beginner: "New to the game or still learning the ropes.",
+  Experienced: "Has played before and is comfortable with the basic rules.",
+  Expert: "A Storyteller or player who has played extensively."
+};
+
+function experienceOptions() {
+  return `<option value="">Choose one</option>${Object.entries(experienceDetails).map(([level, description]) => `<option value="${level}">${level} — ${escapeHtml(description.replace(/\.$/, ""))}</option>`).join("")}`;
+}
+
+function renderExperienceGuide() {
+  return `<div class="experience-guide">${Object.entries(experienceDetails).map(([level, description]) => `<div><strong>${level}</strong><span>${escapeHtml(description)}</span></div>`).join("")}</div>`;
+}
+
 function renderDifficultyBadge(value) {
   const detail = difficultyDetails[value];
   if (!detail) return '<span class="difficulty-badge difficulty-unset"><span class="difficulty-moons" aria-hidden="true"><i></i><i></i><i></i></span>Difficulty TBD</span>';
@@ -771,7 +785,7 @@ function renderFindPlayers(session, manager) {
   const registrationOpen = session.status === "find_players";
   return `<section class="stage-section">
     <div class="roster-summary panel"><div><div class="eyebrow">Find Players</div><h2>${size}</h2><p>${confirmed.length} confirmed of ${session.capacity} maximum${maybe.length ? ` · ${maybe.length} maybe` : ""}${waitlist.length ? ` · ${waitlist.length} waiting` : ""}</p></div><div class="capacity-ring" style="--fill:${Math.min(100, confirmed.length / session.capacity * 100)}%"><strong>${confirmed.length}</strong><span>/${session.capacity}</span></div></div>
-    <div class="section-heading"><div><h2>Who’s gathering</h2><p>Every interested player appears here with their experience level.</p></div></div>
+    <div class="section-heading"><div><h2>Who’s gathering</h2><p>Every interested player appears here with their experience level.</p></div><details class="experience-key"><summary>Experience level guide</summary>${renderExperienceGuide()}</details></div>
     <div class="roster-grid">${roster.length ? roster.map(player => `<article class="player-card ${player.interestStatus === "maybe" ? "is-maybe" : player.interestStatus === "waitlist" ? "is-waitlist" : ""}"><span class="player-initial">${escapeHtml(player.displayName[0]?.toUpperCase() || "?")}</span><div class="player-identity"><strong>${escapeHtml(player.displayName)}</strong><span>${escapeHtml(player.experience)}</span></div><div class="player-card-actions">${player.interestStatus === "maybe" ? '<em>Maybe · unconfirmed</em>' : player.interestStatus === "waitlist" ? '<em>Waitlist</em>' : '<em>Interested</em>'}${manager && player.interestStatus === "waitlist" && confirmed.length < session.capacity ? `<button class="button button-small button-secondary" data-promote-player="${escapeHtml(player.id)}" type="button">Promote</button>` : ""}${manager ? `<button class="icon-button danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button" aria-label="Remove ${escapeHtml(player.displayName)}">Remove</button>` : ""}</div></article>`).join("") : renderEmptyState("The square is quiet", "No players yet. Share the link to call the town together.", true)}</div>
     ${manager ? '<div class="notice">Only the public name and experience shown above are publicly readable. Player registration records remain private to the player and session managers.</div>' + renderManagerRegistrations(session) + (registrationOpen ? managerPlayerForm(session) : "") : renderOwnedRegistrations(session) + (registrationOpen ? playerDetailsForm(confirmed.length >= session.capacity ? "Join the waitlist" : "Register player interest") : '<div class="notice">This event is not accepting new registrations.</div>')}
   </section>`;
@@ -802,7 +816,8 @@ function renderManagerRegistrations(session) {
 function playerDetailsForm(buttonLabel) {
   return `<form id="playerForm" class="panel player-form"><h2>Register a player</h2><p>No account needed. Add yourself, then repeat for anyone else you’re responding for. Each name and experience level will be visible on the session roster if they become interested.</p>
     <div class="form-grid"><label>Name<input name="displayName" minlength="2" maxlength="40" autocomplete="name" required></label>
-    <label>Experience<select name="experience" required><option value="">Choose one</option><option>Beginner</option><option>Experienced</option><option>Expert</option></select></label></div>
+    <label>Experience<select name="experience" required>${experienceOptions()}</select></label></div>
+    ${renderExperienceGuide()}
     <label class="consent-row"><input type="checkbox" name="consent" required><span>I’m happy for my name and experience to appear on this session’s public roster.</span></label>
     <p id="playerError" class="form-error" role="alert" hidden></p><button class="button button-primary" type="submit">${buttonLabel}</button></form>`;
 }
@@ -810,7 +825,8 @@ function playerDetailsForm(buttonLabel) {
 function managerPlayerForm(session) {
   const responseFields = session.status === "date_poll" ? `<div class="manager-response-list">${session.dateOptions.map(option => `<label>${formatDate(option.startAt, sessionTimezone(session))}${responseSelect(`manager-response-${option.id}`)}</label>`).join("")}</div>` : "";
   return `<form id="playerForm" class="panel player-form" data-manager="true"><h2>Add a player</h2><p>Add as many players as needed. Manager-entered responses follow the same privacy and game-size rules.</p>
-    <div class="form-grid"><label>Name<input name="displayName" minlength="2" maxlength="40" required></label><label>Experience<select name="experience" required><option value="">Choose one</option><option>Beginner</option><option>Experienced</option><option>Expert</option></select></label></div>
+    <div class="form-grid"><label>Name<input name="displayName" minlength="2" maxlength="40" required></label><label>Experience<select name="experience" required>${experienceOptions()}</select></label></div>
+    ${renderExperienceGuide()}
     ${responseFields}<label class="consent-row"><input type="checkbox" name="consent" required><span>I have permission to add this player’s name and experience to the session.</span></label>
     <p id="playerError" class="form-error" role="alert" hidden></p><button class="button button-secondary" type="submit">Add player</button></form>`;
 }

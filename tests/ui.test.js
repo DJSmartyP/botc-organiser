@@ -49,6 +49,15 @@ test("admins have an organiser directory with direct session management", () => 
   assert.match(app, /currentProfile\?\.role === "admin"/);
 });
 
+test("player experience levels are explained at selection and roster review", () => {
+  assert.match(app, /Beginner: "New to the game or still learning the ropes\."/);
+  assert.match(app, /Experienced: "Has played before and is comfortable with the basic rules\."/);
+  assert.match(app, /Expert: "A Storyteller or player who has played extensively\."/);
+  assert.match(app, /function renderExperienceGuide/);
+  assert.match(app, /Experience level guide/);
+  assert.match(css, /\.experience-guide/);
+});
+
 test("homepage links to the Chaos playlist and complete tutorial", () => {
   const playlist = "PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra";
   assert.equal(html.split(playlist).length - 1, 2);

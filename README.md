@@ -8,6 +8,8 @@ The organiser dashboard is designed for a growing library of sessions: compact r
 
 The interface uses stage-specific status seals, contained action menus, team-coloured script summaries, and a highlighted best-fit date in the manager availability map. Trouble Brewing, Bad Moon Rising and Sects & Violets are built-in script choices; organisers can still upload custom BOTC JSON files. The built-ins use a local copy of TPI's published role catalogue and locally hosted official edition logos from the [toolmaker resources](https://release.botc.app/resources/). Empty states use the local `assets/empty-town-vignette.png` illustration, keeping the visual treatment reliable without a third-party image host.
 
+Player experience is defined consistently wherever it is selected or reviewed: **Beginner** means new or still learning the ropes; **Experienced** means they have played before and are comfortable with the basic rules; **Expert** means a Storyteller or player who has played extensively. Event difficulty remains a separate organiser setting.
+
 Chaos Planner uses the same custom-link convention as the IDP app: a readable `?join=friday-ravenswood-bluff` URL resolves through the top-level `inviteLinks` collection. The direct `?session=FIRESTORE_DOCUMENT_ID` format remains supported as a fallback.
 
 The site is a static, mobile-first app for GitHub Pages. Firebase Authentication and Cloud Firestore provide identity and authoritative shared data. The placeholder configuration starts a clearly labelled in-memory preview; it does not use `localStorage` and does not persist data.

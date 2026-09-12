@@ -454,6 +454,14 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .capacity-ring strong { font-size: 1.4rem; line-height: 1; }
 .capacity-ring span { color: var(--muted); font-size: .75rem; }
 .roster-grid { display: grid; gap: .5rem; }
+.experience-key { position: relative; align-self: flex-start; }
+.experience-key > summary { color: var(--gold); font-size: .72rem; font-weight: 700; cursor: pointer; }
+.experience-key[open] > summary { margin-bottom: .45rem; }
+.experience-key .experience-guide { position: absolute; right: 0; z-index: 3; width: min(420px, calc(100vw - 2rem)); padding: .6rem; border: 1px solid var(--line-strong); border-radius: 9px; background: #15131a; box-shadow: var(--shadow); }
+.experience-guide { display: grid; gap: .35rem; margin: .15rem 0 .65rem; }
+.experience-guide > div { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: .5rem; align-items: baseline; padding: .38rem .5rem; border-left: 2px solid rgba(216,189,124,.45); border-radius: 0 5px 5px 0; background: rgba(255,255,255,.025); }
+.experience-guide strong { color: var(--gold-bright); font-size: .72rem; }
+.experience-guide span { color: var(--muted); font-size: .7rem; line-height: 1.35; }
 .player-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .55rem; min-height: 58px; padding: .5rem .6rem; border: 1px solid rgba(125,158,187,.2); border-left: 2px solid rgba(112,168,130,.7); border-radius: 8px; background: linear-gradient(145deg, rgba(22,27,35,.91), rgba(20,14,20,.965)), url("assets/texture-leather.png?v=2") center / 520px auto repeat; }
 .player-card.is-maybe { border-style: dashed; }
 .player-card.is-maybe { border-left: 2px solid rgba(208,162,83,.8); }
@@ -623,6 +631,9 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
   .player-card { grid-template-columns: auto minmax(0, 1fr); }
   .player-card-actions { grid-column: 2; flex-direction: row; align-items: center; justify-content: space-between; }
   .player-card em { text-align: left; }
+  .experience-key { width: 100%; }
+  .experience-key .experience-guide { right: auto; left: 0; }
+  .experience-guide > div { grid-template-columns: 1fr; gap: .1rem; }
   .built-in-script-picker { grid-template-columns: 1fr; }
   .organiser-card > header { grid-template-columns: auto minmax(0, 1fr); }
   .organiser-card > header > .status-pill { grid-column: 2; justify-self: start; }
