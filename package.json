@@ -5,6 +5,13 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
+    "test:rules": "firebase emulators:exec --only firestore \"node --test tests/firestore.rules.test.js\"",
+    "qa": "node tools/qa.mjs",
     "serve": "node tools/serve.mjs"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.2.0",
+    "playwright-core": "^1.55.0"
   }
 }

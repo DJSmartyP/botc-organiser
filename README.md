@@ -4,7 +4,7 @@
 
 Chaos Planner is an unofficial community tool. Blood on the Clocktower and its game content are owned by Steven Medway and The Pandemonium Institute; the planner is not affiliated with or endorsed by TPI. Review TPI's [Community Created Content Policy](https://bloodontheclocktower.com/pages/community-created-content-policy) before redistributing or commercialising the project.
 
-The organiser dashboard is designed for a growing library of sessions: compact rows, at-a-glance totals, search by event/venue/storyteller/link, status filters, upcoming/recent/name sorting, and progressive batches of 25 results. Admins see the same tools across every organiser's gathering.
+The organiser dashboard is designed for a growing library of sessions: compact rows, live registration totals, attention markers for dates that have passed, search by event/venue/storyteller/link, lifecycle filters, upcoming/recent/name sorting, and progressive batches of 25 results. Admins see and can edit the same tools across every organiser's gathering. Managers can edit event details and custom links, close/reopen, cancel, archive, permanently delete, or duplicate an event without copying its player records.
 
 Chaos Planner uses the same custom-link convention as the IDP app: a readable `?join=friday-ravenswood-bluff` URL resolves through the top-level `inviteLinks` collection. The direct `?session=FIRESTORE_DOCUMENT_ID` format remains supported as a fallback.
 
@@ -45,18 +45,18 @@ Admins can manage every session. Organisers can manage only sessions whose `owne
 - Session documents contain public event information only. Never put organiser email addresses or player contact details in them.
 - `/users` is readable only by that user and admins.
 - `/registrations` is readable only by the anonymous or signed-in identity that created that player entry, the session owner, and admins. One identity can securely create multiple player records.
-- Players can update only the display name and date responses on records created by their anonymous identity. They cannot change experience after registration, remove records, or edit roster status.
+- Players can update only the display name and date responses on records created by their anonymous identity. They cannot change experience after registration, remove records, or edit roster status. This ownership follows the anonymous Firebase identity on that browser/device; secure cross-device recovery needs a trusted server-side handoff and is intentionally not simulated with insecure browser storage.
 - Session organisers can remove player records from their own sessions and delete their own sessions. Admins can do this for every session. The app deletes nested registrations, response documents, roster entries, scripts, and the custom invite link before deleting an event because Firestore does not cascade subcollection deletes.
 - Date-response documents are publicly countable but contain only `available`, `maybe`, or `unavailable`; no names or contact information.
 - `/inviteLinks/{slug}` can be fetched only by a signed-in or anonymous Firebase identity and cannot be listed. It contains only the target session ID and owner UID.
-- The public roster contains only the player name and experience they explicitly consented to display, plus confirmed/maybe status.
+- The public roster contains only the player name and experience they explicitly consented to display, plus confirmed/maybe/waitlist status. When capacity is reached, new entries join the waitlist and managers can promote them after a place opens.
 - Firebase anonymous authentication prevents one player from overwriting another player’s response without requiring a visible account.
 
 Review these choices against your privacy notice and local data-protection obligations before collecting real data.
 
 ## Script JSON and character display
 
-Each session can list up to ten possible planned scripts. The main session page shows a compact list; selecting an entry opens a dedicated script view, keeping the player and date information uncluttered. Organisers add scripts by uploading BOTC JSON files, which create the full colour-coded character display and its **Print / save as PDF** action. Existing PDF-link entries from older builds remain readable, but the interface no longer creates them.
+Each session can list up to ten possible planned scripts. The main session page shows a compact list; selecting an entry opens a dedicated script view, keeping the player and date information uncluttered. Managers can reorder scripts, mark one as preferred, or remove it. Organisers add scripts by uploading BOTC JSON files, which create the full colour-coded character display and its **Print / save as PDF** action. Existing PDF-link entries from older builds remain readable, but the interface no longer creates them.
 
 Planned scripts are stored in `/sessions/{sessionId}/scripts`, where they are publicly readable alongside the public session but writable only by that session's organiser or an admin. Older sessions with the previous single-script fields remain visible automatically.
 
@@ -84,6 +84,20 @@ Run the domain tests:
 npm test
 ```
 
+Run the browser regression checks (the local server must already be running, and Chrome must be installed at its standard Windows path):
+
+```sh
+npm run qa
+```
+
+The QA script checks the player view at desktop and 390px mobile widths, detects horizontal overflow, and verifies the manager controls and edit dialog.
+
+The repository also includes emulator-backed rules tests covering organiser/admin boundaries, anonymous-player ownership, private registrations, cancelled-event writes, waitlists, and managed scripts. With a supported Java runtime available, run:
+
+```sh
+npm run test:rules
+```
+
 Serve the folder over HTTP (ES modules do not work reliably from `file://`):
 
 ```sh
@@ -96,4 +110,4 @@ For a local sample after Firebase is configured, open `http://127.0.0.1:4173/?de
 
 The header loads `assets/chaos-logo.png`. Replace that file in place to update the logo without changing any code. The supplied asset contains no event date, time, or Twitch branding.
 
-Shared XP Gaming: <https://www.youtube.com/@SharedXPGaming>
+Chaos on the Clocktower playlist: <https://www.youtube.com/playlist?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra>

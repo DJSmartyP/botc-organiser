@@ -24,6 +24,7 @@ const sampleSession = {
   organizerName: "The Storyteller",
   title: "A night in Ravenswood Bluff",
   location: "The Old Bell, upstairs room",
+  timezone: "Europe/London",
   notes: "Arrive from 6:30pm. The first game begins at 7pm.",
   status: "date_poll",
   visibility: "public",
@@ -160,13 +161,79 @@ async function readScriptFile(file) {
   return parseScriptJson(await file.text(), await loadCharacterCatalogue());
 }
 
-function formatDate(value) {
+function validTimezone(value) {
+  try { new Intl.DateTimeFormat("en", { timeZone: value }).format(); return value; }
+  catch { return ""; }
+}
+
+function sessionTimezone(session) {
+  return validTimezone(session?.timezone) || validTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone) || "Europe/London";
+}
+
+function zonedDate(value, timeZone = "") {
+  if (value?.toDate) return value.toDate();
+  if (value instanceof Date) return value;
+  const text = String(value || "");
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!match || !validTimezone(timeZone)) return new Date(value);
+  const target = Date.UTC(+match[1], +match[2] - 1, +match[3], +match[4], +match[5]);
+  let guess = target;
+  const formatter = new Intl.DateTimeFormat("en-GB", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  for (let pass = 0; pass < 2; pass++) {
+    const parts = Object.fromEntries(formatter.formatToParts(new Date(guess)).filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+    const represented = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
+    guess -= represented - target;
+  }
+  return new Date(guess);
+}
+
+function formatDate(value, timeZone = "") {
+  const date = zonedDate(value, timeZone);
+  const zone = validTimezone(timeZone);
+  return new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", ...(zone ? { timeZone: zone, timeZoneName: "short" } : {}) }).format(date);
+}
+
+function toDateTimeLocal(value, timeZone = "") {
+  if (!value) return "";
+  if (typeof value === "string") return value.slice(0, 16);
   const date = value?.toDate ? value.toDate() : new Date(value);
-  return new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: validTimezone(timeZone) || undefined, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(date);
+  const map = Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+  return `${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}`;
 }
 
 function toDateValue(value) {
   return value?.toDate ? value.toDate().toISOString() : value;
+}
+
+const commonTimezones = ["Europe/London", "Europe/Dublin", "UTC", "Europe/Paris", "Europe/Berlin", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Australia/Sydney"];
+
+function populateTimezoneSelect(select, selected = "") {
+  if (!select) return;
+  const detected = validTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const zones = [...new Set([selected, detected, ...commonTimezones].filter(validTimezone))];
+  select.innerHTML = zones.map(zone => `<option value="${escapeHtml(zone)}"${zone === (selected || detected || "Europe/London") ? " selected" : ""}>${escapeHtml(zone.replaceAll("_", " "))}</option>`).join("");
+}
+
+function escapeCalendar(value = "") {
+  return String(value).replaceAll("\\", "\\\\").replaceAll("\n", "\\n").replaceAll(",", "\\,").replaceAll(";", "\\;");
+}
+
+function calendarStamp(date) {
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+
+function downloadCalendar(session) {
+  const value = session.selectedDate || session.fixedDate;
+  if (!value) return;
+  const start = zonedDate(value, sessionTimezone(session));
+  const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
+  const contents = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Chaos Planner//EN", "CALSCALE:GREGORIAN", "BEGIN:VEVENT", `UID:${session.id}@chaos-planner`, `DTSTAMP:${calendarStamp(new Date())}`, `DTSTART:${calendarStamp(start)}`, `DTEND:${calendarStamp(end)}`, `SUMMARY:${escapeCalendar(session.title)}`, `LOCATION:${escapeCalendar(session.location)}`, `DESCRIPTION:${escapeCalendar(session.notes || "")}`, "END:VEVENT", "END:VCALENDAR", ""].join("\r\n");
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([contents], { type: "text/calendar;charset=utf-8" }));
+  link.download = `${normalizeInviteSlug(session.title) || "chaos-planner-event"}.ics`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
 function buildSessionLink(id, inviteSlug = "") {
@@ -242,7 +309,7 @@ async function renderDashboard() {
   list.innerHTML = '<div class="loading">Consulting the grimoire…</div>';
   let sessions = [];
   if (demoMode) {
-    sessions = demoSessions;
+    sessions = demoSessions.map(session => ({ ...session, registeredCount: (session.registrations || []).length }));
     $("#dashboardNotice").hidden = false;
   } else if (currentUser && !currentUser.isAnonymous) {
     const { collection, getDocs, query, where } = firebase;
@@ -250,6 +317,12 @@ async function renderDashboard() {
     const q = currentProfile?.role === "admin" ? query(base, where("visibility", "==", "public")) : query(base, where("ownerUid", "==", currentUser.uid));
     const snapshot = await getDocs(q);
     sessions = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+    await Promise.all(sessions.map(async session => {
+      try {
+        const count = await firebase.getCountFromServer(firebase.collection(firebase.db, "sessions", session.id, "registrations"));
+        session.registeredCount = count.data().count;
+      } catch { session.registeredCount = null; }
+    }));
   }
   dashboardSessions = sessions;
   dashboardVisibleLimit = 25;
@@ -259,7 +332,7 @@ async function renderDashboard() {
 
 function dashboardDate(session) {
   const value = session.selectedDate || session.fixedDate || session.dateOptions?.map(option => option.startAt).sort()[0];
-  const date = value?.toDate ? value.toDate() : value ? new Date(value) : null;
+  const date = value ? zonedDate(value, sessionTimezone(session)) : null;
   return date && !Number.isNaN(date.getTime()) ? date : null;
 }
 
@@ -270,7 +343,13 @@ function timestampValue(value) {
 }
 
 function statusLabel(status) {
-  return status === "date_poll" ? "Finding a date" : status === "closed" ? "Closed" : "Finding players";
+  return ({ date_poll: "Finding a date", find_players: "Finding players", closed: "Closed", cancelled: "Cancelled", archived: "Archived" })[status] || "Finding players";
+}
+
+function sessionNeedsAttention(session) {
+  if (!["date_poll", "find_players"].includes(session.status)) return false;
+  const date = dashboardDate(session);
+  return Boolean(date && date.getTime() < Date.now());
 }
 
 const difficultyDetails = {
@@ -299,9 +378,9 @@ function renderDashboardSessions() {
     if (sort === "updated") return timestampValue(right.updatedAt || right.createdAt) - timestampValue(left.updatedAt || left.createdAt);
     return (dashboardDate(left)?.getTime() ?? Number.MAX_SAFE_INTEGER) - (dashboardDate(right)?.getTime() ?? Number.MAX_SAFE_INTEGER);
   });
-  const totals = Object.fromEntries(["date_poll", "find_players", "closed"].map(key => [key, dashboardSessions.filter(session => session.status === key).length]));
+  const totals = Object.fromEntries(["date_poll", "find_players", "closed", "cancelled", "archived"].map(key => [key, dashboardSessions.filter(session => session.status === key).length]));
   const visible = matches.slice(0, dashboardVisibleLimit);
-  $("#dashboardStats").innerHTML = `<div><strong>${dashboardSessions.length}</strong><span>Total</span></div><div><strong>${totals.date_poll}</strong><span>Finding dates</span></div><div><strong>${totals.find_players}</strong><span>Finding players</span></div><div><strong>${totals.closed}</strong><span>Closed</span></div>`;
+  $("#dashboardStats").innerHTML = `<div><strong>${dashboardSessions.length}</strong><span>Total</span></div><div><strong>${totals.date_poll}</strong><span>Finding dates</span></div><div><strong>${totals.find_players}</strong><span>Finding players</span></div><div><strong>${totals.closed + totals.cancelled + totals.archived}</strong><span>Finished</span></div>`;
   $("#sessionResultCount").textContent = visible.length === matches.length ? `${matches.length} shown` : `${visible.length} of ${matches.length} shown`;
   if (!dashboardSessions.length) {
     list.innerHTML = '<div class="empty-state"><span>☾</span><h2>No gatherings yet</h2><p>Create your first session and invite the town.</p></div>';
@@ -314,9 +393,9 @@ function renderDashboardSessions() {
   list.innerHTML = visible.map(session => {
     const date = dashboardDate(session);
     const isAdmin = currentProfile?.role === "admin";
-    return `<article class="session-card">
-      <div class="session-card-main"><div class="session-card-top"><span class="status-pill status-${escapeHtml(session.status)}">${statusLabel(session.status)}</span>${isAdmin ? `<span class="session-owner">${escapeHtml(session.organizerName || "Organiser")}</span>` : ""}</div>
-      <h2>${escapeHtml(session.title)}</h2><div class="session-card-meta"><span>◷ ${date ? formatDate(date) : `${session.dateOptions?.length || 0} dates proposed`}</span><span>⌖ ${escapeHtml(session.location || "Location TBD")}</span><span>♟ Up to ${Number(session.capacity) || 0}</span>${renderDifficultyBadge(session.difficulty)}</div>
+    return `<article class="session-card ${sessionNeedsAttention(session) ? "needs-attention" : ""}">
+      <div class="session-card-main"><div class="session-card-top"><span class="status-pill status-${escapeHtml(session.status)}">${statusLabel(session.status)}</span>${sessionNeedsAttention(session) ? '<span class="status-pill status-attention">Needs attention</span>' : ""}${isAdmin ? `<span class="session-owner">${escapeHtml(session.organizerName || "Organiser")}</span>` : ""}</div>
+      <h2>${escapeHtml(session.title)}</h2><div class="session-card-meta"><span>◷ ${date ? formatDate(date, sessionTimezone(session)) : `${session.dateOptions?.length || 0} dates proposed`}</span><span>⌖ ${escapeHtml(session.location || "Location TBD")}</span><span>♟ ${Number.isInteger(session.registeredCount) ? `${session.registeredCount} registered · ` : ""}Up to ${Number(session.capacity) || 0}</span>${renderDifficultyBadge(session.difficulty)}</div>
       <code class="session-slug">${escapeHtml(session.inviteSlug || session.id)}</code></div>
       <div class="session-card-actions"><button class="button button-small button-ghost" data-copy-session="${session.id}" data-copy-slug="${escapeHtml(session.inviteSlug || "")}" type="button">Copy player link</button><button class="button button-small button-secondary" data-open-session="${session.id}" type="button">Manage</button><button class="button button-small button-danger" data-delete-session="${session.id}" type="button">Delete</button></div>
     </article>`;
@@ -339,8 +418,8 @@ async function loadSession(id) {
   const session = { id: snap.id, ...snap.data() };
   session.scripts = await loadScripts(session);
   session.registrations = await loadRegistrations(session);
-  if (session.status === "date_poll") session.counts = await loadDateCounts(session);
-  if (session.status === "find_players") session.roster = await loadRoster(session.id);
+  if (isPollStage(session)) session.counts = await loadDateCounts(session);
+  else session.roster = await loadRoster(session.id);
   return session;
 }
 
@@ -365,8 +444,8 @@ function normalizeSessionScripts(session, stored = session.scripts || []) {
     scriptData: session.scriptData || null,
     legacy: true
   };
-  if (stored.some(script => script.name === legacy.name)) return stored;
-  return [...stored, legacy];
+  const scripts = stored.some(script => script.name === legacy.name) ? stored : [...stored, legacy];
+  return scripts.sort((left, right) => Number(Boolean(right.preferred)) - Number(Boolean(left.preferred)) || (left.order ?? 999) - (right.order ?? 999) || String(left.name).localeCompare(String(right.name)));
 }
 
 async function loadScripts(session) {
@@ -399,6 +478,10 @@ function isManager(session) {
   return currentUser && !currentUser.isAnonymous && (session.ownerUid === currentUser.uid || currentProfile?.role === "admin");
 }
 
+function isPollStage(session) {
+  return !session.selectedDate && !session.fixedDate && Boolean(session.dateOptions?.length);
+}
+
 async function openSession(id, preserveUrl = false) {
   showView("sessionView");
   $("#sessionContent").innerHTML = '<div class="loading">Opening the town gates…</div>';
@@ -427,23 +510,28 @@ function renderSession(session) {
   const date = session.selectedDate || session.fixedDate;
   const scriptCount = session.scripts?.length || 0;
   const script = scriptCount ? `<button class="inline-link" data-scroll-scripts type="button">${scriptCount} script${scriptCount === 1 ? "" : "s"} on offer</button>` : "Script TBD";
+  const lifecycleNotice = session.status === "closed" ? '<div class="notice lifecycle-notice">Registration is closed. The roster remains visible.</div>' : session.status === "cancelled" ? '<div class="notice lifecycle-notice danger-notice">This gathering has been cancelled.</div>' : session.status === "archived" ? '<div class="notice lifecycle-notice">This gathering is archived and no longer accepts responses.</div>' : "";
+  const lifecycleAction = session.status === "closed" ? '<button class="button button-small button-secondary" data-session-status="restore" type="button">Reopen</button>' : session.status === "cancelled" || session.status === "archived" ? '<button class="button button-small button-secondary" data-session-status="restore" type="button">Restore</button>' : '<button class="button button-small button-ghost" data-session-status="closed" type="button">Close registration</button>';
   $("#sessionContent").innerHTML = `
     <article class="session-hero panel">
-      <div class="eyebrow">${session.status === "date_poll" ? "Finding a date" : "Finding players"}</div>
+      <div class="eyebrow">${statusLabel(session.status)}</div>
       <h1>${escapeHtml(session.title)}</h1>
       <div class="session-facts">
-        ${date ? `<div><span>Date</span><strong>${formatDate(date)}</strong></div>` : ""}
+        ${date ? `<div><span>Date</span><strong>${formatDate(date, sessionTimezone(session))}</strong></div>` : ""}
         <div><span>Location</span><strong>${escapeHtml(session.location)}</strong></div>
         <div><span>Storyteller</span><strong>${escapeHtml(session.organizerName || "Organiser")}</strong></div>
         <div><span>Script</span><strong>${script}</strong></div>
+        <div><span>Time zone</span><strong>${escapeHtml(sessionTimezone(session))}</strong></div>
         <div class="difficulty-fact"><span>Difficulty</span><strong>${renderDifficultyBadge(session.difficulty)}</strong>${manager ? `<select id="sessionDifficulty" class="difficulty-select" aria-label="Change event difficulty"><option value="">Choose level</option>${Object.keys(difficultyDetails).map(value => `<option value="${value}"${session.difficulty === value ? " selected" : ""}>${value}</option>`).join("")}</select>` : ""}</div>
       </div>
       ${session.notes ? `<p class="session-notes">${escapeHtml(session.notes)}</p>` : ""}
-      <div class="share-row"><button id="copyLinkButton" class="button button-ghost" type="button">Copy player link</button><code>${escapeHtml(session.inviteSlug || session.id)}</code>${session.inviteSlug ? '<span class="status-pill">Custom link</span>' : ""}${manager ? `<button class="button button-danger" data-delete-session="${escapeHtml(session.id)}" type="button">Delete event</button>` : ""}</div>
+      ${lifecycleNotice}
+      <div class="share-row"><button id="copyLinkButton" class="button button-ghost" type="button">Copy player link</button>${date ? '<button class="button button-ghost" data-calendar type="button">Add to calendar</button>' : ""}<code>${escapeHtml(session.inviteSlug || session.id)}</code>${session.inviteSlug ? '<span class="status-pill">Custom link</span>' : ""}</div>
+      ${manager ? `<div class="manager-action-bar"><button class="button button-small button-secondary" data-edit-session type="button">Edit event</button><button class="button button-small button-ghost" data-duplicate-session type="button">Duplicate</button>${lifecycleAction}${session.status !== "cancelled" ? '<button class="button button-small button-danger" data-session-status="cancelled" type="button">Cancel event</button>' : ""}${session.status !== "archived" ? '<button class="button button-small button-ghost" data-session-status="archived" type="button">Archive</button>' : ""}<button class="button button-small button-danger" data-delete-session="${escapeHtml(session.id)}" type="button">Delete permanently</button></div>` : ""}
     </article>
     <div class="session-workspace ${manager ? "manager-workspace" : "player-workspace"}">
       ${renderPlannedScripts(session, manager)}
-      ${session.status === "date_poll" ? renderDatePoll(session, manager) : renderFindPlayers(session, manager)}
+      ${isPollStage(session) ? renderDatePoll(session, manager) : renderFindPlayers(session, manager)}
     </div>
   `;
 }
@@ -467,10 +555,10 @@ function renderCharacterGroups(scriptData) {
 
 function renderPlannedScripts(session, manager) {
   const scripts = session.scripts || [];
-  const rows = scripts.map(script => `<button class="planned-script-row" data-view-script="${escapeHtml(script.id)}" type="button">
-    <span class="planned-script-name"><strong>${escapeHtml(script.name)}</strong>${script.author ? `<small>By ${escapeHtml(script.author)}</small>` : ""}</span>
-    <span class="script-source-badge">${script.sourceType === "json" ? "Characters" : "PDF"}</span><span class="script-row-arrow" aria-hidden="true">→</span>
-  </button>`).join("");
+  const rows = scripts.map((script, index) => `<div class="planned-script-row${script.preferred ? " is-preferred" : ""}">
+    <button class="planned-script-view" data-view-script="${escapeHtml(script.id)}" type="button"><span class="planned-script-name"><strong>${escapeHtml(script.name)}</strong>${script.author ? `<small>By ${escapeHtml(script.author)}</small>` : ""}</span>${script.preferred ? '<span class="preferred-badge">★ Preferred</span>' : ""}<span class="script-source-badge">Characters</span><span class="script-row-arrow" aria-hidden="true">→</span></button>
+    ${manager ? `<div class="script-manager-actions" aria-label="Manage ${escapeHtml(script.name)}">${script.legacy ? "" : `<button class="icon-button" data-move-script="${escapeHtml(script.id)}" data-direction="up" type="button" ${index === 0 ? "disabled" : ""} aria-label="Move up">↑</button><button class="icon-button" data-move-script="${escapeHtml(script.id)}" data-direction="down" type="button" ${index === scripts.length - 1 ? "disabled" : ""} aria-label="Move down">↓</button>${script.preferred ? "" : `<button class="button button-small button-ghost" data-prefer-script="${escapeHtml(script.id)}" type="button">Make preferred</button>`}` }<button class="icon-button danger" data-remove-script="${escapeHtml(script.id)}" data-script-name="${escapeHtml(script.name)}" type="button">Remove</button></div>` : ""}
+  </div>`).join("");
   const addForm = manager ? `<details class="panel planned-script-manager"><summary>Add another script</summary><form id="plannedScriptForm" class="planned-script-form"><p>Upload a BOTC script JSON. Official characters use official tokens; homebrew characters use a clear initial marker.</p>
       <div><label>BOTC script JSON<input name="scriptJsonFile" type="file" accept=".json,application/json"><small class="field-hint">Supports standard character IDs and full homebrew character definitions.</small></label></div>
       <p id="scriptUploadError" class="form-error" role="alert" hidden></p><button class="button button-secondary" type="submit">Add planned script</button></form></details>` : "";
@@ -499,7 +587,7 @@ async function savePlannedScript(form) {
     if (!scriptFile?.size) throw new Error("Choose a BOTC script JSON file.");
     const scriptData = await readScriptFile(scriptFile);
     const name = scriptData.name || scriptFile.name.replace(/\.json$/i, "").replace(/[-_]+/g, " ").trim() || "Uploaded script";
-    const script = { name, author: scriptData.author || "", sourceType: "json", pdfUrl: "", scriptData };
+    const script = { name, author: scriptData.author || "", sourceType: "json", pdfUrl: "", scriptData, order: activeSession.scripts.length, preferred: activeSession.scripts.length === 0 };
     if (demoMode) activeSession.scripts.push({ id: `script-${crypto.randomUUID()}`, ...script });
     else await firebase.addDoc(firebase.collection(firebase.db, "sessions", activeSession.id, "scripts"), { ...script, createdAt: firebase.serverTimestamp(), updatedAt: firebase.serverTimestamp() });
     showToast("Planned script added.");
@@ -507,33 +595,90 @@ async function savePlannedScript(form) {
   } catch (error) { errorBox.textContent = error.message; errorBox.hidden = false; }
 }
 
+async function removePlannedScript(scriptId, scriptName) {
+  if (!isManager(activeSession) || !confirm(`Remove “${scriptName}” from this event?`)) return;
+  const script = activeSession.scripts.find(item => item.id === scriptId);
+  try {
+    if (demoMode) {
+      activeSession.scripts = activeSession.scripts.filter(item => item.id !== scriptId);
+      if (script?.legacy) Object.assign(activeSession, { scriptMode: "tbd", scriptName: "", scriptUrl: "", scriptData: null });
+    } else if (script?.legacy) {
+      await firebase.updateDoc(firebase.doc(firebase.db, "sessions", activeSession.id), { scriptMode: "tbd", scriptName: "", scriptUrl: "", scriptData: null, updatedAt: firebase.serverTimestamp() });
+    } else {
+      await firebase.deleteDoc(firebase.doc(firebase.db, "sessions", activeSession.id, "scripts", scriptId));
+    }
+    activeSession = await loadSession(activeSession.id); renderSession(activeSession); showToast("Planned script removed.");
+  } catch (error) { showToast(`Could not remove script: ${error.message}`); }
+}
+
+async function reorderScripts(scriptId, direction) {
+  if (!isManager(activeSession)) return;
+  const scripts = [...activeSession.scripts];
+  const index = scripts.findIndex(item => item.id === scriptId);
+  const otherIndex = direction === "up" ? index - 1 : index + 1;
+  if (index < 0 || otherIndex < 0 || otherIndex >= scripts.length) return;
+  [scripts[index], scripts[otherIndex]] = [scripts[otherIndex], scripts[index]];
+  try {
+    if (demoMode) scripts.forEach((script, order) => { script.order = order; });
+    else {
+      const batch = firebase.writeBatch(firebase.db);
+      scripts.forEach((script, order) => { if (!script.legacy) batch.update(firebase.doc(firebase.db, "sessions", activeSession.id, "scripts", script.id), { order, updatedAt: firebase.serverTimestamp() }); });
+      await batch.commit();
+    }
+    activeSession.scripts = scripts; renderSession(activeSession);
+  } catch (error) { showToast(`Could not reorder scripts: ${error.message}`); }
+}
+
+async function preferScript(scriptId) {
+  if (!isManager(activeSession)) return;
+  try {
+    if (demoMode) activeSession.scripts.forEach(script => { script.preferred = script.id === scriptId; });
+    else {
+      const batch = firebase.writeBatch(firebase.db);
+      activeSession.scripts.forEach(script => { if (!script.legacy) batch.update(firebase.doc(firebase.db, "sessions", activeSession.id, "scripts", script.id), { preferred: script.id === scriptId, updatedAt: firebase.serverTimestamp() }); });
+      await batch.commit();
+    }
+    activeSession = await loadSession(activeSession.id); renderSession(activeSession); showToast("Preferred script updated.");
+  } catch (error) { showToast(`Could not update preferred script: ${error.message}`); }
+}
+
 function renderDatePoll(session, manager) {
+  const responseOpen = session.status === "date_poll";
   const options = (session.dateOptions || []).map(option => {
     const count = session.counts?.[option.id] || { available: 0, maybe: 0, unavailable: 0 };
     const indicator = dateIndicator(count.available);
     return `<article class="date-card">
-      <div class="date-card-head"><div><span class="date-day">${formatDate(option.startAt)}</span><span class="indicator ${indicator.tone}">${indicator.label}</span></div>
-      ${manager ? `<button class="button button-small button-secondary" data-finalize="${option.id}" type="button">Choose this date</button>` : ""}</div>
+      <div class="date-card-head"><div><span class="date-day">${formatDate(option.startAt, sessionTimezone(session))}</span><span class="indicator ${indicator.tone}">${indicator.label}</span></div>
+      ${manager && responseOpen ? `<button class="button button-small button-secondary" data-finalize="${option.id}" type="button">Choose this date</button>` : ""}</div>
       <div class="count-row"><span><b>${count.available}</b> Available</span><span><b>${count.maybe}</b> Maybe</span><span><b>${count.unavailable}</b> Unavailable</span></div>
-      ${!manager ? `<fieldset class="response-group" data-option="${option.id}"><legend>Your response</legend>${["available","maybe","unavailable"].map(value => `<label><input type="radio" name="response-${option.id}" value="${value}" required><span>${value[0].toUpperCase() + value.slice(1)}</span></label>`).join("")}</fieldset>` : ""}
+      ${!manager && responseOpen ? `<fieldset class="response-group" data-option="${option.id}"><legend>Your response</legend>${["available","maybe","unavailable"].map(value => `<label><input type="radio" name="response-${option.id}" value="${value}" required><span>${value[0].toUpperCase() + value.slice(1)}</span></label>`).join("")}</fieldset>` : ""}
     </article>`;
   }).join("");
   return `<section class="stage-section"><div class="section-heading"><div><div class="eyebrow">Optional first stage</div><h2>Which nights can you make?</h2></div><p>Maybe responses are shown separately and never count toward a game-size threshold.</p></div>
     <div class="date-list">${options}</div>
-    ${manager ? '<div class="notice">Choosing a date moves the session to Find Players. Available players stay interested; Maybe players remain visibly unconfirmed.</div>' + renderManagerRegistrations(session) + managerPlayerForm(session) : renderOwnedRegistrations(session) + playerDetailsForm("Save player responses")}
+    ${manager ? renderAvailabilityHeatmap(session) + (responseOpen ? '<div class="notice">Choosing a date moves the session to Find Players. Available players stay interested; Maybe players remain visibly unconfirmed.</div>' : "") + renderManagerRegistrations(session) + (responseOpen ? managerPlayerForm(session) : "") : renderOwnedRegistrations(session) + (responseOpen ? playerDetailsForm("Save player responses") : '<div class="notice">This event is not accepting new date responses.</div>')}
   </section>`;
+}
+
+function renderAvailabilityHeatmap(session) {
+  const players = session.registrations || [];
+  if (!players.length) return "";
+  const cells = { available: ["A", "Available"], maybe: ["M", "Maybe"], unavailable: ["U", "Unavailable"] };
+  return `<section class="availability-panel panel"><div class="section-heading"><div><div class="eyebrow">At a glance</div><h2>Availability map</h2></div><p>A = Available · M = Maybe · U = Unavailable</p></div><div class="availability-scroll"><table class="availability-table"><thead><tr><th>Player</th>${session.dateOptions.map((option, index) => `<th title="${escapeHtml(formatDate(option.startAt, sessionTimezone(session)))}">Date ${index + 1}</th>`).join("")}</tr></thead><tbody>${players.map(player => `<tr><th>${escapeHtml(player.displayName)}</th>${session.dateOptions.map(option => { const response = player.responses?.[option.id] || "unavailable"; const detail = cells[response] || ["—", "No response"]; return `<td><span class="availability-cell status-${response}" title="${detail[1]}">${detail[0]}</span></td>`; }).join("")}</tr>`).join("")}</tbody></table></div></section>`;
 }
 
 function renderFindPlayers(session, manager) {
   const roster = session.roster || [];
-  const confirmed = roster.filter(player => player.interestStatus !== "maybe");
+  const confirmed = roster.filter(player => player.interestStatus === "confirmed");
   const maybe = roster.filter(player => player.interestStatus === "maybe");
+  const waitlist = roster.filter(player => player.interestStatus === "waitlist");
   const size = gameSize(confirmed.length);
+  const registrationOpen = session.status === "find_players";
   return `<section class="stage-section">
-    <div class="roster-summary panel"><div><div class="eyebrow">Find Players</div><h2>${size}</h2><p>${confirmed.length} confirmed of ${session.capacity} maximum${maybe.length ? ` · ${maybe.length} maybe` : ""}</p></div><div class="capacity-ring" style="--fill:${Math.min(100, confirmed.length / session.capacity * 100)}%"><strong>${confirmed.length}</strong><span>/${session.capacity}</span></div></div>
+    <div class="roster-summary panel"><div><div class="eyebrow">Find Players</div><h2>${size}</h2><p>${confirmed.length} confirmed of ${session.capacity} maximum${maybe.length ? ` · ${maybe.length} maybe` : ""}${waitlist.length ? ` · ${waitlist.length} waiting` : ""}</p></div><div class="capacity-ring" style="--fill:${Math.min(100, confirmed.length / session.capacity * 100)}%"><strong>${confirmed.length}</strong><span>/${session.capacity}</span></div></div>
     <div class="section-heading"><div><h2>Who’s gathering</h2><p>Every interested player appears here with their experience level.</p></div></div>
-    <div class="roster-grid">${roster.length ? roster.map(player => `<article class="player-card ${player.interestStatus === "maybe" ? "is-maybe" : ""}"><span class="player-initial">${escapeHtml(player.displayName[0]?.toUpperCase() || "?")}</span><div class="player-identity"><strong>${escapeHtml(player.displayName)}</strong><span>${escapeHtml(player.experience)}</span></div><div class="player-card-actions">${player.interestStatus === "maybe" ? '<em>Maybe · unconfirmed</em>' : '<em>Interested</em>'}${manager ? `<button class="icon-button danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button" aria-label="Remove ${escapeHtml(player.displayName)}">Remove</button>` : ""}</div></article>`).join("") : '<div class="empty-state compact"><p>No players yet. Share the link to begin.</p></div>'}</div>
-    ${manager ? '<div class="notice">Only the public name and experience shown above are publicly readable. Player registration records remain private to the player and session managers.</div>' + renderManagerRegistrations(session) + managerPlayerForm(session) : renderOwnedRegistrations(session) + (confirmed.length >= session.capacity ? '<div class="notice">This session has reached its player capacity.</div>' : playerDetailsForm("Register player interest"))}
+    <div class="roster-grid">${roster.length ? roster.map(player => `<article class="player-card ${player.interestStatus === "maybe" ? "is-maybe" : player.interestStatus === "waitlist" ? "is-waitlist" : ""}"><span class="player-initial">${escapeHtml(player.displayName[0]?.toUpperCase() || "?")}</span><div class="player-identity"><strong>${escapeHtml(player.displayName)}</strong><span>${escapeHtml(player.experience)}</span></div><div class="player-card-actions">${player.interestStatus === "maybe" ? '<em>Maybe · unconfirmed</em>' : player.interestStatus === "waitlist" ? '<em>Waitlist</em>' : '<em>Interested</em>'}${manager && player.interestStatus === "waitlist" && confirmed.length < session.capacity ? `<button class="button button-small button-secondary" data-promote-player="${escapeHtml(player.id)}" type="button">Promote</button>` : ""}${manager ? `<button class="icon-button danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button" aria-label="Remove ${escapeHtml(player.displayName)}">Remove</button>` : ""}</div></article>`).join("") : '<div class="empty-state compact"><p>No players yet. Share the link to begin.</p></div>'}</div>
+    ${manager ? '<div class="notice">Only the public name and experience shown above are publicly readable. Player registration records remain private to the player and session managers.</div>' + renderManagerRegistrations(session) + (registrationOpen ? managerPlayerForm(session) : "") : renderOwnedRegistrations(session) + (registrationOpen ? playerDetailsForm(confirmed.length >= session.capacity ? "Join the waitlist" : "Register player interest") : '<div class="notice">This event is not accepting new registrations.</div>')}
   </section>`;
 }
 
@@ -547,7 +692,7 @@ function renderOwnedRegistrations(session) {
   return `<section class="owned-registrations panel"><div class="section-heading"><div><div class="eyebrow">Your entries</div><h2>Edit registrations</h2></div><p>You can change names${session.status === "date_poll" ? " and date responses" : ""}. Experience is fixed after registration.</p></div>
     <div class="owned-registration-list">${registrations.map(player => `<details class="owned-registration"><summary><span><strong>${escapeHtml(player.displayName)}</strong><small>${escapeHtml(player.experience)}</small></span><span>Edit</span></summary>
       <form class="edit-player-form" data-player-id="${escapeHtml(player.id)}"><div class="form-grid"><label>Name<input name="displayName" value="${escapeHtml(player.displayName)}" minlength="2" maxlength="40" required></label><label>Experience<input value="${escapeHtml(player.experience)}" disabled></label></div>
-      ${session.status === "date_poll" ? `<div class="manager-response-list">${session.dateOptions.map(option => `<label>${formatDate(option.startAt)}${responseSelect(`response-${option.id}`, player.responses?.[option.id])}</label>`).join("")}</div>` : ""}
+      ${session.status === "date_poll" ? `<div class="manager-response-list">${session.dateOptions.map(option => `<label>${formatDate(option.startAt, sessionTimezone(session))}${responseSelect(`response-${option.id}`, player.responses?.[option.id])}</label>`).join("")}</div>` : ""}
       <p class="form-error" role="alert" hidden></p><button class="button button-small button-secondary" type="submit">Save changes</button></form></details>`).join("")}</div>
   </section>`;
 }
@@ -568,7 +713,7 @@ function playerDetailsForm(buttonLabel) {
 }
 
 function managerPlayerForm(session) {
-  const responseFields = session.status === "date_poll" ? `<div class="manager-response-list">${session.dateOptions.map(option => `<label>${formatDate(option.startAt)}${responseSelect(`manager-response-${option.id}`)}</label>`).join("")}</div>` : "";
+  const responseFields = session.status === "date_poll" ? `<div class="manager-response-list">${session.dateOptions.map(option => `<label>${formatDate(option.startAt, sessionTimezone(session))}${responseSelect(`manager-response-${option.id}`)}</label>`).join("")}</div>` : "";
   return `<form id="playerForm" class="panel player-form" data-manager="true"><h2>Add a player</h2><p>Add as many players as needed. Manager-entered responses follow the same privacy and game-size rules.</p>
     <div class="form-grid"><label>Name<input name="displayName" minlength="2" maxlength="40" required></label><label>Experience<select name="experience" required><option value="">Choose one</option><option>Beginner</option><option>Experienced</option><option>Expert</option></select></label></div>
     ${responseFields}<label class="consent-row"><input type="checkbox" name="consent" required><span>I have permission to add this player’s name and experience to the session.</span></label>
@@ -590,6 +735,7 @@ async function ensurePlayerUser() {
 async function submitPlayer(form) {
   const errorBox = $("#playerError"); errorBox.hidden = true;
   try {
+    if (!["date_poll", "find_players"].includes(activeSession.status)) throw new Error("This event is not accepting responses.");
     const data = validatePlayer(Object.fromEntries(new FormData(form)));
     const user = await ensurePlayerUser();
     const playerId = demoMode ? `player-${crypto.randomUUID()}` : firebase.doc(firebase.collection(firebase.db, "sessions", activeSession.id, "registrations")).id;
@@ -613,17 +759,23 @@ async function submitPlayer(form) {
       }
       showToast("Player availability saved. You can add another player now.");
     } else {
+      let confirmedCount = (activeSession.roster || []).filter(player => player.interestStatus === "confirmed").length;
+      if (!demoMode) {
+        const confirmedQuery = firebase.query(firebase.collection(firebase.db, "sessions", activeSession.id, "roster"), firebase.where("interestStatus", "==", "confirmed"));
+        confirmedCount = (await firebase.getCountFromServer(confirmedQuery)).data().count;
+      }
+      const finalStatus = confirmedCount >= activeSession.capacity ? "waitlist" : "confirmed";
       if (demoMode) {
-        activeSession.registrations.push({ id: playerId, ...data, createdByUid: user.uid, finalStatus: "confirmed" });
-        activeSession.roster.push({ id: playerId, ...data, interestStatus: "confirmed" });
+        activeSession.registrations.push({ id: playerId, ...data, createdByUid: user.uid, finalStatus });
+        activeSession.roster.push({ id: playerId, ...data, interestStatus: finalStatus });
       }
       else {
         const batch = firebase.writeBatch(firebase.db);
-        batch.set(firebase.doc(firebase.db, "sessions", activeSession.id, "registrations", playerId), { ...data, createdByUid: user.uid, finalStatus: "confirmed", updatedAt: firebase.serverTimestamp() });
-        batch.set(firebase.doc(firebase.db, "sessions", activeSession.id, "roster", playerId), { ...data, interestStatus: "confirmed", updatedAt: firebase.serverTimestamp() });
+        batch.set(firebase.doc(firebase.db, "sessions", activeSession.id, "registrations", playerId), { ...data, createdByUid: user.uid, finalStatus, updatedAt: firebase.serverTimestamp() });
+        batch.set(firebase.doc(firebase.db, "sessions", activeSession.id, "roster", playerId), { ...data, interestStatus: finalStatus, updatedAt: firebase.serverTimestamp() });
         await batch.commit();
       }
-      showToast("Player registered. You can add another player now.");
+      showToast(finalStatus === "waitlist" ? "The session is full, so this player joined the waitlist." : "Player registered. You can add another player now.");
     }
     activeSession = await loadSession(activeSession.id); renderSession(activeSession);
   } catch (error) { errorBox.textContent = error.message; errorBox.hidden = false; }
@@ -751,9 +903,120 @@ async function updateSessionDifficulty(value) {
   } catch (error) { showToast(`Could not change difficulty: ${error.message}`); }
 }
 
+function openEditSessionDialog() {
+  if (!activeSession || !isManager(activeSession)) return;
+  const form = $("#editSessionForm");
+  form.elements.sessionId.value = activeSession.id;
+  form.elements.title.value = activeSession.title || "";
+  form.elements.inviteSlug.value = activeSession.inviteSlug || "";
+  form.elements.location.value = activeSession.location || "";
+  form.elements.capacity.value = activeSession.capacity || 15;
+  form.elements.difficulty.value = activeSession.difficulty || "Beginner";
+  form.elements.notes.value = activeSession.notes || "";
+  populateTimezoneSelect($("#editTimezone"), sessionTimezone(activeSession));
+  const pollLocked = isPollStage(activeSession);
+  form.elements.scheduledDate.closest("label").hidden = pollLocked;
+  form.elements.scheduledDate.required = !pollLocked;
+  $("#editPollDateNotice").hidden = !pollLocked;
+  form.elements.scheduledDate.value = toDateTimeLocal(activeSession.selectedDate || activeSession.fixedDate, sessionTimezone(activeSession));
+  $("#editSessionError").hidden = true;
+  $("#editSessionDialog").showModal();
+}
+
+async function saveSessionEdits(form) {
+  const errorBox = $("#editSessionError"); errorBox.hidden = true;
+  try {
+    if (!activeSession || !isManager(activeSession)) throw new Error("You cannot edit this event.");
+    const fields = new FormData(form);
+    const inviteSlug = normalizeInviteSlug(fields.get("inviteSlug"));
+    const slugError = inviteSlugError(inviteSlug); if (slugError) throw new Error(slugError);
+    const capacity = Number(fields.get("capacity"));
+    if (!Number.isInteger(capacity) || capacity < 5 || capacity > 20) throw new Error("Maximum players must be between 5 and 20.");
+    const timezone = validTimezone(fields.get("timezone")); if (!timezone) throw new Error("Choose a valid time zone.");
+    const update = { title: String(fields.get("title") || "").trim(), inviteSlug, location: String(fields.get("location") || "").trim(), capacity, difficulty: fields.get("difficulty"), notes: String(fields.get("notes") || "").trim(), timezone };
+    if (!update.title || !update.location) throw new Error("Session name and location are required.");
+    const scheduledDate = fields.get("scheduledDate");
+    if (!isPollStage(activeSession) && scheduledDate) {
+      if (activeSession.selectedDate) update.selectedDate = scheduledDate; else update.fixedDate = scheduledDate;
+    }
+    if (demoMode) {
+      if (demoSessions.some(session => session.id !== activeSession.id && session.inviteSlug === inviteSlug)) throw new Error("That custom player link is already in use.");
+      Object.assign(activeSession, update);
+    } else {
+      const sessionRef = firebase.doc(firebase.db, "sessions", activeSession.id);
+      if (inviteSlug !== activeSession.inviteSlug) {
+        const newInviteRef = firebase.doc(firebase.db, "inviteLinks", inviteSlug);
+        await firebase.runTransaction(firebase.db, async transaction => {
+          if ((await transaction.get(newInviteRef)).exists()) throw new Error("That custom player link is already in use.");
+          transaction.set(newInviteRef, { sessionId: activeSession.id, ownerUid: activeSession.ownerUid, createdAt: firebase.serverTimestamp(), updatedAt: firebase.serverTimestamp() });
+          if (activeSession.inviteSlug) transaction.delete(firebase.doc(firebase.db, "inviteLinks", activeSession.inviteSlug));
+          transaction.update(sessionRef, { ...update, updatedAt: firebase.serverTimestamp() });
+        });
+      } else await firebase.updateDoc(sessionRef, { ...update, updatedAt: firebase.serverTimestamp() });
+    }
+    $("#editSessionDialog").close();
+    activeSession = await loadSession(activeSession.id); renderSession(activeSession); showToast("Event details updated.");
+  } catch (error) { errorBox.textContent = error.message; errorBox.hidden = false; }
+}
+
+async function updateSessionStatus(requestedStatus) {
+  if (!activeSession || !isManager(activeSession)) return;
+  const restoreStatus = activeSession.selectedDate || activeSession.fixedDate ? "find_players" : "date_poll";
+  const status = requestedStatus === "restore" ? restoreStatus : requestedStatus;
+  if (!["date_poll", "find_players", "closed", "cancelled", "archived"].includes(status)) return;
+  const verb = status === "cancelled" ? "cancel" : status === "archived" ? "archive" : status === "closed" ? "close registration for" : "restore";
+  if (!confirm(`${verb[0].toUpperCase() + verb.slice(1)} “${activeSession.title}”?`)) return;
+  try {
+    if (demoMode) activeSession.status = status;
+    else await firebase.updateDoc(firebase.doc(firebase.db, "sessions", activeSession.id), { status, updatedAt: firebase.serverTimestamp() });
+    activeSession = await loadSession(activeSession.id); renderSession(activeSession); showToast(`Event is now ${statusLabel(status).toLowerCase()}.`);
+  } catch (error) { showToast(`Could not update event: ${error.message}`); }
+}
+
+async function duplicateSession() {
+  if (!activeSession || !isManager(activeSession)) return;
+  try {
+    const slug = `${normalizeInviteSlug(activeSession.inviteSlug || activeSession.title).slice(0, 38)}-copy-${Math.random().toString(36).slice(2, 6)}`;
+    const status = activeSession.selectedDate || activeSession.fixedDate ? "find_players" : "date_poll";
+    const copy = { ownerUid: demoMode ? "demo-organiser" : currentUser.uid, organizerName: demoMode ? "Demo Storyteller" : currentProfile.displayName, title: `${activeSession.title} (Copy)`.slice(0, 80), location: activeSession.location || "", notes: activeSession.notes || "", capacity: activeSession.capacity, difficulty: activeSession.difficulty || "Beginner", timezone: sessionTimezone(activeSession), visibility: "public", status, fixedDate: activeSession.fixedDate || null, selectedDate: activeSession.selectedDate || null, selectedOptionId: activeSession.selectedOptionId || null, dateOptions: structuredClone(activeSession.dateOptions || []), scriptMode: "tbd", scriptName: "", scriptUrl: "", scriptData: null, inviteSlug: slug };
+    let id;
+    const scripts = (activeSession.scripts || []).filter(script => !script.legacy).map(({ id: ignored, createdAt: ignoredCreated, updatedAt: ignoredUpdated, ...script }) => script);
+    if (demoMode) {
+      id = `demo-${crypto.randomUUID()}`;
+      demoSessions.unshift({ id, ...copy, scripts: scripts.map((script, index) => ({ ...structuredClone(script), id: `script-${crypto.randomUUID()}`, order: index })), counts: Object.fromEntries(copy.dateOptions.map(option => [option.id, { available: 0, maybe: 0, unavailable: 0 }])), roster: [], registrations: [] });
+    } else {
+      const sessionRef = firebase.doc(firebase.collection(firebase.db, "sessions")); id = sessionRef.id;
+      await firebase.runTransaction(firebase.db, async transaction => {
+        transaction.set(sessionRef, { ...copy, createdAt: firebase.serverTimestamp(), updatedAt: firebase.serverTimestamp() });
+        transaction.set(firebase.doc(firebase.db, "inviteLinks", slug), { sessionId: id, ownerUid: currentUser.uid, createdAt: firebase.serverTimestamp(), updatedAt: firebase.serverTimestamp() });
+        scripts.forEach((script, index) => transaction.set(firebase.doc(firebase.collection(firebase.db, "sessions", id, "scripts")), { ...script, order: index, createdAt: firebase.serverTimestamp(), updatedAt: firebase.serverTimestamp() }));
+      });
+    }
+    showToast("Event duplicated without player records."); await openSession(id);
+  } catch (error) { showToast(`Could not duplicate event: ${error.message}`); }
+}
+
+async function promoteWaitlistedPlayer(playerId) {
+  if (!isManager(activeSession)) return;
+  const confirmed = activeSession.roster.filter(player => player.interestStatus === "confirmed").length;
+  if (confirmed >= activeSession.capacity) { showToast("There is no free place yet."); return; }
+  try {
+    if (demoMode) {
+      const player = activeSession.roster.find(item => item.id === playerId); if (player) player.interestStatus = "confirmed";
+      const registration = activeSession.registrations.find(item => item.id === playerId); if (registration) registration.finalStatus = "confirmed";
+    } else {
+      const batch = firebase.writeBatch(firebase.db);
+      batch.update(firebase.doc(firebase.db, "sessions", activeSession.id, "roster", playerId), { interestStatus: "confirmed", updatedAt: firebase.serverTimestamp() });
+      batch.update(firebase.doc(firebase.db, "sessions", activeSession.id, "registrations", playerId), { finalStatus: "confirmed", updatedAt: firebase.serverTimestamp() });
+      await batch.commit();
+    }
+    activeSession = await loadSession(activeSession.id); renderSession(activeSession); showToast("Player promoted from the waitlist.");
+  } catch (error) { showToast(`Could not promote player: ${error.message}`); }
+}
+
 async function finalizeDate(optionId) {
   const option = activeSession.dateOptions.find(item => item.id === optionId);
-  if (!option || !confirm(`Choose ${formatDate(option.startAt)} as the final date?`)) return;
+  if (!option || !confirm(`Choose ${formatDate(option.startAt, sessionTimezone(activeSession))} as the final date?`)) return;
   if (demoMode) {
     activeSession.status = "find_players"; activeSession.selectedDate = option.startAt;
     const names = ["Alex", "Morgan", "Sam", "Quinn", "Jamie", "Avery", "Taylor", "Casey", "Jordan", "Drew"];
@@ -767,9 +1030,16 @@ async function finalizeDate(optionId) {
   } else {
     const registrations = await firebase.getDocs(firebase.collection(firebase.db, "sessions", activeSession.id, "registrations"));
     const batch = firebase.writeBatch(firebase.db);
+    let confirmedPlaces = 0;
     batch.update(firebase.doc(firebase.db, "sessions", activeSession.id), { status: "find_players", selectedDate: option.startAt, selectedOptionId: optionId, updatedAt: firebase.serverTimestamp() });
     registrations.forEach(reg => {
-      const player = reg.data(); const status = promotedStatus(player.responses?.[optionId]);
+      const player = reg.data();
+      const response = player.responses?.[optionId];
+      let status = promotedStatus(response);
+      if (status === "confirmed") {
+        status = confirmedPlaces < activeSession.capacity ? "confirmed" : "waitlist";
+        confirmedPlaces++;
+      }
       const rosterRef = firebase.doc(firebase.db, "sessions", activeSession.id, "roster", reg.id);
       if (status) batch.set(rosterRef, { displayName: player.displayName, experience: player.experience, interestStatus: status, updatedAt: firebase.serverTimestamp() });
       else batch.delete(rosterRef);
@@ -787,6 +1057,7 @@ function resetCreateDialog() {
   $("#scriptJsonStatus").textContent = "The script name and characters will be read automatically. Official characters use official tokens; homebrew characters use their initial. Players can print or save the displayed sheet as a PDF.";
   $("#scriptJsonFields").hidden = false;
   inviteSlugEdited = false; updateInvitePreview();
+  populateTimezoneSelect($("#createTimezone"));
 }
 
 function updateInvitePreview() {
@@ -826,7 +1097,7 @@ async function createSession(form) {
     const data = {
       ownerUid: demoMode ? "demo-organiser" : currentUser.uid,
       organizerName: demoMode ? "Demo Storyteller" : currentProfile.displayName,
-      title: formData.get("title").trim(), location: formData.get("location").trim(), notes: formData.get("notes").trim(),
+      title: formData.get("title").trim(), location: formData.get("location").trim(), notes: formData.get("notes").trim(), timezone: validTimezone(formData.get("timezone")) || "Europe/London",
       capacity: Number(formData.get("capacity")), difficulty: formData.get("difficulty"), visibility: "public", status: createMode === "poll" ? "date_poll" : "find_players",
       fixedDate: createMode === "fixed" ? formData.get("fixedDate") : null, dateOptions,
       scriptMode, scriptName: scriptMode === "chosen" ? jsonScriptName : "", scriptUrl: "", scriptData: null, inviteSlug
@@ -836,7 +1107,9 @@ async function createSession(form) {
       author: scriptData?.author || "",
       sourceType: "json",
       pdfUrl: "",
-      scriptData
+      scriptData,
+      order: 0,
+      preferred: true
     } : null;
     let id;
     if (demoMode) {
@@ -868,6 +1141,14 @@ document.addEventListener("click", async event => {
   const finalize = event.target.closest("[data-finalize]"); if (finalize) { await finalizeDate(finalize.dataset.finalize); return; }
   const removePlayerButton = event.target.closest("[data-remove-player]"); if (removePlayerButton) { await removePlayer(removePlayerButton.dataset.removePlayer, removePlayerButton.dataset.playerName); return; }
   const deleteSessionButton = event.target.closest("[data-delete-session]"); if (deleteSessionButton) { await deleteSession(deleteSessionButton.dataset.deleteSession); return; }
+  if (event.target.closest("[data-edit-session]")) { openEditSessionDialog(); return; }
+  if (event.target.closest("[data-duplicate-session]")) { await duplicateSession(); return; }
+  const statusButton = event.target.closest("[data-session-status]"); if (statusButton) { await updateSessionStatus(statusButton.dataset.sessionStatus); return; }
+  const promoteButton = event.target.closest("[data-promote-player]"); if (promoteButton) { await promoteWaitlistedPlayer(promoteButton.dataset.promotePlayer); return; }
+  const removeScriptButton = event.target.closest("[data-remove-script]"); if (removeScriptButton) { await removePlannedScript(removeScriptButton.dataset.removeScript, removeScriptButton.dataset.scriptName); return; }
+  const moveScriptButton = event.target.closest("[data-move-script]"); if (moveScriptButton) { await reorderScripts(moveScriptButton.dataset.moveScript, moveScriptButton.dataset.direction); return; }
+  const preferScriptButton = event.target.closest("[data-prefer-script]"); if (preferScriptButton) { await preferScript(preferScriptButton.dataset.preferScript); return; }
+  if (event.target.closest("[data-calendar]")) { downloadCalendar(activeSession); return; }
   const mode = event.target.closest("[data-create-mode]"); if (mode) chooseCreateMode(mode.dataset.createMode);
   const viewScript = event.target.closest("[data-view-script]");
   if (viewScript) {
@@ -903,7 +1184,7 @@ $("#createSessionForm").addEventListener("change", async event => {
     try {
       const parsed = await readScriptFile(changedField.files[0]);
       status.textContent = `${parsed.characters.length} characters ready${parsed.author ? ` · by ${parsed.author}` : ""}.`;
-      if (!form.elements.scriptName.value && parsed.name) form.elements.scriptName.value = parsed.name;
+      if (form.elements.scriptName && !form.elements.scriptName.value && parsed.name) form.elements.scriptName.value = parsed.name;
     } catch (error) { status.textContent = error.message; changedField.value = ""; }
   }
 });
@@ -912,6 +1193,7 @@ $("#createSessionForm").elements.title.addEventListener("input", event => { if (
 $("#inviteSlug").addEventListener("input", () => { inviteSlugEdited = true; updateInvitePreview(); });
 $("#inviteSlug").addEventListener("blur", () => { $("#inviteSlug").value = normalizeInviteSlug($("#inviteSlug").value); updateInvitePreview(); });
 $("#createSessionForm").addEventListener("submit", event => { event.preventDefault(); createSession(event.currentTarget); });
+$("#editSessionForm").addEventListener("submit", event => { event.preventDefault(); saveSessionEdits(event.currentTarget); });
 $("#sessionContent").addEventListener("submit", event => {
   if (event.target.id === "playerForm") { event.preventDefault(); submitPlayer(event.target); }
   if (event.target.matches(".edit-player-form")) { event.preventDefault(); editPlayer(event.target); }

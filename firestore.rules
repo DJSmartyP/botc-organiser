@@ -37,7 +37,7 @@ service cloud.firestore {
         && request.resource.data.displayName.size() >= 2
         && request.resource.data.displayName.size() <= 40
         && validExperience(request.resource.data.experience)
-        && request.resource.data.interestStatus in ['confirmed', 'maybe'];
+        && request.resource.data.interestStatus in ['confirmed', 'maybe', 'waitlist'];
     }
 
     function validScriptData(value) {
@@ -57,7 +57,7 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly([
         'ownerUid', 'organizerName', 'title', 'location', 'notes', 'capacity', 'difficulty',
         'visibility', 'status', 'fixedDate', 'selectedDate', 'selectedOptionId',
-        'dateOptions', 'scriptMode', 'scriptName', 'scriptUrl', 'scriptData', 'inviteSlug', 'createdAt', 'updatedAt'
+        'dateOptions', 'scriptMode', 'scriptName', 'scriptUrl', 'scriptData', 'inviteSlug', 'timezone', 'createdAt', 'updatedAt'
       ])
       && request.resource.data.ownerUid is string
       && request.resource.data.organizerName is string
@@ -75,7 +75,9 @@ service cloud.firestore {
       && (!request.resource.data.keys().hasAny(['difficulty'])
         || request.resource.data.difficulty in ['Beginner', 'Experienced', 'Expert'])
       && request.resource.data.visibility == 'public'
-      && request.resource.data.status in ['date_poll', 'find_players', 'closed']
+      && request.resource.data.status in ['date_poll', 'find_players', 'closed', 'cancelled', 'archived']
+      && (!request.resource.data.keys().hasAny(['timezone'])
+        || (request.resource.data.timezone is string && request.resource.data.timezone.size() <= 60))
       && request.resource.data.scriptMode in ['tbd', 'chosen']
       && (!request.resource.data.keys().hasAny(['scriptData']) || validScriptData(request.resource.data.scriptData))
       && request.resource.data.inviteSlug is string
@@ -87,7 +89,7 @@ service cloud.firestore {
 
     function validPlannedScript() {
       return request.resource.data.keys().hasOnly([
-        'name', 'author', 'sourceType', 'pdfUrl', 'scriptData', 'createdAt', 'updatedAt'
+        'name', 'author', 'sourceType', 'pdfUrl', 'scriptData', 'order', 'preferred', 'createdAt', 'updatedAt'
       ])
       && request.resource.data.name is string
       && request.resource.data.name.size() > 0
@@ -97,6 +99,8 @@ service cloud.firestore {
       && request.resource.data.sourceType == 'json'
       && request.resource.data.pdfUrl is string
       && request.resource.data.pdfUrl == ''
+      && (!request.resource.data.keys().hasAny(['order']) || request.resource.data.order is int)
+      && (!request.resource.data.keys().hasAny(['preferred']) || request.resource.data.preferred is bool)
       && request.resource.data.scriptData is map
       && validScriptData(request.resource.data.scriptData);
     }
@@ -107,8 +111,10 @@ service cloud.firestore {
       allow list: if false;
       allow create: if isHumanAccount()
         && request.resource.data.keys().hasOnly(['sessionId', 'ownerUid', 'createdAt', 'updatedAt'])
-        && request.resource.data.ownerUid == request.auth.uid
-        && getAfter(/databases/$(database)/documents/sessions/$(request.resource.data.sessionId)).data.ownerUid == request.auth.uid;
+        && ((request.resource.data.ownerUid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/sessions/$(request.resource.data.sessionId)).data.ownerUid == request.auth.uid)
+          || (isAdmin()
+            && getAfter(/databases/$(database)/documents/sessions/$(request.resource.data.sessionId)).data.ownerUid == request.resource.data.ownerUid));
       allow update: if isAdmin() || (isHumanAccount()
         && resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerUid == resource.data.ownerUid
@@ -154,6 +160,7 @@ service cloud.firestore {
         allow read: if signedIn() && (resource.data.createdByUid == request.auth.uid || manages(sessionId));
         allow create: if signedIn()
           && (request.resource.data.createdByUid == request.auth.uid || manages(sessionId))
+          && (manages(sessionId) || session(sessionId).data.status in ['date_poll', 'find_players'])
           && request.resource.data.keys().hasOnly(['displayName', 'experience', 'createdByUid', 'responses', 'finalStatus', 'updatedAt'])
           && request.resource.data.displayName is string
           && request.resource.data.displayName.size() >= 2

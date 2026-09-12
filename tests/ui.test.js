@@ -48,3 +48,22 @@ test("new scripts are JSON-only and homebrew characters use initials", () => {
   assert.match(app, /sourceType: "json", pdfUrl: ""/);
   assert.match(app, /function officialTokenUrl/);
 });
+
+test("event management supports lifecycle, duplication, calendar, and compact script controls", () => {
+  assert.match(html, /id="editSessionDialog"/);
+  assert.match(html, /id="createTimezone"/);
+  assert.match(app, /function updateSessionStatus/);
+  assert.match(app, /function duplicateSession/);
+  assert.match(app, /function downloadCalendar/);
+  assert.match(app, /data-remove-script/);
+  assert.match(app, /data-move-script/);
+  assert.match(app, /data-prefer-script/);
+});
+
+test("capacity and date planning expose waitlists and a manager heatmap", () => {
+  assert.match(app, /interestStatus === "waitlist"/);
+  assert.match(app, /Join the waitlist/);
+  assert.match(app, /function promoteWaitlistedPlayer/);
+  assert.match(app, /function renderAvailabilityHeatmap/);
+  assert.match(css, /\.availability-table/);
+});
