@@ -6,6 +6,8 @@ Chaos Planner is an unofficial community tool. Blood on the Clocktower and its g
 
 The organiser dashboard is designed for a growing library of sessions: compact rows, live registration totals, attention markers for dates that have passed, search by event/venue/storyteller/link, lifecycle filters, upcoming/recent/name sorting, and progressive batches of 25 results. Admins see and can edit the same tools across every organiser's gathering. Managers can edit event details and custom links, close/reopen, cancel, archive, permanently delete, or duplicate an event without copying its player records.
 
+The interface uses stage-specific status seals, contained action menus, team-coloured script summaries, and a highlighted best-fit date in the manager availability map. Empty states use the local `assets/empty-town-vignette.png` illustration, keeping the visual treatment reliable without a third-party image host.
+
 Chaos Planner uses the same custom-link convention as the IDP app: a readable `?join=friday-ravenswood-bluff` URL resolves through the top-level `inviteLinks` collection. The direct `?session=FIRESTORE_DOCUMENT_ID` format remains supported as a fallback.
 
 The site is a static, mobile-first app for GitHub Pages. Firebase Authentication and Cloud Firestore provide identity and authoritative shared data. The placeholder configuration starts a clearly labelled in-memory preview; it does not use `localStorage` and does not persist data.

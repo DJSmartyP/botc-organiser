@@ -2,10 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app] = await Promise.all([
+const [html, css, app, emptyArt] = await Promise.all([
   readFile(new URL("../index.html", import.meta.url), "utf8"),
   readFile(new URL("../styles.css", import.meta.url), "utf8"),
-  readFile(new URL("../app.js", import.meta.url), "utf8")
+  readFile(new URL("../app.js", import.meta.url), "utf8"),
+  readFile(new URL("../assets/empty-town-vignette.png", import.meta.url))
 ]);
 
 test("homepage links to the Chaos playlist and complete tutorial", () => {
@@ -66,4 +67,14 @@ test("capacity and date planning expose waitlists and a manager heatmap", () => 
   assert.match(app, /function promoteWaitlistedPlayer/);
   assert.match(app, /function renderAvailabilityHeatmap/);
   assert.match(css, /\.availability-table/);
+});
+
+test("the cosmetic layer keeps controls contained and gives empty states a local PNG", () => {
+  assert.match(app, /class="manager-more-menu"/);
+  assert.match(app, /class="script-management"/);
+  assert.match(app, /script-team-strip/);
+  assert.match(app, /Best fit/);
+  assert.match(app, /assets\/empty-town-vignette\.png/);
+  assert.deepEqual([...emptyArt.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+  assert.ok(emptyArt.length < 750_000);
 });

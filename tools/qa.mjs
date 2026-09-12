@@ -35,6 +35,14 @@ try {
   assert.equal(await page.locator("[data-duplicate-session]").count(), 1);
   assert.equal(await page.locator("[data-session-status='closed']").count(), 1);
   assert.equal(await page.locator("[data-remove-script]").count(), 2);
+  await page.locator(".manager-more-menu > summary").click();
+  await page.locator(".manager-more-menu [data-delete-session]").waitFor({ state: "visible" });
+  await assertFits(page, "expanded manager actions");
+  await page.locator(".manager-more-menu > summary").click();
+  await page.locator(".script-management > summary").click();
+  await page.locator(".script-management-row").first().waitFor({ state: "visible" });
+  await assertFits(page, "expanded script management");
+  await page.locator(".script-management > summary").click();
   await page.locator("[data-edit-session]").click();
   await page.locator("#editSessionDialog").waitFor({ state: "visible" });
   assert.equal(await page.locator("#editSessionForm [name='title']").inputValue(), "A night in Ravenswood Bluff");
@@ -53,7 +61,35 @@ try {
   assert.match(await page.locator(".manager-registrations summary").innerText(), /0 total/);
   assert.deepEqual(pageErrors, []);
   await page.close();
-  console.log("QA passed: desktop, 390px mobile, manager controls, player heatmap, duplication, dialogs, and horizontal-overflow checks.");
+
+  const emptyPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  watchErrors(emptyPage, "empty state");
+  await emptyPage.goto("http://127.0.0.1:4173/?demo=1", { waitUntil: "networkidle" });
+  await emptyPage.locator("#dashboardButton").click();
+  await emptyPage.locator(".card-more-menu > summary").first().click();
+  await emptyPage.locator(".card-more-menu [data-delete-session]").first().waitFor({ state: "visible" });
+  await assertFits(emptyPage, "mobile dashboard action menu");
+  await emptyPage.locator(".card-more-menu > summary").first().click();
+  await emptyPage.locator("#sessionSearch").fill("no event can match this");
+  await emptyPage.locator(".empty-state-art").scrollIntoViewIfNeeded();
+  await emptyPage.waitForFunction(() => document.querySelector(".empty-state-art")?.naturalWidth > 0);
+  const emptyArtWidth = await emptyPage.locator(".empty-state-art").evaluate(image => image.naturalWidth);
+  assert.ok(emptyArtWidth > 0, "empty-state PNG did not load");
+  await assertFits(emptyPage, "mobile dashboard empty state");
+  await emptyPage.close();
+
+  const mobileManager = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  watchErrors(mobileManager, "mobile manager");
+  await mobileManager.goto("http://127.0.0.1:4173/?demo=1", { waitUntil: "networkidle" });
+  await mobileManager.locator("#dashboardButton").click();
+  await mobileManager.locator("[data-open-session]").first().click();
+  await mobileManager.locator(".manager-more-menu > summary").click();
+  await mobileManager.locator(".script-management > summary").click();
+  await mobileManager.locator(".script-management-row").first().waitFor({ state: "visible" });
+  await assertFits(mobileManager, "mobile expanded manager controls");
+  await mobileManager.close();
+  assert.deepEqual(pageErrors, []);
+  console.log("QA passed: desktop, 390px mobile, manager controls, script controls, player heatmap, duplication, empty states, dialogs, and horizontal-overflow checks.");
 } finally {
   await browser.close();
 }

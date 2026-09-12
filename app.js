@@ -58,8 +58,8 @@ const sampleSession = {
 };
 
 sampleSession.scripts = [
-  { id: "trouble-brewing", name: "Trouble Brewing", author: "The Pandemonium Institute", sourceType: "json", pdfUrl: "", scriptData: sampleSession.scriptData },
-  { id: "bad-moon-rising", name: "Bad Moon Rising", author: "The Pandemonium Institute", sourceType: "json", pdfUrl: "", scriptData: { name: "Bad Moon Rising", author: "The Pandemonium Institute", characters: [
+  { id: "trouble-brewing", name: "Trouble Brewing", author: "The Pandemonium Institute", sourceType: "json", pdfUrl: "", preferred: true, order: 0, scriptData: sampleSession.scriptData },
+  { id: "bad-moon-rising", name: "Bad Moon Rising", author: "The Pandemonium Institute", sourceType: "json", pdfUrl: "", preferred: false, order: 1, scriptData: { name: "Bad Moon Rising", author: "The Pandemonium Institute", characters: [
     { id: "grandmother", name: "Grandmother", team: "townsfolk", ability: "You start knowing a good player and their character. If the Demon kills them, you die too.", iconUrl: "https://release.botc.app/resources/characters/bmr/grandmother_g.webp" },
     { id: "lunatic", name: "Lunatic", team: "outsider", ability: "You think you are a Demon, but you are not. The Demon knows who you are and who you choose at night.", iconUrl: "https://release.botc.app/resources/characters/bmr/lunatic_g.webp" },
     { id: "devilsadvocate", name: "Devil's Advocate", team: "minion", ability: "Each night, choose a living player. If executed tomorrow, they do not die.", iconUrl: "https://release.botc.app/resources/characters/bmr/devilsadvocate_e.webp" },
@@ -346,6 +346,16 @@ function statusLabel(status) {
   return ({ date_poll: "Finding a date", find_players: "Finding players", closed: "Closed", cancelled: "Cancelled", archived: "Archived" })[status] || "Finding players";
 }
 
+const statusMarks = { date_poll: "◷", find_players: "♟", closed: "◆", cancelled: "×", archived: "▣" };
+
+function renderStatusPill(status, label = statusLabel(status)) {
+  return `<span class="status-pill status-${escapeHtml(status)}"><span class="status-mark" aria-hidden="true">${statusMarks[status] || "◆"}</span>${escapeHtml(label)}</span>`;
+}
+
+function renderEmptyState(title, copy = "", compact = false) {
+  return `<div class="empty-state${compact ? " compact" : ""}"><img class="empty-state-art" src="assets/empty-town-vignette.png?v=1" alt="" loading="lazy"><div><h2>${escapeHtml(title)}</h2>${copy ? `<p>${escapeHtml(copy)}</p>` : ""}</div></div>`;
+}
+
 function sessionNeedsAttention(session) {
   if (!["date_poll", "find_players"].includes(session.status)) return false;
   const date = dashboardDate(session);
@@ -383,21 +393,21 @@ function renderDashboardSessions() {
   $("#dashboardStats").innerHTML = `<div><strong>${dashboardSessions.length}</strong><span>Total</span></div><div><strong>${totals.date_poll}</strong><span>Finding dates</span></div><div><strong>${totals.find_players}</strong><span>Finding players</span></div><div><strong>${totals.closed + totals.cancelled + totals.archived}</strong><span>Finished</span></div>`;
   $("#sessionResultCount").textContent = visible.length === matches.length ? `${matches.length} shown` : `${visible.length} of ${matches.length} shown`;
   if (!dashboardSessions.length) {
-    list.innerHTML = '<div class="empty-state"><span>☾</span><h2>No gatherings yet</h2><p>Create your first session and invite the town.</p></div>';
+    list.innerHTML = renderEmptyState("No gatherings yet", "Create your first session and invite the town.");
     return;
   }
   if (!matches.length) {
-    list.innerHTML = '<div class="empty-state compact"><p>No gatherings match those filters.</p></div>';
+    list.innerHTML = renderEmptyState("No matching gatherings", "Try a different search or status filter.", true);
     return;
   }
   list.innerHTML = visible.map(session => {
     const date = dashboardDate(session);
     const isAdmin = currentProfile?.role === "admin";
     return `<article class="session-card ${sessionNeedsAttention(session) ? "needs-attention" : ""}">
-      <div class="session-card-main"><div class="session-card-top"><span class="status-pill status-${escapeHtml(session.status)}">${statusLabel(session.status)}</span>${sessionNeedsAttention(session) ? '<span class="status-pill status-attention">Needs attention</span>' : ""}${isAdmin ? `<span class="session-owner">${escapeHtml(session.organizerName || "Organiser")}</span>` : ""}</div>
+      <div class="session-card-main"><div class="session-card-top">${renderStatusPill(session.status)}${sessionNeedsAttention(session) ? '<span class="status-pill status-attention"><span class="status-mark" aria-hidden="true">!</span>Needs attention</span>' : ""}${isAdmin ? `<span class="session-owner">${escapeHtml(session.organizerName || "Organiser")}</span>` : ""}</div>
       <h2>${escapeHtml(session.title)}</h2><div class="session-card-meta"><span>◷ ${date ? formatDate(date, sessionTimezone(session)) : `${session.dateOptions?.length || 0} dates proposed`}</span><span>⌖ ${escapeHtml(session.location || "Location TBD")}</span><span>♟ ${Number.isInteger(session.registeredCount) ? `${session.registeredCount} registered · ` : ""}Up to ${Number(session.capacity) || 0}</span>${renderDifficultyBadge(session.difficulty)}</div>
       <code class="session-slug">${escapeHtml(session.inviteSlug || session.id)}</code></div>
-      <div class="session-card-actions"><button class="button button-small button-ghost" data-copy-session="${session.id}" data-copy-slug="${escapeHtml(session.inviteSlug || "")}" type="button">Copy player link</button><button class="button button-small button-secondary" data-open-session="${session.id}" type="button">Manage</button><button class="button button-small button-danger" data-delete-session="${session.id}" type="button">Delete</button></div>
+      <div class="session-card-actions"><button class="button button-small button-ghost" data-copy-session="${session.id}" data-copy-slug="${escapeHtml(session.inviteSlug || "")}" type="button">Copy player link</button><button class="button button-small button-secondary" data-open-session="${session.id}" type="button">Manage</button><details class="card-more-menu"><summary aria-label="More actions">•••</summary><div><button class="button button-small button-danger" data-delete-session="${session.id}" type="button">Delete event</button></div></details></div>
     </article>`;
   }).join("") + (visible.length < matches.length ? '<button class="button button-ghost dashboard-load-more" data-load-more type="button">Show 25 more</button>' : "");
 }
@@ -513,8 +523,8 @@ function renderSession(session) {
   const lifecycleNotice = session.status === "closed" ? '<div class="notice lifecycle-notice">Registration is closed. The roster remains visible.</div>' : session.status === "cancelled" ? '<div class="notice lifecycle-notice danger-notice">This gathering has been cancelled.</div>' : session.status === "archived" ? '<div class="notice lifecycle-notice">This gathering is archived and no longer accepts responses.</div>' : "";
   const lifecycleAction = session.status === "closed" ? '<button class="button button-small button-secondary" data-session-status="restore" type="button">Reopen</button>' : session.status === "cancelled" || session.status === "archived" ? '<button class="button button-small button-secondary" data-session-status="restore" type="button">Restore</button>' : '<button class="button button-small button-ghost" data-session-status="closed" type="button">Close registration</button>';
   $("#sessionContent").innerHTML = `
-    <article class="session-hero panel">
-      <div class="eyebrow">${statusLabel(session.status)}</div>
+    <article class="session-hero panel session-status-${escapeHtml(session.status)}">
+      <div class="session-status-line">${renderStatusPill(session.status)}</div>
       <h1>${escapeHtml(session.title)}</h1>
       <div class="session-facts">
         ${date ? `<div><span>Date</span><strong>${formatDate(date, sessionTimezone(session))}</strong></div>` : ""}
@@ -527,7 +537,7 @@ function renderSession(session) {
       ${session.notes ? `<p class="session-notes">${escapeHtml(session.notes)}</p>` : ""}
       ${lifecycleNotice}
       <div class="share-row"><button id="copyLinkButton" class="button button-ghost" type="button">Copy player link</button>${date ? '<button class="button button-ghost" data-calendar type="button">Add to calendar</button>' : ""}<code>${escapeHtml(session.inviteSlug || session.id)}</code>${session.inviteSlug ? '<span class="status-pill">Custom link</span>' : ""}</div>
-      ${manager ? `<div class="manager-action-bar"><button class="button button-small button-secondary" data-edit-session type="button">Edit event</button><button class="button button-small button-ghost" data-duplicate-session type="button">Duplicate</button>${lifecycleAction}${session.status !== "cancelled" ? '<button class="button button-small button-danger" data-session-status="cancelled" type="button">Cancel event</button>' : ""}${session.status !== "archived" ? '<button class="button button-small button-ghost" data-session-status="archived" type="button">Archive</button>' : ""}<button class="button button-small button-danger" data-delete-session="${escapeHtml(session.id)}" type="button">Delete permanently</button></div>` : ""}
+      ${manager ? `<div class="manager-action-bar"><button class="button button-small button-secondary" data-edit-session type="button">Edit event</button><button class="button button-small button-ghost" data-duplicate-session type="button">Duplicate</button>${lifecycleAction}<details class="manager-more-menu"><summary class="button button-small button-ghost">More actions</summary><div class="manager-more-popover">${session.status !== "cancelled" ? '<button class="button button-small button-danger" data-session-status="cancelled" type="button">Cancel event</button>' : ""}${session.status !== "archived" ? '<button class="button button-small button-ghost" data-session-status="archived" type="button">Archive event</button>' : ""}<button class="button button-small button-danger" data-delete-session="${escapeHtml(session.id)}" type="button">Delete permanently</button></div></details></div>` : ""}
     </article>
     <div class="session-workspace ${manager ? "manager-workspace" : "player-workspace"}">
       ${renderPlannedScripts(session, manager)}
@@ -555,15 +565,19 @@ function renderCharacterGroups(scriptData) {
 
 function renderPlannedScripts(session, manager) {
   const scripts = session.scripts || [];
-  const rows = scripts.map((script, index) => `<div class="planned-script-row${script.preferred ? " is-preferred" : ""}">
-    <button class="planned-script-view" data-view-script="${escapeHtml(script.id)}" type="button"><span class="planned-script-name"><strong>${escapeHtml(script.name)}</strong>${script.author ? `<small>By ${escapeHtml(script.author)}</small>` : ""}</span>${script.preferred ? '<span class="preferred-badge">★ Preferred</span>' : ""}<span class="script-source-badge">Characters</span><span class="script-row-arrow" aria-hidden="true">→</span></button>
-    ${manager ? `<div class="script-manager-actions" aria-label="Manage ${escapeHtml(script.name)}">${script.legacy ? "" : `<button class="icon-button" data-move-script="${escapeHtml(script.id)}" data-direction="up" type="button" ${index === 0 ? "disabled" : ""} aria-label="Move up">↑</button><button class="icon-button" data-move-script="${escapeHtml(script.id)}" data-direction="down" type="button" ${index === scripts.length - 1 ? "disabled" : ""} aria-label="Move down">↓</button>${script.preferred ? "" : `<button class="button button-small button-ghost" data-prefer-script="${escapeHtml(script.id)}" type="button">Make preferred</button>`}` }<button class="icon-button danger" data-remove-script="${escapeHtml(script.id)}" data-script-name="${escapeHtml(script.name)}" type="button">Remove</button></div>` : ""}
-  </div>`).join("");
+  const rows = scripts.map(script => {
+    const characters = script.scriptData?.characters || [];
+    const teamCounts = Object.fromEntries(["townsfolk", "outsider", "minion", "demon", "other"].map(team => [team, 0]));
+    characters.forEach(character => { const team = teamCounts[character.team] === undefined ? "other" : character.team; teamCounts[team]++; });
+    const strip = Object.entries(teamCounts).filter(([, count]) => count).map(([team, count]) => `<i class="team-${team}" style="--team-weight:${count}" title="${count} ${team}"></i>`).join("");
+    return `<article class="planned-script-card${script.preferred ? " is-preferred" : ""}"><span class="script-team-strip" aria-hidden="true">${strip}</span><button class="planned-script-view" data-view-script="${escapeHtml(script.id)}" type="button"><span class="planned-script-name"><strong>${escapeHtml(script.name)}</strong>${script.author ? `<small>By ${escapeHtml(script.author)}</small>` : ""}</span><span class="script-card-meta">${characters.length} character${characters.length === 1 ? "" : "s"}</span>${script.preferred ? '<span class="preferred-ribbon">★ Preferred</span>' : ""}<span class="script-row-arrow" aria-hidden="true">→</span></button></article>`;
+  }).join("");
+  const management = manager && scripts.length ? `<details class="script-management"><summary>Manage scripts</summary><div class="script-management-list">${scripts.map((script, index) => `<div class="script-management-row"><span>${escapeHtml(script.name)}</span><div>${script.legacy ? "" : `<button class="icon-button" data-move-script="${escapeHtml(script.id)}" data-direction="up" type="button" ${index === 0 ? "disabled" : ""} aria-label="Move ${escapeHtml(script.name)} up">↑</button><button class="icon-button" data-move-script="${escapeHtml(script.id)}" data-direction="down" type="button" ${index === scripts.length - 1 ? "disabled" : ""} aria-label="Move ${escapeHtml(script.name)} down">↓</button>${script.preferred ? "" : `<button class="button button-small button-ghost" data-prefer-script="${escapeHtml(script.id)}" type="button">Prefer</button>`}` }<button class="icon-button danger" data-remove-script="${escapeHtml(script.id)}" data-script-name="${escapeHtml(script.name)}" type="button">Remove</button></div></div>`).join("")}</div></details>` : "";
   const addForm = manager ? `<details class="panel planned-script-manager"><summary>Add another script</summary><form id="plannedScriptForm" class="planned-script-form"><p>Upload a BOTC script JSON. Official characters use official tokens; homebrew characters use a clear initial marker.</p>
       <div><label>BOTC script JSON<input name="scriptJsonFile" type="file" accept=".json,application/json"><small class="field-hint">Supports standard character IDs and full homebrew character definitions.</small></label></div>
       <p id="scriptUploadError" class="form-error" role="alert" hidden></p><button class="button button-secondary" type="submit">Add planned script</button></form></details>` : "";
   return `<section id="plannedScripts" class="planned-scripts-section"><div class="script-offer-panel panel"><div class="script-offer-heading"><div><span class="eyebrow">Before you choose dates</span><h2>Scripts on offer</h2></div><p>${scripts.length ? "Check the possible games, then choose every date you can make." : "No scripts have been added yet. You can still choose your dates below."}</p></div>
-    ${scripts.length ? `<div class="planned-script-list">${rows}</div>` : ""}</div>${addForm}</section>`;
+    ${scripts.length ? `<div class="planned-script-list">${rows}</div>${management}` : renderEmptyState("No scripts announced", "The Storyteller can still add possibilities later.", true)}</div>${addForm}</section>`;
 }
 
 function renderScriptDetail(session, script) {
@@ -664,7 +678,10 @@ function renderAvailabilityHeatmap(session) {
   const players = session.registrations || [];
   if (!players.length) return "";
   const cells = { available: ["A", "Available"], maybe: ["M", "Maybe"], unavailable: ["U", "Unavailable"] };
-  return `<section class="availability-panel panel"><div class="section-heading"><div><div class="eyebrow">At a glance</div><h2>Availability map</h2></div><p>A = Available · M = Maybe · U = Unavailable</p></div><div class="availability-scroll"><table class="availability-table"><thead><tr><th>Player</th>${session.dateOptions.map((option, index) => `<th title="${escapeHtml(formatDate(option.startAt, sessionTimezone(session)))}">Date ${index + 1}</th>`).join("")}</tr></thead><tbody>${players.map(player => `<tr><th>${escapeHtml(player.displayName)}</th>${session.dateOptions.map(option => { const response = player.responses?.[option.id] || "unavailable"; const detail = cells[response] || ["—", "No response"]; return `<td><span class="availability-cell status-${response}" title="${detail[1]}">${detail[0]}</span></td>`; }).join("")}</tr>`).join("")}</tbody></table></div></section>`;
+  const maximum = Math.max(0, ...session.dateOptions.map(option => session.counts?.[option.id]?.available || 0));
+  const strongest = new Set(maximum ? session.dateOptions.filter(option => (session.counts?.[option.id]?.available || 0) === maximum).map(option => option.id) : []);
+  const shortDate = value => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: sessionTimezone(session) }).format(zonedDate(value, sessionTimezone(session)));
+  return `<section class="availability-panel panel"><div class="section-heading"><div><div class="eyebrow">At a glance</div><h2>Availability map</h2></div><p><span class="legend-token status-available">A</span> Available <span class="legend-token status-maybe">M</span> Maybe <span class="legend-token status-unavailable">U</span> Unavailable</p></div><div class="availability-scroll"><table class="availability-table"><thead><tr><th>Player</th>${session.dateOptions.map(option => `<th class="${strongest.has(option.id) ? "is-strongest" : ""}" title="${escapeHtml(formatDate(option.startAt, sessionTimezone(session)))}"><span>${escapeHtml(shortDate(option.startAt))}</span>${strongest.has(option.id) ? '<small>Best fit</small>' : ""}</th>`).join("")}</tr></thead><tbody>${players.map(player => `<tr><th>${escapeHtml(player.displayName)}</th>${session.dateOptions.map(option => { const response = player.responses?.[option.id] || "unavailable"; const detail = cells[response] || ["—", "No response"]; return `<td class="${strongest.has(option.id) ? "is-strongest" : ""}"><span class="availability-cell status-${response}" title="${detail[1]}">${detail[0]}</span></td>`; }).join("")}</tr>`).join("")}</tbody></table></div></section>`;
 }
 
 function renderFindPlayers(session, manager) {
@@ -677,7 +694,7 @@ function renderFindPlayers(session, manager) {
   return `<section class="stage-section">
     <div class="roster-summary panel"><div><div class="eyebrow">Find Players</div><h2>${size}</h2><p>${confirmed.length} confirmed of ${session.capacity} maximum${maybe.length ? ` · ${maybe.length} maybe` : ""}${waitlist.length ? ` · ${waitlist.length} waiting` : ""}</p></div><div class="capacity-ring" style="--fill:${Math.min(100, confirmed.length / session.capacity * 100)}%"><strong>${confirmed.length}</strong><span>/${session.capacity}</span></div></div>
     <div class="section-heading"><div><h2>Who’s gathering</h2><p>Every interested player appears here with their experience level.</p></div></div>
-    <div class="roster-grid">${roster.length ? roster.map(player => `<article class="player-card ${player.interestStatus === "maybe" ? "is-maybe" : player.interestStatus === "waitlist" ? "is-waitlist" : ""}"><span class="player-initial">${escapeHtml(player.displayName[0]?.toUpperCase() || "?")}</span><div class="player-identity"><strong>${escapeHtml(player.displayName)}</strong><span>${escapeHtml(player.experience)}</span></div><div class="player-card-actions">${player.interestStatus === "maybe" ? '<em>Maybe · unconfirmed</em>' : player.interestStatus === "waitlist" ? '<em>Waitlist</em>' : '<em>Interested</em>'}${manager && player.interestStatus === "waitlist" && confirmed.length < session.capacity ? `<button class="button button-small button-secondary" data-promote-player="${escapeHtml(player.id)}" type="button">Promote</button>` : ""}${manager ? `<button class="icon-button danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button" aria-label="Remove ${escapeHtml(player.displayName)}">Remove</button>` : ""}</div></article>`).join("") : '<div class="empty-state compact"><p>No players yet. Share the link to begin.</p></div>'}</div>
+    <div class="roster-grid">${roster.length ? roster.map(player => `<article class="player-card ${player.interestStatus === "maybe" ? "is-maybe" : player.interestStatus === "waitlist" ? "is-waitlist" : ""}"><span class="player-initial">${escapeHtml(player.displayName[0]?.toUpperCase() || "?")}</span><div class="player-identity"><strong>${escapeHtml(player.displayName)}</strong><span>${escapeHtml(player.experience)}</span></div><div class="player-card-actions">${player.interestStatus === "maybe" ? '<em>Maybe · unconfirmed</em>' : player.interestStatus === "waitlist" ? '<em>Waitlist</em>' : '<em>Interested</em>'}${manager && player.interestStatus === "waitlist" && confirmed.length < session.capacity ? `<button class="button button-small button-secondary" data-promote-player="${escapeHtml(player.id)}" type="button">Promote</button>` : ""}${manager ? `<button class="icon-button danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button" aria-label="Remove ${escapeHtml(player.displayName)}">Remove</button>` : ""}</div></article>`).join("") : renderEmptyState("The square is quiet", "No players yet. Share the link to call the town together.", true)}</div>
     ${manager ? '<div class="notice">Only the public name and experience shown above are publicly readable. Player registration records remain private to the player and session managers.</div>' + renderManagerRegistrations(session) + (registrationOpen ? managerPlayerForm(session) : "") : renderOwnedRegistrations(session) + (registrationOpen ? playerDetailsForm(confirmed.length >= session.capacity ? "Join the waitlist" : "Register player interest") : '<div class="notice">This event is not accepting new registrations.</div>')}
   </section>`;
 }
@@ -700,7 +717,7 @@ function renderOwnedRegistrations(session) {
 function renderManagerRegistrations(session) {
   const registrations = session.registrations || [];
   return `<details class="manager-registrations panel" ${session.status === "date_poll" ? "open" : ""}><summary><span>Manage all player records</span><small>${registrations.length} total</small></summary>
-    ${registrations.length ? `<div class="manager-player-list">${registrations.map(player => `<div><span><strong>${escapeHtml(player.displayName)}</strong><small>${escapeHtml(player.experience)}</small></span><button class="button button-small button-danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button">Remove</button></div>`).join("")}</div>` : '<div class="empty-state compact"><p>No players have responded yet.</p></div>'}
+    ${registrations.length ? `<div class="manager-player-list">${registrations.map(player => `<div><span><strong>${escapeHtml(player.displayName)}</strong><small>${escapeHtml(player.experience)}</small></span><button class="button button-small button-danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button">Remove</button></div>`).join("")}</div>` : renderEmptyState("No responses yet", "The player link is ready to share.", true)}
   </details>`;
 }
 
