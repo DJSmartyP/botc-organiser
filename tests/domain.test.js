@@ -74,8 +74,9 @@ test("official role references place newer and previously unresolved characters 
 });
 
 test("BOTC script JSON supports embedded custom characters and rejects invalid files", () => {
-  const parsed = parseScriptJson([{ id: "custom-demon", name: "Night Beast", team: "demons", ability: "Each night, choose a player." }]);
+  const parsed = parseScriptJson([{ id: "custom-demon", name: "Night Beast", team: "demons", ability: "Each night, choose a player.", image: ["http://unsafe.example/token.png", "https://github.com/clockmaker/homebrew/blob/main/tokens/night-beast.png"] }]);
   assert.equal(parsed.characters[0].team, "demon");
+  assert.equal(parsed.characters[0].iconUrl, "https://raw.githubusercontent.com/clockmaker/homebrew/main/tokens/night-beast.png");
   assert.throws(() => parseScriptJson("not json"), /valid JSON/);
   assert.throws(() => parseScriptJson({}), /list of characters/);
 });
