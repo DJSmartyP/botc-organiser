@@ -61,10 +61,10 @@ describe("Firestore privacy and role rules", { skip: !hasEmulator }, () => {
 
   it("limits organisers to their events and lets admins manage every event", async () => {
     const owner = human("owner-one");
-    await assertSucceeds(updateDoc(doc(owner, "sessions", "owned"), { notes: "Updated by owner" }));
+    await assertSucceeds(updateDoc(doc(owner, "sessions", "owned"), { notes: "Updated by owner", difficulty: "Intermediate" }));
     await assertFails(updateDoc(doc(owner, "sessions", "other"), { notes: "Not allowed" }));
     const admin = human("admin-user", { admin: true });
-    await assertSucceeds(updateDoc(doc(admin, "sessions", "other"), { notes: "Updated by admin" }));
+    await assertSucceeds(updateDoc(doc(admin, "sessions", "other"), { notes: "Updated by admin", difficulty: "Advanced" }));
   });
 
   it("accepts waitlist roster records and manager-controlled script ordering", async () => {

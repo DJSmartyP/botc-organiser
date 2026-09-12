@@ -407,10 +407,14 @@ function sessionNeedsAttention(session) {
 }
 
 const difficultyDetails = {
-  Beginner: { level: 1, hint: "New players welcome" },
-  Experienced: { level: 2, hint: "Some rules confidence helps" },
-  Expert: { level: 3, hint: "For seasoned townsfolk" }
+  Beginner: { level: 1, hint: "Features the three base scripts" },
+  Intermediate: { level: 2, hint: "May include more complex scripts" },
+  Advanced: { level: 3, hint: "May include homebrew scripts or alternative game modes" }
 };
+
+function eventDifficulty(value) {
+  return ({ Experienced: "Intermediate", Expert: "Advanced" })[value] || value;
+}
 
 const experienceDetails = {
   Beginner: "New to the game or still learning the ropes.",
@@ -423,14 +427,20 @@ function experienceOptions() {
 }
 
 function renderExperienceGuide() {
-  return `<div class="experience-guide">${Object.entries(experienceDetails).map(([level, description]) => `<div><strong>${level}</strong><span>${escapeHtml(description)}</span></div>`).join("")}</div>`;
+  return `<div class="experience-guide">${Object.entries(experienceDetails).map(([level, description]) => `<div class="experience-level-${level.toLowerCase()}"><strong>${level}</strong><span>${escapeHtml(description)}</span></div>`).join("")}</div>`;
+}
+
+function renderExperienceBadge(value) {
+  const description = experienceDetails[value];
+  return description ? `<span class="experience-badge experience-${value.toLowerCase()}" title="${escapeHtml(description)}">${escapeHtml(value)}</span>` : `<span class="experience-badge">${escapeHtml(value || "Unknown")}</span>`;
 }
 
 function renderDifficultyBadge(value) {
-  const detail = difficultyDetails[value];
+  const normalized = eventDifficulty(value);
+  const detail = difficultyDetails[normalized];
   if (!detail) return '<span class="difficulty-badge difficulty-unset"><span class="difficulty-moons" aria-hidden="true"><i></i><i></i><i></i></span>Difficulty TBD</span>';
   const moons = [1, 2, 3].map(index => `<i class="${index <= detail.level ? "is-lit" : ""}"></i>`).join("");
-  return `<span class="difficulty-badge difficulty-${value.toLowerCase()}" title="${detail.hint}"><span class="difficulty-moons" aria-hidden="true">${moons}</span>${value}</span>`;
+  return `<span class="difficulty-badge difficulty-${normalized.toLowerCase()}" title="${detail.hint}"><span class="difficulty-moons" aria-hidden="true">${moons}</span>${normalized}</span>`;
 }
 
 function renderDashboardSessions() {
@@ -623,7 +633,7 @@ function renderSession(session) {
         <div><span>Storyteller${storytellerNames(session).includes(",") ? "s" : ""}</span><strong>${escapeHtml(storytellerNames(session))}</strong></div>
         <div><span>Script</span><strong>${script}</strong></div>
         <div><span>Time zone</span><strong>${escapeHtml(sessionTimezone(session))}</strong></div>
-        <div class="difficulty-fact"><span>Difficulty</span><strong>${renderDifficultyBadge(session.difficulty)}</strong>${manager ? `<select id="sessionDifficulty" class="difficulty-select" aria-label="Change event difficulty"><option value="">Choose level</option>${Object.keys(difficultyDetails).map(value => `<option value="${value}"${session.difficulty === value ? " selected" : ""}>${value}</option>`).join("")}</select>` : ""}</div>
+        <div class="difficulty-fact"><span>Difficulty</span><strong>${renderDifficultyBadge(session.difficulty)}</strong>${manager ? `<select id="sessionDifficulty" class="difficulty-select" aria-label="Change event difficulty"><option value="">Choose level</option>${Object.keys(difficultyDetails).map(value => `<option value="${value}"${eventDifficulty(session.difficulty) === value ? " selected" : ""}>${value}</option>`).join("")}</select>` : ""}</div>
       </div>
       ${session.notes ? `<p class="session-notes">${escapeHtml(session.notes)}</p>` : ""}
       ${lifecycleNotice}
@@ -786,7 +796,7 @@ function renderFindPlayers(session, manager) {
   return `<section class="stage-section">
     <div class="roster-summary panel"><div><div class="eyebrow">Find Players</div><h2>${size}</h2><p>${confirmed.length} confirmed of ${session.capacity} maximum${maybe.length ? ` · ${maybe.length} maybe` : ""}${waitlist.length ? ` · ${waitlist.length} waiting` : ""}</p></div><div class="capacity-ring" style="--fill:${Math.min(100, confirmed.length / session.capacity * 100)}%"><strong>${confirmed.length}</strong><span>/${session.capacity}</span></div></div>
     <div class="section-heading"><div><h2>Who’s gathering</h2><p>Every interested player appears here with their experience level.</p></div><details class="experience-key"><summary>Experience level guide</summary>${renderExperienceGuide()}</details></div>
-    <div class="roster-grid">${roster.length ? roster.map(player => `<article class="player-card ${player.interestStatus === "maybe" ? "is-maybe" : player.interestStatus === "waitlist" ? "is-waitlist" : ""}"><span class="player-initial">${escapeHtml(player.displayName[0]?.toUpperCase() || "?")}</span><div class="player-identity"><strong>${escapeHtml(player.displayName)}</strong><span>${escapeHtml(player.experience)}</span></div><div class="player-card-actions">${player.interestStatus === "maybe" ? '<em>Maybe · unconfirmed</em>' : player.interestStatus === "waitlist" ? '<em>Waitlist</em>' : '<em>Interested</em>'}${manager && player.interestStatus === "waitlist" && confirmed.length < session.capacity ? `<button class="button button-small button-secondary" data-promote-player="${escapeHtml(player.id)}" type="button">Promote</button>` : ""}${manager ? `<button class="icon-button danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button" aria-label="Remove ${escapeHtml(player.displayName)}">Remove</button>` : ""}</div></article>`).join("") : renderEmptyState("The square is quiet", "No players yet. Share the link to call the town together.", true)}</div>
+    <div class="roster-grid">${roster.length ? roster.map(player => `<article class="player-card ${player.interestStatus === "maybe" ? "is-maybe" : player.interestStatus === "waitlist" ? "is-waitlist" : ""}"><span class="player-initial">${escapeHtml(player.displayName[0]?.toUpperCase() || "?")}</span><div class="player-identity"><strong>${escapeHtml(player.displayName)}</strong>${renderExperienceBadge(player.experience)}</div><div class="player-card-actions">${player.interestStatus === "maybe" ? '<em>Maybe · unconfirmed</em>' : player.interestStatus === "waitlist" ? '<em>Waitlist</em>' : '<em>Interested</em>'}${manager && player.interestStatus === "waitlist" && confirmed.length < session.capacity ? `<button class="button button-small button-secondary" data-promote-player="${escapeHtml(player.id)}" type="button">Promote</button>` : ""}${manager ? `<button class="icon-button danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button" aria-label="Remove ${escapeHtml(player.displayName)}">Remove</button>` : ""}</div></article>`).join("") : renderEmptyState("The square is quiet", "No players yet. Share the link to call the town together.", true)}</div>
     ${manager ? '<div class="notice">Only the public name and experience shown above are publicly readable. Player registration records remain private to the player and session managers.</div>' + renderManagerRegistrations(session) + (registrationOpen ? managerPlayerForm(session) : "") : renderOwnedRegistrations(session) + (registrationOpen ? playerDetailsForm(confirmed.length >= session.capacity ? "Join the waitlist" : "Register player interest") : '<div class="notice">This event is not accepting new registrations.</div>')}
   </section>`;
 }
@@ -799,7 +809,7 @@ function renderOwnedRegistrations(session) {
   const registrations = demoMode ? (session.registrations || []).filter(player => player.createdByUid === demoPlayerUid) : (session.registrations || []);
   if (!registrations.length) return "";
   return `<section class="owned-registrations panel"><div class="section-heading"><div><div class="eyebrow">Your entries</div><h2>Edit registrations</h2></div><p>You can change names${session.status === "date_poll" ? " and date responses" : ""}. Experience is fixed after registration.</p></div>
-    <div class="owned-registration-list">${registrations.map(player => `<details class="owned-registration"><summary><span><strong>${escapeHtml(player.displayName)}</strong><small>${escapeHtml(player.experience)}</small></span><span>Edit</span></summary>
+    <div class="owned-registration-list">${registrations.map(player => `<details class="owned-registration"><summary><span><strong>${escapeHtml(player.displayName)}</strong>${renderExperienceBadge(player.experience)}</span><span>Edit</span></summary>
       <form class="edit-player-form" data-player-id="${escapeHtml(player.id)}"><div class="form-grid"><label>Name<input name="displayName" value="${escapeHtml(player.displayName)}" minlength="2" maxlength="40" required></label><label>Experience<input value="${escapeHtml(player.experience)}" disabled></label></div>
       ${session.status === "date_poll" ? `<div class="manager-response-list">${session.dateOptions.map(option => `<label>${formatDate(option.startAt, sessionTimezone(session))}${responseSelect(`response-${option.id}`, player.responses?.[option.id])}</label>`).join("")}</div>` : ""}
       <p class="form-error" role="alert" hidden></p><button class="button button-small button-secondary" type="submit">Save changes</button></form></details>`).join("")}</div>
@@ -809,7 +819,7 @@ function renderOwnedRegistrations(session) {
 function renderManagerRegistrations(session) {
   const registrations = session.registrations || [];
   return `<details class="manager-registrations panel" ${session.status === "date_poll" ? "open" : ""}><summary><span>Manage all player records</span><small>${registrations.length} total</small></summary>
-    ${registrations.length ? `<div class="manager-player-list">${registrations.map(player => `<div><span><strong>${escapeHtml(player.displayName)}</strong><small>${escapeHtml(player.experience)}</small></span><button class="button button-small button-danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button">Remove</button></div>`).join("")}</div>` : renderEmptyState("No responses yet", "The player link is ready to share.", true)}
+    ${registrations.length ? `<div class="manager-player-list">${registrations.map(player => `<div><span><strong>${escapeHtml(player.displayName)}</strong>${renderExperienceBadge(player.experience)}</span><button class="button button-small button-danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button">Remove</button></div>`).join("")}</div>` : renderEmptyState("No responses yet", "The player link is ready to share.", true)}
   </details>`;
 }
 
@@ -1023,7 +1033,7 @@ function openEditSessionDialog() {
   form.elements.storytellerNames.value = storytellerNames(activeSession);
   form.elements.location.value = activeSession.location || "";
   form.elements.capacity.value = activeSession.capacity || 15;
-  form.elements.difficulty.value = activeSession.difficulty || "Beginner";
+  form.elements.difficulty.value = eventDifficulty(activeSession.difficulty) || "Beginner";
   form.elements.notes.value = activeSession.notes || "";
   populateTimezoneSelect($("#editTimezone"), sessionTimezone(activeSession));
   const pollLocked = isPollStage(activeSession);
@@ -1045,7 +1055,9 @@ async function saveSessionEdits(form) {
     const capacity = Number(fields.get("capacity"));
     if (!Number.isInteger(capacity) || capacity < 5 || capacity > 20) throw new Error("Maximum players must be between 5 and 20.");
     const timezone = validTimezone(fields.get("timezone")); if (!timezone) throw new Error("Choose a valid time zone.");
-    const update = { title: String(fields.get("title") || "").trim(), inviteSlug, storytellerNames: normalizeStorytellerNames(fields.get("storytellerNames")), location: String(fields.get("location") || "").trim(), capacity, difficulty: fields.get("difficulty"), notes: String(fields.get("notes") || "").trim(), timezone };
+    const difficulty = eventDifficulty(fields.get("difficulty"));
+    if (!difficultyDetails[difficulty]) throw new Error("Choose a valid event difficulty.");
+    const update = { title: String(fields.get("title") || "").trim(), inviteSlug, storytellerNames: normalizeStorytellerNames(fields.get("storytellerNames")), location: String(fields.get("location") || "").trim(), capacity, difficulty, notes: String(fields.get("notes") || "").trim(), timezone };
     if (!update.title || !update.location) throw new Error("Session name and location are required.");
     const scheduledDate = fields.get("scheduledDate");
     if (!isPollStage(activeSession) && scheduledDate) {
@@ -1090,7 +1102,7 @@ async function duplicateSession() {
   try {
     const slug = `${normalizeInviteSlug(activeSession.inviteSlug || activeSession.title).slice(0, 38)}-copy-${Math.random().toString(36).slice(2, 6)}`;
     const status = activeSession.selectedDate || activeSession.fixedDate ? "find_players" : "date_poll";
-    const copy = { ownerUid: demoMode ? "demo-organiser" : currentUser.uid, organizerName: demoMode ? "Demo Storyteller" : currentProfile.displayName, storytellerNames: storytellerNames(activeSession), title: `${activeSession.title} (Copy)`.slice(0, 80), location: activeSession.location || "", notes: activeSession.notes || "", capacity: activeSession.capacity, difficulty: activeSession.difficulty || "Beginner", timezone: sessionTimezone(activeSession), visibility: "public", status, fixedDate: activeSession.fixedDate || null, selectedDate: activeSession.selectedDate || null, selectedOptionId: activeSession.selectedOptionId || null, dateOptions: structuredClone(activeSession.dateOptions || []), scriptMode: "tbd", scriptName: "", scriptUrl: "", scriptData: null, inviteSlug: slug };
+    const copy = { ownerUid: demoMode ? "demo-organiser" : currentUser.uid, organizerName: demoMode ? "Demo Storyteller" : currentProfile.displayName, storytellerNames: storytellerNames(activeSession), title: `${activeSession.title} (Copy)`.slice(0, 80), location: activeSession.location || "", notes: activeSession.notes || "", capacity: activeSession.capacity, difficulty: eventDifficulty(activeSession.difficulty) || "Beginner", timezone: sessionTimezone(activeSession), visibility: "public", status, fixedDate: activeSession.fixedDate || null, selectedDate: activeSession.selectedDate || null, selectedOptionId: activeSession.selectedOptionId || null, dateOptions: structuredClone(activeSession.dateOptions || []), scriptMode: "tbd", scriptName: "", scriptUrl: "", scriptData: null, inviteSlug: slug };
     let id;
     const scripts = (activeSession.scripts || []).filter(script => !script.legacy).map(({ id: ignored, createdAt: ignoredCreated, updatedAt: ignoredUpdated, ...script }) => script);
     if (demoMode) {

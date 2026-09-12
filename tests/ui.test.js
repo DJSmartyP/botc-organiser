@@ -54,8 +54,12 @@ test("player experience levels are explained at selection and roster review", ()
   assert.match(app, /Experienced: "Has played before and is comfortable with the basic rules\."/);
   assert.match(app, /Expert: "A Storyteller or player who has played extensively\."/);
   assert.match(app, /function renderExperienceGuide/);
+  assert.match(app, /function renderExperienceBadge/);
   assert.match(app, /Experience level guide/);
   assert.match(css, /\.experience-guide/);
+  assert.match(css, /\.experience-badge\.experience-beginner/);
+  assert.match(css, /\.experience-badge\.experience-experienced/);
+  assert.match(css, /\.experience-badge\.experience-expert/);
 });
 
 test("homepage links to the Chaos playlist and complete tutorial", () => {
@@ -82,12 +86,16 @@ test("script printing targets a compact single landscape sheet", () => {
 
 test("events have a visible and manager-editable difficulty signal", () => {
   assert.match(html, /name="difficulty" value="Beginner" checked/);
-  assert.match(html, /New players warmly welcomed/);
+  assert.match(html, /name="difficulty" value="Intermediate"/);
+  assert.match(html, /name="difficulty" value="Advanced"/);
+  assert.match(html, /Features the three base scripts/);
+  assert.match(app, /Experienced: "Intermediate", Expert: "Advanced"/);
   assert.match(app, /function renderDifficultyBadge/);
   assert.match(app, /id="sessionDifficulty"/);
   assert.match(app, /updateSessionDifficulty/);
   assert.match(css, /\.difficulty-picker/);
-  assert.match(css, /\.difficulty-badge/);
+  assert.match(css, /\.difficulty-badge\.difficulty-intermediate/);
+  assert.match(css, /\.difficulty-badge\.difficulty-advanced/);
 });
 
 test("new scripts avoid external PDFs and homebrew characters use initials", () => {

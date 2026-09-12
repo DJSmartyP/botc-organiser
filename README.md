@@ -10,6 +10,8 @@ The interface uses stage-specific status seals, contained action menus, team-col
 
 Player experience is defined consistently wherever it is selected or reviewed: **Beginner** means new or still learning the ropes; **Experienced** means they have played before and are comfortable with the basic rules; **Expert** means a Storyteller or player who has played extensively. Event difficulty remains a separate organiser setting.
 
+Event difficulty uses a separate colour-coded scale: **Beginner** events feature the three base scripts; **Intermediate** events may use more complex scripts; **Advanced** events may include homebrew scripts or alternative game modes. Older events saved with the former Experienced/Expert labels are displayed as Intermediate/Advanced and are upgraded when edited or duplicated.
+
 Chaos Planner uses the same custom-link convention as the IDP app: a readable `?join=friday-ravenswood-bluff` URL resolves through the top-level `inviteLinks` collection. The direct `?session=FIRESTORE_DOCUMENT_ID` format remains supported as a fallback.
 
 The site is a static, mobile-first app for GitHub Pages. Firebase Authentication and Cloud Firestore provide identity and authoritative shared data. The placeholder configuration starts a clearly labelled in-memory preview; it does not use `localStorage` and does not persist data.

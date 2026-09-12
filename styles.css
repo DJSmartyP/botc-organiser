@@ -284,8 +284,8 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .session-card p { margin: 0; color: var(--muted); }
 .session-card-meta { display: flex; flex-wrap: wrap; gap: .2rem .9rem; color: var(--muted); font-size: .76rem; }
 .difficulty-badge { display: inline-flex; align-items: center; align-self: start; gap: .42rem; width: fit-content; padding: .24rem .52rem; border: 1px solid rgba(125,158,187,.34); border-radius: 999px; color: #c9dcef; background: rgba(29,50,70,.42); font: 700 .68rem/1 Cinzel, Georgia, serif; letter-spacing: .035em; text-transform: none; white-space: nowrap; }
-.difficulty-badge.difficulty-experienced { border-color: rgba(216,189,124,.4); color: var(--gold-bright); background: rgba(101,72,29,.25); }
-.difficulty-badge.difficulty-expert { border-color: rgba(210,74,81,.52); color: #ffc4c8; background: rgba(116,21,33,.32); }
+.difficulty-badge.difficulty-intermediate { border-color: rgba(216,189,124,.48); color: var(--gold-bright); background: rgba(101,72,29,.28); }
+.difficulty-badge.difficulty-advanced { border-color: rgba(210,74,81,.58); color: #ffc4c8; background: rgba(116,21,33,.36); }
 .difficulty-badge.difficulty-unset { color: var(--muted); filter: saturate(.45); }
 .difficulty-moons { display: inline-flex; gap: 3px; letter-spacing: 0; }
 .difficulty-moons i, .difficulty-choice-moons i { display: block; width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%; opacity: .3; box-shadow: inset -3px 0 0 rgba(4,5,8,.82); }
@@ -460,6 +460,9 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .experience-key .experience-guide { position: absolute; right: 0; z-index: 3; width: min(420px, calc(100vw - 2rem)); padding: .6rem; border: 1px solid var(--line-strong); border-radius: 9px; background: #15131a; box-shadow: var(--shadow); }
 .experience-guide { display: grid; gap: .35rem; margin: .15rem 0 .65rem; }
 .experience-guide > div { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: .5rem; align-items: baseline; padding: .38rem .5rem; border-left: 2px solid rgba(216,189,124,.45); border-radius: 0 5px 5px 0; background: rgba(255,255,255,.025); }
+.experience-guide > .experience-level-beginner { border-left-color: #50aeb3; background: rgba(26,91,98,.12); }
+.experience-guide > .experience-level-experienced { border-left-color: #d8bd7c; background: rgba(101,72,29,.13); }
+.experience-guide > .experience-level-expert { border-left-color: #b967b1; background: rgba(103,38,94,.14); }
 .experience-guide strong { color: var(--gold-bright); font-size: .72rem; }
 .experience-guide span { color: var(--muted); font-size: .7rem; line-height: 1.35; }
 .player-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .55rem; min-height: 58px; padding: .5rem .6rem; border: 1px solid rgba(125,158,187,.2); border-left: 2px solid rgba(112,168,130,.7); border-radius: 8px; background: linear-gradient(145deg, rgba(22,27,35,.91), rgba(20,14,20,.965)), url("assets/texture-leather.png?v=2") center / 520px auto repeat; }
@@ -469,6 +472,10 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .player-identity { display: grid; line-height: 1.25; }
 .player-identity strong { font-size: .88rem; }
 .player-identity span { color: var(--muted); font-size: .72rem; }
+.experience-badge { display: inline-flex; width: fit-content; margin-top: .16rem; padding: .18rem .42rem; border: 1px solid rgba(150,150,160,.3); border-radius: 999px; color: var(--muted); background: rgba(30,30,36,.45); font: 700 .62rem/1 Inter, sans-serif; letter-spacing: .025em; }
+.experience-badge.experience-beginner { border-color: rgba(80,174,179,.48); color: #a8e6e5; background: rgba(26,91,98,.28); }
+.experience-badge.experience-experienced { border-color: rgba(216,189,124,.5); color: #efd995; background: rgba(101,72,29,.3); }
+.experience-badge.experience-expert { border-color: rgba(185,103,177,.55); color: #efb8e8; background: rgba(103,38,94,.34); }
 .player-card em { color: #a9d9b8; font-size: .7rem; font-style: normal; text-align: right; }
 .player-card.is-maybe em { color: #e2bd7b; }
 .player-card.is-waitlist { border-left-color: #7895b7; background: linear-gradient(145deg, rgba(18,25,36,.94), rgba(17,14,22,.97)), url("assets/texture-leather.png?v=2") center / 520px auto repeat; }

@@ -77,7 +77,7 @@ service cloud.firestore {
       && request.resource.data.capacity >= 5
       && request.resource.data.capacity <= 20
       && (!request.resource.data.keys().hasAny(['difficulty'])
-        || request.resource.data.difficulty in ['Beginner', 'Experienced', 'Expert'])
+        || request.resource.data.difficulty in ['Beginner', 'Intermediate', 'Advanced', 'Experienced', 'Expert'])
       && request.resource.data.visibility == 'public'
       && request.resource.data.status in ['date_poll', 'find_players', 'closed', 'cancelled', 'archived']
       && (!request.resource.data.keys().hasAny(['timezone'])

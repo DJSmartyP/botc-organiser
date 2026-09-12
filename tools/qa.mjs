@@ -116,9 +116,18 @@ try {
   await creationPage.waitForFunction(() => document.querySelector(".script-edition-logo")?.naturalWidth > 0);
   await assertFits(creationPage, "mobile recurring session and built-in script");
   await creationPage.screenshot({ path: "qa-creation.png", fullPage: true });
+  creationPage.once("dialog", dialog => dialog.accept());
+  await creationPage.locator("[data-finalize]").first().click();
+  await creationPage.locator("#playerForm input[name='displayName']").fill("Expert Storyteller");
+  await creationPage.locator("#playerForm select[name='experience']").selectOption("Expert");
+  await creationPage.locator("#playerForm input[name='consent']").check();
+  await creationPage.locator("#playerForm button[type='submit']").click();
+  await creationPage.locator(".experience-badge.experience-expert").first().waitFor();
+  await creationPage.locator(".experience-key > summary").click();
+  await assertFits(creationPage, "mobile colour-coded experience roster");
   await creationPage.close();
   assert.deepEqual(pageErrors, []);
-  console.log("QA passed: desktop, 390px mobile, manager controls, recurring dates, multi-Storytellers, built-in scripts, player heatmap, duplication, empty states, dialogs, and horizontal-overflow checks.");
+  console.log("QA passed: desktop, 390px mobile, manager controls, recurring dates, multi-Storytellers, built-in scripts, colour-coded experience and difficulty, player heatmap, duplication, empty states, dialogs, and horizontal-overflow checks.");
 } finally {
   await browser.close();
 }

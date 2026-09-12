@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260913-1">
+  <link rel="stylesheet" href="styles.css?v=20260913-2">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -76,7 +76,7 @@
         <div class="guide-grid">
           <article class="guide-step panel"><span class="guide-number">1</span><div class="guide-copy"><h3>Sign in and use the dashboard</h3><p>Choose <strong>Continue with Google</strong>. Your dashboard keeps upcoming, date-poll and closed sessions together, with search and status filters for a long-running calendar.</p></div><div class="guide-screen"><div class="guide-screen-bar"><b>Your gatherings</b><i>+ Create session</i></div><div class="guide-stats"><span><b>8</b> Upcoming</span><span><b>3</b> Finding dates</span><span><b>5</b> Finding players</span></div><div class="guide-row"><span>Friday in Ravenswood Bluff<small>Finding players · 9 registered</small></span><i>Open</i></div></div></article>
           <article class="guide-step panel"><span class="guide-number">2</span><div class="guide-copy"><h3>Choose how the date works</h3><p>Select <strong>I have a date</strong> to begin recruiting immediately, or <strong>I need to find a date</strong> to offer up to ten options for players to answer.</p></div><div class="guide-screen"><div class="guide-screen-title">How will you plan this game?</div><div class="guide-choice"><span>✓<b>I have a date</b><small>Fixed date and time</small></span><span>?</span><span><b>I need to find a date</b><small>Ask players first</small></span></div></div></article>
-          <article class="guide-step panel"><span class="guide-number">3</span><div class="guide-copy"><h3>Add scripts and session details</h3><p>Enter all Storyteller names, the venue, difficulty, capacity and notes. Pick a built-in base script, upload a BOTC JSON, or leave scripts as TBD. Official characters display their official tokens; homebrew characters use a styled initial.</p></div><div class="guide-screen"><div class="guide-screen-title">Create a gathering</div><div class="guide-fields"><span>Session name</span><span>Storytellers</span><span>Maximum players</span><span class="accent">Choose or upload script</span></div><div class="guide-file">Trouble Brewing <b>Built in</b></div></div></article>
+          <article class="guide-step panel"><span class="guide-number">3</span><div class="guide-copy"><h3>Add scripts and session details</h3><p>Enter all Storyteller names, the venue, capacity and event difficulty. Beginner events feature the three base scripts; Intermediate events may use more complex scripts; Advanced events may include homebrew or alternative game modes.</p></div><div class="guide-screen"><div class="guide-screen-title">Create a gathering</div><div class="guide-fields"><span>Session name</span><span>Storytellers</span><span>Maximum players</span><span class="accent">Choose or upload script</span></div><div class="guide-file">Trouble Brewing <b>Beginner</b></div></div></article>
           <article class="guide-step panel"><span class="guide-number">4</span><div class="guide-copy"><h3>Share the player link</h3><p>Copy the custom link from the session header and send it to your group. It opens the session directly—players do not need your dashboard or a Google account.</p></div><div class="guide-screen"><div class="guide-screen-title">A night in Ravenswood Bluff</div><div class="guide-facts"><span>DATE<b>Finding a date</b></span><span>SCRIPT<b>2 on offer</b></span></div><div class="guide-link"><b>Copy player link</b><code>ravenswood-night</code></div></div></article>
         </div>
       </section>
@@ -188,9 +188,9 @@
         <label>Maximum players<input name="capacity" type="number" min="5" max="20" value="15" required></label>
         <fieldset class="difficulty-fieldset"><legend>Event difficulty</legend>
           <div class="difficulty-picker">
-            <label><input type="radio" name="difficulty" value="Beginner" checked><span class="difficulty-choice"><span class="difficulty-choice-moons" aria-hidden="true"><i></i><i></i><i></i></span><strong>Beginner</strong><small>New players warmly welcomed</small></span></label>
-            <label><input type="radio" name="difficulty" value="Experienced"><span class="difficulty-choice"><span class="difficulty-choice-moons" aria-hidden="true"><i></i><i></i><i></i></span><strong>Experienced</strong><small>Some rules confidence helps</small></span></label>
-            <label><input type="radio" name="difficulty" value="Expert"><span class="difficulty-choice"><span class="difficulty-choice-moons" aria-hidden="true"><i></i><i></i><i></i></span><strong>Expert</strong><small>For seasoned townsfolk</small></span></label>
+            <label><input type="radio" name="difficulty" value="Beginner" checked><span class="difficulty-choice"><span class="difficulty-choice-moons" aria-hidden="true"><i></i><i></i><i></i></span><strong>Beginner</strong><small>Features the three base scripts</small></span></label>
+            <label><input type="radio" name="difficulty" value="Intermediate"><span class="difficulty-choice"><span class="difficulty-choice-moons" aria-hidden="true"><i></i><i></i><i></i></span><strong>Intermediate</strong><small>May use more complex scripts</small></span></label>
+            <label><input type="radio" name="difficulty" value="Advanced"><span class="difficulty-choice"><span class="difficulty-choice-moons" aria-hidden="true"><i></i><i></i><i></i></span><strong>Advanced</strong><small>Homebrew or alternative modes</small></span></label>
           </div>
         </fieldset>
         <fieldset><legend>Script</legend>
@@ -231,7 +231,7 @@
       <div id="editDateField"><label>Confirmed date and time<input name="scheduledDate" type="datetime-local"></label></div>
       <p id="editPollDateNotice" class="notice compact-notice" hidden>Date options stay locked while polling so existing player responses cannot be detached. Finalise a date first to change the confirmed time.</p>
       <label>Time zone<select id="editTimezone" name="timezone" required></select></label>
-      <div class="form-grid"><label>Maximum players<input name="capacity" type="number" min="5" max="20" required></label><label>Difficulty<select name="difficulty" required><option>Beginner</option><option>Experienced</option><option>Expert</option></select></label></div>
+      <div class="form-grid"><label>Maximum players<input name="capacity" type="number" min="5" max="20" required></label><label>Event difficulty<select name="difficulty" required><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></label></div>
       <label>Notes <span class="optional">Optional</span><textarea name="notes" maxlength="600" rows="3"></textarea></label>
       <p id="editSessionError" class="form-error" role="alert" hidden></p>
       <button class="button button-primary button-wide" type="submit">Save event changes</button>
@@ -239,6 +239,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20260913-1"></script>
+  <script type="module" src="app.js?v=20260913-2"></script>
 </body>
 </html>
