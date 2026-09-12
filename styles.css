@@ -279,6 +279,13 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .session-card h2 { margin: .38rem 0 .3rem; font-size: 1.18rem; }
 .session-card p { margin: 0; color: var(--muted); }
 .session-card-meta { display: flex; flex-wrap: wrap; gap: .2rem .9rem; color: var(--muted); font-size: .76rem; }
+.difficulty-badge { display: inline-flex; align-items: center; align-self: start; gap: .42rem; width: fit-content; padding: .24rem .52rem; border: 1px solid rgba(125,158,187,.34); border-radius: 999px; color: #c9dcef; background: rgba(29,50,70,.42); font: 700 .68rem/1 Cinzel, Georgia, serif; letter-spacing: .035em; text-transform: none; white-space: nowrap; }
+.difficulty-badge.difficulty-experienced { border-color: rgba(216,189,124,.4); color: var(--gold-bright); background: rgba(101,72,29,.25); }
+.difficulty-badge.difficulty-expert { border-color: rgba(210,74,81,.52); color: #ffc4c8; background: rgba(116,21,33,.32); }
+.difficulty-badge.difficulty-unset { color: var(--muted); filter: saturate(.45); }
+.difficulty-moons { display: inline-flex; gap: 3px; letter-spacing: 0; }
+.difficulty-moons i, .difficulty-choice-moons i { display: block; width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%; opacity: .3; box-shadow: inset -3px 0 0 rgba(4,5,8,.82); }
+.difficulty-moons i.is-lit { opacity: 1; filter: drop-shadow(0 0 3px currentColor); background: currentColor; }
 .session-owner { overflow: hidden; color: var(--muted); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
 .session-slug { display: block; margin-top: .35rem; color: #95878b; font-size: .7rem; }
 .session-card-actions { display: flex; flex-wrap: wrap; gap: .45rem; }
@@ -299,6 +306,8 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .session-facts div { display: grid; min-width: 0; gap: .2rem; }
 .session-facts span { color: var(--gold); font-size: .75rem; letter-spacing: .13em; text-transform: uppercase; }
 .session-facts strong { font-size: .92rem; }
+.difficulty-fact strong { display: flex; }
+.difficulty-select { width: min(180px, 100%); min-height: 32px; margin-top: .25rem; padding: .3rem .5rem; font-size: .76rem; }
 .session-notes { margin: .8rem 0 0; padding: .7rem .85rem; border-left: 3px solid var(--blood-bright); color: #ddd0c8; background: rgba(0,0,0,.24); font: .96rem/1.45 "IM Fell English", Georgia, serif; white-space: pre-wrap; }
 .share-row { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: .8rem; }
 .share-row code { min-width: 0; max-width: 100%; color: var(--muted); word-break: break-all; }
@@ -429,6 +438,20 @@ fieldset { padding: 1rem; border: 1px solid var(--line); border-radius: 10px; }
 legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; }
 .radio-row { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .5rem; margin-bottom: .65rem; }
 .radio-row input { width: 18px; min-height: 18px; }
+.difficulty-fieldset { padding: .75rem; }
+.difficulty-picker { display: grid; gap: .45rem; }
+.difficulty-picker label { position: relative; display: block; cursor: pointer; }
+.difficulty-picker input { position: absolute; width: 1px; height: 1px; min-height: 0; opacity: 0; }
+.difficulty-choice { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .12rem .55rem; min-height: 62px; padding: .62rem .7rem; border: 1px solid rgba(229,214,189,.15); border-radius: 8px; color: var(--muted); background: rgba(5,4,7,.36); transition: border-color .15s ease, background .15s ease, transform .15s ease; }
+.difficulty-choice-moons { grid-row: 1 / span 2; display: flex; align-items: center; gap: 3px; color: var(--gold); }
+.difficulty-choice strong { align-self: end; color: var(--ink); font: 700 .8rem Cinzel, Georgia, serif; }
+.difficulty-choice small { font-size: .7rem; font-weight: 400; }
+.difficulty-picker label:nth-child(1) .difficulty-choice-moons i:nth-child(n+2), .difficulty-picker label:nth-child(2) .difficulty-choice-moons i:nth-child(3) { opacity: .22; background: transparent; }
+.difficulty-picker label:nth-child(1) .difficulty-choice-moons i:first-child { color: #9bc6e9; background: currentColor; filter: drop-shadow(0 0 4px currentColor); }
+.difficulty-picker label:nth-child(2) .difficulty-choice-moons i:nth-child(-n+2) { color: var(--gold-bright); background: currentColor; filter: drop-shadow(0 0 4px currentColor); }
+.difficulty-picker label:nth-child(3) .difficulty-choice-moons i { color: #f06a72; background: currentColor; filter: drop-shadow(0 0 4px currentColor); }
+.difficulty-picker input:checked + .difficulty-choice { border-color: rgba(216,189,124,.58); background: linear-gradient(145deg, rgba(94,29,42,.5), rgba(22,25,34,.78)); box-shadow: inset 0 0 0 1px rgba(216,189,124,.1), 0 5px 15px rgba(0,0,0,.18); transform: translateY(-1px); }
+.difficulty-picker input:focus-visible + .difficulty-choice { outline: 3px solid rgba(203,178,123,.5); outline-offset: 2px; }
 .nested-fields { display: grid; gap: .8rem; margin-top: 1rem; }
 .script-methods { display: grid; gap: .25rem; padding-bottom: .75rem; border-bottom: 1px solid var(--line); }
 .recommended { justify-self: start; padding: .12rem .38rem; border: 1px solid rgba(216,189,124,.35); border-radius: 999px; color: var(--gold); font-size: .75rem; font-weight: 700; }
@@ -478,6 +501,7 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
   .session-facts { grid-template-columns: repeat(2, 1fr); }
   .date-card-head { flex-direction: row; align-items: center; justify-content: space-between; }
   .form-grid { grid-template-columns: repeat(2, 1fr); }
+  .difficulty-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .roster-grid { grid-template-columns: repeat(2, 1fr); }
   .character-grid { grid-template-columns: repeat(2, 1fr); }
   .script-upload-form { grid-template-columns: 1.2fr 1fr auto; align-items: end; }
