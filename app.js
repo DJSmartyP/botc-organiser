@@ -462,11 +462,11 @@ function renderScriptDetail(session, script) {
   document.title = `${script.name} · ${session.title}`;
   const pdfUrl = safeExternalUrl(script.pdfUrl);
   const characters = script.scriptData?.characters || [];
-  $("#sessionContent").innerHTML = `<section id="scriptSheet" class="script-detail-view">
+  $("#sessionContent").innerHTML = `<section id="scriptSheet" class="script-detail-view ${characters.length > 24 ? "print-dense" : ""}" data-character-count="${characters.length}">
     <button class="back-link no-print" data-back-session type="button">← Back to scripts & dates</button>
     <header class="script-detail-header panel"><div><div class="eyebrow">Planned script</div><h1>${escapeHtml(script.name)}</h1>${script.author ? `<p>By ${escapeHtml(script.author)}</p>` : ""}</div>
       <div class="script-detail-actions no-print">${characters.length ? '<button class="button button-ghost" data-print-script type="button">Print / save as PDF</button>' : ""}${pdfUrl ? `<a class="button button-secondary" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">Open PDF ↗</a>` : ""}</div></header>
-    ${characters.length ? `<div class="script-section">${renderCharacterGroups(script.scriptData)}</div><p class="catalogue-credit no-print">Character details and icons use the current <a href="https://release.botc.app/resources/" target="_blank" rel="noopener noreferrer">official BOTC toolmaker resources ↗</a>, with the Townsquare catalogue as a fallback.</p>` : pdfUrl ? `<div class="pdf-frame-wrap"><iframe class="pdf-frame" src="${escapeHtml(pdfUrl)}" title="${escapeHtml(script.name)} PDF"></iframe><p>If the PDF does not appear here, use “Open PDF” above.</p></div>` : '<div class="notice">This script has no character data or PDF link.</div>'}
+    ${characters.length ? `<div class="script-section">${renderCharacterGroups(script.scriptData)}</div><p class="catalogue-credit no-print">Character details and icons use the current <a href="https://release.botc.app/resources/" target="_blank" rel="noopener noreferrer">official BOTC toolmaker resources ↗</a>, with the Townsquare catalogue as a fallback.</p><footer class="print-script-footer">Created with Chaos Planner · Unofficial community tool · Blood on the Clocktower is owned by Steven Medway and The Pandemonium Institute.</footer>` : pdfUrl ? `<div class="pdf-frame-wrap"><iframe class="pdf-frame" src="${escapeHtml(pdfUrl)}" title="${escapeHtml(script.name)} PDF"></iframe><p>If the PDF does not appear here, use “Open PDF” above.</p></div>` : '<div class="notice">This script has no character data or PDF link.</div>'}
   </section>`;
 }
 
@@ -837,7 +837,8 @@ async function createSession(form) {
 }
 
 document.addEventListener("click", async event => {
-  const home = event.target.closest('[data-action="home"]'); if (home) { history.replaceState({}, "", location.pathname); showView("homeView"); return; }
+  const home = event.target.closest('[data-action="home"]'); if (home) { event.preventDefault(); history.replaceState({}, "", location.pathname); document.title = "Chaos Planner · Chaos On The Clocktower"; showView("homeView"); return; }
+  const guide = event.target.closest('[data-action="guide"]'); if (guide) { event.preventDefault(); const url = new URL(location.href); url.search = ""; url.searchParams.set("guide", "1"); history.pushState({}, "", url); document.title = "How to use Chaos Planner"; showView("guideView"); scrollTo({ top: 0, behavior: "smooth" }); return; }
   const open = event.target.closest("[data-open-session]"); if (open) { await openSession(open.dataset.openSession); return; }
   const finalize = event.target.closest("[data-finalize]"); if (finalize) { await finalizeDate(finalize.dataset.finalize); return; }
   const removePlayerButton = event.target.closest("[data-remove-player]"); if (removePlayerButton) { await removePlayer(removePlayerButton.dataset.removePlayer, removePlayerButton.dataset.playerName); return; }
@@ -901,8 +902,10 @@ $("#sessionContent").addEventListener("change", event => {
   $("[data-planned-json]", form).hidden = !json; $("[data-planned-pdf]", form).hidden = json;
 });
 window.addEventListener("popstate", () => {
-  if (!activeSession || $("#sessionView").hidden) return;
-  const scriptId = new URL(location.href).searchParams.get("script");
+  const currentUrl = new URL(location.href);
+  if (currentUrl.searchParams.get("guide") === "1") { document.title = "How to use Chaos Planner"; showView("guideView"); return; }
+  if (!activeSession || $("#sessionView").hidden) { document.title = "Chaos Planner · Chaos On The Clocktower"; showView("homeView"); return; }
+  const scriptId = currentUrl.searchParams.get("script");
   const script = activeSession.scripts?.find(item => item.id === scriptId);
   if (script) renderScriptDetail(activeSession, script); else renderSession(activeSession);
 });
@@ -910,13 +913,8 @@ window.addEventListener("popstate", () => {
 function initialiseHeroLogoEffect() {
   const stage = document.querySelector("[data-hero-logo-effect]");
   if (!stage) return;
-  const effects = ["glitch", "clock", "demon", "ghost", "ink"];
-  const randomValue = globalThis.crypto?.getRandomValues
-    ? globalThis.crypto.getRandomValues(new Uint32Array(1))[0]
-    : Math.floor(Math.random() * 0xffffffff);
-  const effect = effects[randomValue % effects.length];
-  stage.dataset.heroLogoEffect = effect;
-  stage.classList.add(`effect-${effect}`);
+  stage.dataset.heroLogoEffect = "glitch";
+  stage.classList.add("effect-glitch");
 }
 
 initialiseHeroLogoEffect();
@@ -925,4 +923,5 @@ updateAccountUi();
 const initialUrl = new URL(location.href);
 const initialInvite = initialUrl.searchParams.get("join");
 const initialSession = initialUrl.searchParams.get("session");
-if (initialInvite) openInvite(initialInvite); else if (initialSession) openSession(initialSession); else showView("homeView");
+const initialGuide = initialUrl.searchParams.get("guide") === "1";
+if (initialInvite) openInvite(initialInvite); else if (initialSession) openSession(initialSession); else if (initialGuide) { document.title = "How to use Chaos Planner"; showView("guideView"); } else showView("homeView");
