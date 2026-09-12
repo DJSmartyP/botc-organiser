@@ -55,7 +55,7 @@ service cloud.firestore {
 
     function validSession() {
       return request.resource.data.keys().hasOnly([
-        'ownerUid', 'organizerName', 'title', 'location', 'notes', 'capacity',
+        'ownerUid', 'organizerName', 'title', 'location', 'notes', 'capacity', 'difficulty',
         'visibility', 'status', 'fixedDate', 'selectedDate', 'selectedOptionId',
         'dateOptions', 'scriptMode', 'scriptName', 'scriptUrl', 'scriptData', 'inviteSlug', 'createdAt', 'updatedAt'
       ])
@@ -72,6 +72,8 @@ service cloud.firestore {
       && request.resource.data.capacity is int
       && request.resource.data.capacity >= 5
       && request.resource.data.capacity <= 20
+      && (!request.resource.data.keys().hasAny(['difficulty'])
+        || request.resource.data.difficulty in ['Beginner', 'Experienced', 'Expert'])
       && request.resource.data.visibility == 'public'
       && request.resource.data.status in ['date_poll', 'find_players', 'closed']
       && request.resource.data.scriptMode in ['tbd', 'chosen']
