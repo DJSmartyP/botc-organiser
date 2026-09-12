@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260912-3">
+  <link rel="stylesheet" href="styles.css?v=20260912-4">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -21,6 +21,7 @@
       <span><strong>Chaos Planner</strong><small>A BOTC Planner</small></span>
     </a>
     <nav class="header-actions" aria-label="Account">
+      <a class="youtube-link" href="https://www.youtube.com/@SharedXPGaming" target="_blank" rel="noopener noreferrer"><span class="youtube-play" aria-hidden="true"></span><span>Watch on YouTube</span></a>
       <button id="dashboardButton" class="button button-ghost" type="button">Google sign in</button>
       <button id="signOutButton" class="button button-ghost" type="button" hidden>Sign out</button>
     </nav>
@@ -28,7 +29,13 @@
 
   <main id="app" tabindex="-1">
     <section id="homeView" class="view home-view">
-      <img class="home-hero-logo" src="assets/chaos-logo.png?v=20260912-3" alt="Chaos on the Clocktower">
+      <div class="hero-logo-stage" data-hero-logo-effect="" aria-label="Chaos on the Clocktower">
+        <span class="hero-logo-aura" aria-hidden="true"></span>
+        <span class="hero-demon-eyes" aria-hidden="true"><i></i><i></i></span>
+        <img class="home-hero-logo hero-logo-main" src="assets/chaos-logo.png?v=20260912-4" alt="Chaos on the Clocktower">
+        <img class="home-hero-logo hero-logo-echo echo-one" src="assets/chaos-logo.png?v=20260912-4" alt="" aria-hidden="true">
+        <img class="home-hero-logo hero-logo-echo echo-two" src="assets/chaos-logo.png?v=20260912-4" alt="" aria-hidden="true">
+      </div>
       <div class="eyebrow">Chaos Planner</div>
       <h1>When the clock strikes, will your players be ready?</h1>
       <p class="lede">Plan the date, share one link, and see who can brave the town square. Players join without creating an account.</p>
@@ -137,6 +144,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20260912-3"></script>
+  <script type="module" src="app.js?v=20260912-4"></script>
 </body>
 </html>
