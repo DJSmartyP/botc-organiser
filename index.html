@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260912-7">
+  <link rel="stylesheet" href="styles.css?v=20260912-8">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -166,6 +166,13 @@
           <button id="addDateOption" class="button button-small button-ghost" type="button">+ Add another option</button>
         </div>
         <label>Maximum players<input name="capacity" type="number" min="5" max="20" value="15" required></label>
+        <fieldset class="difficulty-fieldset"><legend>Event difficulty</legend>
+          <div class="difficulty-picker">
+            <label><input type="radio" name="difficulty" value="Beginner" checked><span class="difficulty-choice"><span class="difficulty-choice-moons" aria-hidden="true"><i></i><i></i><i></i></span><strong>Beginner</strong><small>New players warmly welcomed</small></span></label>
+            <label><input type="radio" name="difficulty" value="Experienced"><span class="difficulty-choice"><span class="difficulty-choice-moons" aria-hidden="true"><i></i><i></i><i></i></span><strong>Experienced</strong><small>Some rules confidence helps</small></span></label>
+            <label><input type="radio" name="difficulty" value="Expert"><span class="difficulty-choice"><span class="difficulty-choice-moons" aria-hidden="true"><i></i><i></i><i></i></span><strong>Expert</strong><small>For seasoned townsfolk</small></span></label>
+          </div>
+        </fieldset>
         <fieldset><legend>Script</legend>
           <label class="radio-row"><input type="radio" name="scriptMode" value="tbd" checked> Script TBD</label>
           <label class="radio-row"><input type="radio" name="scriptMode" value="chosen"> Chosen script</label>
@@ -194,6 +201,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20260912-7"></script>
+  <script type="module" src="app.js?v=20260912-8"></script>
 </body>
 </html>
