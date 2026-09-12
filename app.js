@@ -34,10 +34,10 @@ const sampleSession = {
   scriptUrl: "",
   scriptData: {
     name: "Trouble Brewing", author: "The Pandemonium Institute", characters: [
-      { id: "washerwoman", name: "Washerwoman", team: "townsfolk", ability: "You start knowing that 1 of 2 players is a particular Townsfolk.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/washerwoman.png" },
-      { id: "recluse", name: "Recluse", team: "outsider", ability: "You might register as evil and as a Minion or Demon, even if dead.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/recluse.png" },
-      { id: "poisoner", name: "Poisoner", team: "minion", ability: "Each night, choose a player: they are poisoned tonight and tomorrow day.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/poisoner.png" },
-      { id: "imp", name: "Imp", team: "demon", ability: "Each night, choose a player: they die. If you kill yourself this way, a Minion becomes the Imp.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/imp.png" }
+      { id: "washerwoman", name: "Washerwoman", team: "townsfolk", ability: "You start knowing that 1 of 2 players is a particular Townsfolk.", iconUrl: "https://release.botc.app/resources/characters/tb/washerwoman_g.webp" },
+      { id: "recluse", name: "Recluse", team: "outsider", ability: "You might register as evil and as a Minion or Demon, even if dead.", iconUrl: "https://release.botc.app/resources/characters/tb/recluse_g.webp" },
+      { id: "poisoner", name: "Poisoner", team: "minion", ability: "Each night, choose a player: they are poisoned tonight and tomorrow day.", iconUrl: "https://release.botc.app/resources/characters/tb/poisoner_e.webp" },
+      { id: "imp", name: "Imp", team: "demon", ability: "Each night, choose a player: they die. If you kill yourself this way, a Minion becomes the Imp.", iconUrl: "https://release.botc.app/resources/characters/tb/imp_e.webp" }
     ]
   },
   scripts: [],
@@ -59,10 +59,10 @@ const sampleSession = {
 sampleSession.scripts = [
   { id: "trouble-brewing", name: "Trouble Brewing", author: "The Pandemonium Institute", sourceType: "json", pdfUrl: "", scriptData: sampleSession.scriptData },
   { id: "bad-moon-rising", name: "Bad Moon Rising", author: "The Pandemonium Institute", sourceType: "json", pdfUrl: "", scriptData: { name: "Bad Moon Rising", author: "The Pandemonium Institute", characters: [
-    { id: "grandmother", name: "Grandmother", team: "townsfolk", ability: "You start knowing a good player and their character. If the Demon kills them, you die too.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/grandmother.png" },
-    { id: "lunatic", name: "Lunatic", team: "outsider", ability: "You think you are a Demon, but you are not. The Demon knows who you are and who you choose at night.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/lunatic.png" },
-    { id: "devilsadvocate", name: "Devil's Advocate", team: "minion", ability: "Each night, choose a living player. If executed tomorrow, they do not die.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/devilsadvocate.png" },
-    { id: "shabaloth", name: "Shabaloth", team: "demon", ability: "Each night, choose 2 players: they die. A dead player you chose last night might be regurgitated.", iconUrl: "https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/shabaloth.png" }
+    { id: "grandmother", name: "Grandmother", team: "townsfolk", ability: "You start knowing a good player and their character. If the Demon kills them, you die too.", iconUrl: "https://release.botc.app/resources/characters/bmr/grandmother_g.webp" },
+    { id: "lunatic", name: "Lunatic", team: "outsider", ability: "You think you are a Demon, but you are not. The Demon knows who you are and who you choose at night.", iconUrl: "https://release.botc.app/resources/characters/bmr/lunatic_g.webp" },
+    { id: "devilsadvocate", name: "Devil's Advocate", team: "minion", ability: "Each night, choose a living player. If executed tomorrow, they do not die.", iconUrl: "https://release.botc.app/resources/characters/bmr/devilsadvocate_e.webp" },
+    { id: "shabaloth", name: "Shabaloth", team: "demon", ability: "Each night, choose 2 players: they die. A dead player you chose last night might be regurgitated.", iconUrl: "https://release.botc.app/resources/characters/bmr/shabaloth_e.webp" }
   ] } }
 ];
 
@@ -134,14 +134,21 @@ function safeExternalUrl(value) {
   catch { return ""; }
 }
 
+function officialTokenUrl(value) {
+  const candidate = safeExternalUrl(value);
+  if (!candidate) return "";
+  const url = new URL(candidate);
+  return url.hostname === "release.botc.app" && url.pathname.startsWith("/resources/characters/") ? url.href : "";
+}
+
 async function loadCharacterCatalogue() {
   characterCataloguePromise ||= Promise.all([
     fetch("https://release.botc.app/resources/data/roles.json").then(response => response.ok ? response.json() : []).catch(() => []),
     fetch("https://raw.githubusercontent.com/bra1n/townsquare/develop/src/roles.json").then(response => response.ok ? response.json() : []).catch(() => [])
   ]).then(([official, community]) => {
     const roles = new Map();
-    community.forEach(role => roles.set(String(role.id || "").toLowerCase(), role));
-    official.forEach(role => roles.set(String(role.id || "").toLowerCase(), role));
+    community.forEach(role => roles.set(String(role.id || "").toLowerCase(), { ...role, _officialAsset: false }));
+    official.forEach(role => roles.set(String(role.id || "").toLowerCase(), { ...role, _officialAsset: true }));
     return [...roles.values()];
   });
   return characterCataloguePromise;
@@ -451,7 +458,7 @@ function renderCharacterGroups(scriptData) {
     const members = characters.filter(character => character.team === team);
     if (!members.length) return "";
     return `<section class="script-team script-team-${team}"><h3>${label}<span>${members.length}</span></h3><div class="character-grid">${members.map(character => {
-      const icon = safeExternalUrl(character.iconUrl);
+      const icon = officialTokenUrl(character.iconUrl);
       return `<article class="character-card">${icon ? `<img src="${escapeHtml(icon)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false">` : ""}<span class="character-fallback" ${icon ? "hidden" : ""}>${escapeHtml(character.name?.[0] || "?")}</span><div><strong>${escapeHtml(character.name)}</strong>${character.ability ? `<p>${escapeHtml(character.ability)}</p>` : ""}</div></article>`;
     }).join("")}</div></section>`;
   }).join("");
@@ -464,7 +471,7 @@ function renderPlannedScripts(session, manager) {
     <span class="planned-script-name"><strong>${escapeHtml(script.name)}</strong>${script.author ? `<small>By ${escapeHtml(script.author)}</small>` : ""}</span>
     <span class="script-source-badge">${script.sourceType === "json" ? "Characters" : "PDF"}</span><span class="script-row-arrow" aria-hidden="true">→</span>
   </button>`).join("");
-  const addForm = manager ? `<details class="panel planned-script-manager"><summary>Add another script</summary><form id="plannedScriptForm" class="planned-script-form"><p>Upload a BOTC script JSON. Homebrew characters and their custom token artwork are imported when included in the file.</p>
+  const addForm = manager ? `<details class="panel planned-script-manager"><summary>Add another script</summary><form id="plannedScriptForm" class="planned-script-form"><p>Upload a BOTC script JSON. Official characters use official tokens; homebrew characters use a clear initial marker.</p>
       <div><label>BOTC script JSON<input name="scriptJsonFile" type="file" accept=".json,application/json"><small class="field-hint">Supports standard character IDs and full homebrew character definitions.</small></label></div>
       <p id="scriptUploadError" class="form-error" role="alert" hidden></p><button class="button button-secondary" type="submit">Add planned script</button></form></details>` : "";
   return `<section id="plannedScripts" class="planned-scripts-section"><div class="script-offer-panel panel"><div class="script-offer-heading"><div><span class="eyebrow">Before you choose dates</span><h2>Scripts on offer</h2></div><p>${scripts.length ? "Check the possible games, then choose every date you can make." : "No scripts have been added yet. You can still choose your dates below."}</p></div>
@@ -777,7 +784,7 @@ async function finalizeDate(optionId) {
 function resetCreateDialog() {
   $("#createChoice").hidden = false; $("#createFormPanel").hidden = true;
   $("#createSessionForm").reset(); $("#dateOptionList").innerHTML = ""; $("#createError").hidden = true;
-  $("#scriptJsonStatus").textContent = "The script name, characters and any homebrew token artwork will be read automatically. Players can print or save the displayed sheet as a PDF.";
+  $("#scriptJsonStatus").textContent = "The script name and characters will be read automatically. Official characters use official tokens; homebrew characters use their initial. Players can print or save the displayed sheet as a PDF.";
   $("#scriptJsonFields").hidden = false;
   inviteSlugEdited = false; updateInvitePreview();
 }
