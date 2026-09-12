@@ -63,13 +63,14 @@ test("official role references place newer and previously unresolved characters 
     { id: "hermit", name: "Hermit", team: "outsider", edition: "carousel" },
     { id: "wizard", name: "Wizard", team: "minion", edition: "carousel" },
     { id: "gnome", name: "Gnome", team: "traveller", edition: "carousel" },
-    { id: "duchess", name: "Duchess", team: "fabled", edition: "fabled" }
+    { id: "duchess", name: "Duchess", team: "fabled", edition: "fabled", ability: "Each day, 3 players may choose to visit you." }
   ]);
   assert.deepEqual(parsed.characters.map(character => character.team), ["townsfolk", "outsider", "minion", "traveller", "fabled"]);
   assert.equal(parsed.characters[0].iconUrl, "https://release.botc.app/resources/characters/carousel/alsaahir_g.webp");
   assert.equal(parsed.characters[2].iconUrl, "https://release.botc.app/resources/characters/carousel/wizard_e.webp");
   assert.equal(parsed.characters[3].iconUrl, "https://release.botc.app/resources/characters/carousel/gnome.webp");
   assert.equal(parsed.characters[4].iconUrl, "https://release.botc.app/resources/characters/fabled/duchess.webp");
+  assert.equal(parsed.characters[4].ability, "Each day, 3 players may choose to visit you.");
 });
 
 test("BOTC script JSON supports embedded custom characters and rejects invalid files", () => {

@@ -31,6 +31,15 @@ service cloud.firestore {
       return value in ['Beginner', 'Experienced', 'Expert'];
     }
 
+    function validRoster() {
+      return request.resource.data.keys().hasOnly(['displayName', 'experience', 'interestStatus', 'updatedAt'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 2
+        && request.resource.data.displayName.size() <= 40
+        && validExperience(request.resource.data.experience)
+        && request.resource.data.interestStatus in ['confirmed', 'maybe'];
+    }
+
     function validScriptData(value) {
       return value == null || (
         value is map
@@ -150,14 +159,16 @@ service cloud.firestore {
         allow update: if (signedIn()
           && resource.data.createdByUid == request.auth.uid
           && request.resource.data.createdByUid == resource.data.createdByUid
-          && request.resource.data.keys().hasOnly(['displayName', 'experience', 'createdByUid', 'responses', 'finalStatus', 'updatedAt'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'responses', 'updatedAt'])
           && request.resource.data.displayName is string
           && request.resource.data.displayName.size() >= 2
           && request.resource.data.displayName.size() <= 40
-          && validExperience(request.resource.data.experience))
+          && (session(sessionId).data.status == 'date_poll'
+            || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['responses']))
+          && (!request.resource.data.keys().hasAny(['responses']) || request.resource.data.responses is map))
           || (manages(sessionId)
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['finalStatus', 'updatedAt']));
-        allow delete: if signedIn() && (resource.data.createdByUid == request.auth.uid || manages(sessionId));
+        allow delete: if manages(sessionId);
       }
 
       // Anonymous response documents deliberately contain no name or contact data.
@@ -169,27 +180,27 @@ service cloud.firestore {
           && session(sessionId).data.status == 'date_poll'
           && request.resource.data.keys().hasOnly(['response', 'updatedAt'])
           && request.resource.data.response in ['available', 'maybe', 'unavailable'];
-        allow delete: if manages(sessionId)
-          || (signedIn() && get(/databases/$(database)/documents/sessions/$(sessionId)/registrations/$(playerId)).data.createdByUid == request.auth.uid);
+        allow delete: if manages(sessionId);
       }
 
       // The public roster contains only explicitly consented display fields.
       match /roster/{playerId} {
         allow read: if session(sessionId).data.visibility == 'public';
-        allow create, update: if (
+        allow create: if (
           manages(sessionId)
           || (signedIn()
             && session(sessionId).data.status == 'find_players'
             && getAfter(/databases/$(database)/documents/sessions/$(sessionId)/registrations/$(playerId)).data.createdByUid == request.auth.uid)
         )
-        && request.resource.data.keys().hasOnly(['displayName', 'experience', 'interestStatus', 'updatedAt'])
-        && request.resource.data.displayName is string
-        && request.resource.data.displayName.size() >= 2
-        && request.resource.data.displayName.size() <= 40
-        && validExperience(request.resource.data.experience)
-        && request.resource.data.interestStatus in ['confirmed', 'maybe'];
-        allow delete: if manages(sessionId)
-          || (signedIn() && get(/databases/$(database)/documents/sessions/$(sessionId)/registrations/$(playerId)).data.createdByUid == request.auth.uid);
+        && validRoster();
+        allow update: if validRoster() && (
+          manages(sessionId)
+          || (signedIn()
+            && session(sessionId).data.status == 'find_players'
+            && get(/databases/$(database)/documents/sessions/$(sessionId)/registrations/$(playerId)).data.createdByUid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'updatedAt']))
+        );
+        allow delete: if manages(sessionId);
       }
     }
   }

@@ -127,6 +127,8 @@ main:focus { outline: none; }
 .button-primary:hover { background: linear-gradient(180deg, #bd414b, #7d202b); }
 .button-secondary { border-color: rgba(216,189,124,.54); background: linear-gradient(180deg, rgba(216,189,124,.14), rgba(100,72,33,.09)); }
 .button-ghost { border-color: var(--line); background: rgba(255,255,255,.025); }
+.button-danger { border-color: rgba(210,74,81,.55); color: #ffc6c8; background: rgba(148,42,53,.13); }
+.button-danger:hover { border-color: var(--blood-bright); background: rgba(148,42,53,.25); }
 .button-small { min-height: 38px; padding: .4rem .68rem; font-size: .76rem; }
 .button-wide { width: 100%; }
 .text-button, .back-link { padding: .5rem 0; border: 0; color: var(--gold-bright); background: none; font-family: Cinzel, serif; font-size: .82rem; font-weight: 700; letter-spacing: .04em; cursor: pointer; }
@@ -275,6 +277,20 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .player-form > p { margin-bottom: 0; color: var(--muted); }
 .manager-response-list { display: grid; gap: .8rem; padding: 1rem 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .form-grid { display: grid; gap: 1rem; }
+.owned-registrations, .manager-registrations { margin-top: 1rem; padding: .85rem; box-shadow: none; }
+.owned-registrations .section-heading { margin-bottom: .5rem; }
+.owned-registration-list { display: grid; gap: .45rem; }
+.owned-registration { overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,.18); }
+.owned-registration summary, .manager-registrations > summary { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .65rem .75rem; color: var(--gold-bright); cursor: pointer; }
+.owned-registration summary span:first-child { display: grid; min-width: 0; }
+.owned-registration summary small, .manager-registrations > summary small, .manager-player-list small { color: var(--muted); font-size: .75rem; }
+.edit-player-form { display: grid; gap: .75rem; padding: .75rem; border-top: 1px solid var(--line); }
+.manager-registrations > summary { font-family: Cinzel, serif; font-size: .88rem; font-weight: 700; }
+.manager-player-list { display: grid; padding: 0 .75rem .75rem; }
+.manager-player-list > div { display: flex; align-items: center; justify-content: space-between; gap: .7rem; padding: .55rem 0; border-top: 1px solid var(--line); }
+.manager-player-list span { display: grid; min-width: 0; }
+.icon-button { min-height: 34px; padding: .35rem .55rem; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); background: transparent; font-size: .72rem; cursor: pointer; }
+.icon-button.danger:hover { border-color: var(--blood-bright); color: #ffc6c8; }
 .consent-row { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: .65rem; font-weight: 400; }
 .consent-row input { width: 19px; min-height: 19px; margin-top: .15rem; }
 .roster-summary { display: flex; align-items: center; justify-content: space-between; gap: .8rem; margin-bottom: 1rem; padding: .9rem; }
@@ -291,6 +307,7 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .player-card div span { color: var(--muted); font-size: .78rem; }
 .player-card em { color: #a9d9b8; font-size: .7rem; font-style: normal; text-align: right; }
 .player-card.is-maybe em { color: #e2bd7b; }
+.player-card .icon-button { grid-column: 3; justify-self: end; }
 
 .dialog { width: min(720px, calc(100% - 1rem)); max-height: calc(100vh - 1rem); padding: clamp(1.2rem, 4vw, 2.2rem); overflow-y: auto; border: 1px solid rgba(216,189,124,.42); border-radius: 12px; color: var(--ink); background: linear-gradient(145deg, #281621, #100b10 72%); box-shadow: inset 0 0 0 6px #120c11, inset 0 0 0 7px rgba(216,189,124,.12), 0 30px 100px #000; }
 .dialog::backdrop { background: rgba(3,2,4,.82); backdrop-filter: blur(5px); }
@@ -336,6 +353,7 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
   .planned-script-row { gap: .4rem; }
   .player-card { grid-template-columns: auto minmax(0, 1fr); }
   .player-card em { grid-column: 2; text-align: left; }
+  .player-card .icon-button { grid-column: 2; justify-self: start; }
 }
 
 @media (min-width: 680px) {

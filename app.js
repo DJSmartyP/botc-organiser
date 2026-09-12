@@ -16,6 +16,7 @@ let demoManager = false;
 let dashboardSessions = [];
 let dashboardVisibleLimit = 25;
 let characterCataloguePromise = null;
+const demoPlayerUid = "demo-player";
 
 const sampleSession = {
   id: "sample-night",
@@ -50,7 +51,8 @@ const sampleSession = {
     "option-2": { available: 8, maybe: 1, unavailable: 0 },
     "option-3": { available: 4, maybe: 3, unavailable: 2 }
   },
-  roster: []
+  roster: [],
+  registrations: []
 };
 
 sampleSession.scripts = [
@@ -293,7 +295,7 @@ function renderDashboardSessions() {
       <div class="session-card-main"><div class="session-card-top"><span class="status-pill status-${escapeHtml(session.status)}">${statusLabel(session.status)}</span>${isAdmin ? `<span class="session-owner">${escapeHtml(session.organizerName || "Organiser")}</span>` : ""}</div>
       <h2>${escapeHtml(session.title)}</h2><div class="session-card-meta"><span>◷ ${date ? formatDate(date) : `${session.dateOptions?.length || 0} dates proposed`}</span><span>⌖ ${escapeHtml(session.location || "Location TBD")}</span><span>♟ Up to ${Number(session.capacity) || 0}</span></div>
       <code class="session-slug">${escapeHtml(session.inviteSlug || session.id)}</code></div>
-      <div class="session-card-actions"><button class="button button-small button-ghost" data-copy-session="${session.id}" data-copy-slug="${escapeHtml(session.inviteSlug || "")}" type="button">Copy player link</button><button class="button button-small button-secondary" data-open-session="${session.id}" type="button">Manage</button></div>
+      <div class="session-card-actions"><button class="button button-small button-ghost" data-copy-session="${session.id}" data-copy-slug="${escapeHtml(session.inviteSlug || "")}" type="button">Copy player link</button><button class="button button-small button-secondary" data-open-session="${session.id}" type="button">Manage</button><button class="button button-small button-danger" data-delete-session="${session.id}" type="button">Delete</button></div>
     </article>`;
   }).join("") + (visible.length < matches.length ? '<button class="button button-ghost dashboard-load-more" data-load-more type="button">Show 25 more</button>' : "");
 }
@@ -313,9 +315,20 @@ async function loadSession(id) {
   if (!snap.exists()) return null;
   const session = { id: snap.id, ...snap.data() };
   session.scripts = await loadScripts(session);
+  session.registrations = await loadRegistrations(session);
   if (session.status === "date_poll") session.counts = await loadDateCounts(session);
   if (session.status === "find_players") session.roster = await loadRoster(session.id);
   return session;
+}
+
+async function loadRegistrations(session) {
+  if (!currentUser) return [];
+  const base = firebase.collection(firebase.db, "sessions", session.id, "registrations");
+  const source = isManager(session)
+    ? base
+    : firebase.query(base, firebase.where("createdByUid", "==", currentUser.uid));
+  const snapshot = await firebase.getDocs(source);
+  return snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
 }
 
 function normalizeSessionScripts(session, stored = session.scripts || []) {
@@ -367,6 +380,7 @@ async function openSession(id, preserveUrl = false) {
   showView("sessionView");
   $("#sessionContent").innerHTML = '<div class="loading">Opening the town gates…</div>';
   try {
+    if (!demoMode && !currentUser) await ensurePlayerUser();
     activeSession = await loadSession(id);
     if (!activeSession) throw new Error("That session could not be found.");
     const requestedScript = new URL(location.href).searchParams.get("script");
@@ -401,7 +415,7 @@ function renderSession(session) {
         <div><span>Script</span><strong>${script}</strong></div>
       </div>
       ${session.notes ? `<p class="session-notes">${escapeHtml(session.notes)}</p>` : ""}
-      <div class="share-row"><button id="copyLinkButton" class="button button-ghost" type="button">Copy player link</button><code>${escapeHtml(session.inviteSlug || session.id)}</code>${session.inviteSlug ? '<span class="status-pill">Custom link</span>' : ""}</div>
+      <div class="share-row"><button id="copyLinkButton" class="button button-ghost" type="button">Copy player link</button><code>${escapeHtml(session.inviteSlug || session.id)}</code>${session.inviteSlug ? '<span class="status-pill">Custom link</span>' : ""}${manager ? `<button class="button button-danger" data-delete-session="${escapeHtml(session.id)}" type="button">Delete event</button>` : ""}</div>
     </article>
     ${renderPlannedScripts(session, manager)}
     ${session.status === "date_poll" ? renderDatePoll(session, manager) : renderFindPlayers(session, manager)}
@@ -490,7 +504,7 @@ function renderDatePoll(session, manager) {
   }).join("");
   return `<section class="stage-section"><div class="section-heading"><div><div class="eyebrow">Optional first stage</div><h2>Which nights can you make?</h2></div><p>Maybe responses are shown separately and never count toward a game-size threshold.</p></div>
     <div class="date-list">${options}</div>
-    ${manager ? '<div class="notice">Choosing a date moves the session to Find Players. Available players stay interested; Maybe players remain visibly unconfirmed.</div>' + managerPlayerForm(session) : playerDetailsForm("Save player responses")}
+    ${manager ? '<div class="notice">Choosing a date moves the session to Find Players. Available players stay interested; Maybe players remain visibly unconfirmed.</div>' + renderManagerRegistrations(session) + managerPlayerForm(session) : renderOwnedRegistrations(session) + playerDetailsForm("Save player responses")}
   </section>`;
 }
 
@@ -502,9 +516,31 @@ function renderFindPlayers(session, manager) {
   return `<section class="stage-section">
     <div class="roster-summary panel"><div><div class="eyebrow">Find Players</div><h2>${size}</h2><p>${confirmed.length} confirmed of ${session.capacity} maximum${maybe.length ? ` · ${maybe.length} maybe` : ""}</p></div><div class="capacity-ring" style="--fill:${Math.min(100, confirmed.length / session.capacity * 100)}%"><strong>${confirmed.length}</strong><span>/${session.capacity}</span></div></div>
     <div class="section-heading"><div><h2>Who’s gathering</h2><p>Every interested player appears here with their experience level.</p></div></div>
-    <div class="roster-grid">${roster.length ? roster.map(player => `<article class="player-card ${player.interestStatus === "maybe" ? "is-maybe" : ""}"><span class="player-initial">${escapeHtml(player.displayName[0]?.toUpperCase() || "?")}</span><div><strong>${escapeHtml(player.displayName)}</strong><span>${escapeHtml(player.experience)}</span></div>${player.interestStatus === "maybe" ? '<em>Maybe · unconfirmed</em>' : '<em>Interested</em>'}</article>`).join("") : '<div class="empty-state compact"><p>No players yet. Share the link to begin.</p></div>'}</div>
-    ${manager ? '<div class="notice">Only the public name and experience shown above are publicly readable. Player registration records remain private to the player and session managers.</div>' + managerPlayerForm(session) : (confirmed.length >= session.capacity ? '<div class="notice">This session has reached its player capacity.</div>' : playerDetailsForm("Register player interest"))}
+    <div class="roster-grid">${roster.length ? roster.map(player => `<article class="player-card ${player.interestStatus === "maybe" ? "is-maybe" : ""}"><span class="player-initial">${escapeHtml(player.displayName[0]?.toUpperCase() || "?")}</span><div><strong>${escapeHtml(player.displayName)}</strong><span>${escapeHtml(player.experience)}</span></div>${player.interestStatus === "maybe" ? '<em>Maybe · unconfirmed</em>' : '<em>Interested</em>'}${manager ? `<button class="icon-button danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button" aria-label="Remove ${escapeHtml(player.displayName)}">Remove</button>` : ""}</article>`).join("") : '<div class="empty-state compact"><p>No players yet. Share the link to begin.</p></div>'}</div>
+    ${manager ? '<div class="notice">Only the public name and experience shown above are publicly readable. Player registration records remain private to the player and session managers.</div>' + renderManagerRegistrations(session) + managerPlayerForm(session) : renderOwnedRegistrations(session) + (confirmed.length >= session.capacity ? '<div class="notice">This session has reached its player capacity.</div>' : playerDetailsForm("Register player interest"))}
   </section>`;
+}
+
+function responseSelect(name, selected = "") {
+  return `<select name="${escapeHtml(name)}" required><option value="">Choose response</option>${["available", "maybe", "unavailable"].map(value => `<option value="${value}" ${selected === value ? "selected" : ""}>${value[0].toUpperCase() + value.slice(1)}</option>`).join("")}</select>`;
+}
+
+function renderOwnedRegistrations(session) {
+  const registrations = demoMode ? (session.registrations || []).filter(player => player.createdByUid === demoPlayerUid) : (session.registrations || []);
+  if (!registrations.length) return "";
+  return `<section class="owned-registrations panel"><div class="section-heading"><div><div class="eyebrow">Your entries</div><h2>Edit registrations</h2></div><p>You can change names${session.status === "date_poll" ? " and date responses" : ""}. Experience is fixed after registration.</p></div>
+    <div class="owned-registration-list">${registrations.map(player => `<details class="owned-registration"><summary><span><strong>${escapeHtml(player.displayName)}</strong><small>${escapeHtml(player.experience)}</small></span><span>Edit</span></summary>
+      <form class="edit-player-form" data-player-id="${escapeHtml(player.id)}"><div class="form-grid"><label>Name<input name="displayName" value="${escapeHtml(player.displayName)}" minlength="2" maxlength="40" required></label><label>Experience<input value="${escapeHtml(player.experience)}" disabled></label></div>
+      ${session.status === "date_poll" ? `<div class="manager-response-list">${session.dateOptions.map(option => `<label>${formatDate(option.startAt)}${responseSelect(`response-${option.id}`, player.responses?.[option.id])}</label>`).join("")}</div>` : ""}
+      <p class="form-error" role="alert" hidden></p><button class="button button-small button-secondary" type="submit">Save changes</button></form></details>`).join("")}</div>
+  </section>`;
+}
+
+function renderManagerRegistrations(session) {
+  const registrations = session.registrations || [];
+  return `<details class="manager-registrations panel" ${session.status === "date_poll" ? "open" : ""}><summary><span>Manage all player records</span><small>${registrations.length} total</small></summary>
+    ${registrations.length ? `<div class="manager-player-list">${registrations.map(player => `<div><span><strong>${escapeHtml(player.displayName)}</strong><small>${escapeHtml(player.experience)}</small></span><button class="button button-small button-danger" data-remove-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.displayName)}" type="button">Remove</button></div>`).join("")}</div>` : '<div class="empty-state compact"><p>No players have responded yet.</p></div>'}
+  </details>`;
 }
 
 function playerDetailsForm(buttonLabel) {
@@ -516,7 +552,7 @@ function playerDetailsForm(buttonLabel) {
 }
 
 function managerPlayerForm(session) {
-  const responseFields = session.status === "date_poll" ? `<div class="manager-response-list">${session.dateOptions.map(option => `<label>${formatDate(option.startAt)}<select name="manager-response-${option.id}" required><option value="">Choose response</option><option value="available">Available</option><option value="maybe">Maybe</option><option value="unavailable">Unavailable</option></select></label>`).join("")}</div>` : "";
+  const responseFields = session.status === "date_poll" ? `<div class="manager-response-list">${session.dateOptions.map(option => `<label>${formatDate(option.startAt)}${responseSelect(`manager-response-${option.id}`)}</label>`).join("")}</div>` : "";
   return `<form id="playerForm" class="panel player-form" data-manager="true"><h2>Add a player</h2><p>Add as many players as needed. Manager-entered responses follow the same privacy and game-size rules.</p>
     <div class="form-grid"><label>Name<input name="displayName" minlength="2" maxlength="40" required></label><label>Experience<select name="experience" required><option value="">Choose one</option><option>Beginner</option><option>Experienced</option><option>Expert</option></select></label></div>
     ${responseFields}<label class="consent-row"><input type="checkbox" name="consent" required><span>I have permission to add this player’s name and experience to the session.</span></label>
@@ -524,9 +560,14 @@ function managerPlayerForm(session) {
 }
 
 async function ensurePlayerUser() {
-  if (demoMode) return { uid: `demo-${crypto.randomUUID()}` };
-  if (currentUser) return currentUser;
+  if (demoMode) return { uid: demoPlayerUid, isAnonymous: true };
+  await firebase.auth.authStateReady();
+  if (currentUser || firebase.auth.currentUser) {
+    currentUser = currentUser || firebase.auth.currentUser;
+    return currentUser;
+  }
   const result = await firebase.signInAnonymously(firebase.auth);
+  currentUser = result.user;
   return result.user;
 }
 
@@ -547,6 +588,7 @@ async function submitPlayer(form) {
       }
       if (demoMode) {
         for (const [optionId, response] of Object.entries(responses)) activeSession.counts[optionId][response]++;
+        activeSession.registrations.push({ id: playerId, ...data, createdByUid: user.uid, responses });
       } else {
         const batch = firebase.writeBatch(firebase.db);
         batch.set(firebase.doc(firebase.db, "sessions", activeSession.id, "registrations", playerId), { ...data, createdByUid: user.uid, responses, updatedAt: firebase.serverTimestamp() });
@@ -555,7 +597,10 @@ async function submitPlayer(form) {
       }
       showToast("Player availability saved. You can add another player now.");
     } else {
-      if (demoMode) activeSession.roster.push({ id: playerId, ...data, interestStatus: "confirmed" });
+      if (demoMode) {
+        activeSession.registrations.push({ id: playerId, ...data, createdByUid: user.uid, finalStatus: "confirmed" });
+        activeSession.roster.push({ id: playerId, ...data, interestStatus: "confirmed" });
+      }
       else {
         const batch = firebase.writeBatch(firebase.db);
         batch.set(firebase.doc(firebase.db, "sessions", activeSession.id, "registrations", playerId), { ...data, createdByUid: user.uid, finalStatus: "confirmed", updatedAt: firebase.serverTimestamp() });
@@ -566,6 +611,112 @@ async function submitPlayer(form) {
     }
     activeSession = await loadSession(activeSession.id); renderSession(activeSession);
   } catch (error) { errorBox.textContent = error.message; errorBox.hidden = false; }
+}
+
+async function editPlayer(form) {
+  const errorBox = $(".form-error", form); errorBox.hidden = true;
+  try {
+    const playerId = form.dataset.playerId;
+    const displayName = String(new FormData(form).get("displayName") || "").trim();
+    if (displayName.length < 2 || displayName.length > 40) throw new Error("Use a name between 2 and 40 characters.");
+    const responses = {};
+    if (activeSession.status === "date_poll") {
+      const fields = new FormData(form);
+      for (const option of activeSession.dateOptions) {
+        const response = fields.get(`response-${option.id}`);
+        if (!["available", "maybe", "unavailable"].includes(response)) throw new Error("Choose a response for every date.");
+        responses[option.id] = response;
+      }
+    }
+    if (demoMode) {
+      const registration = activeSession.registrations.find(player => player.id === playerId && player.createdByUid === demoPlayerUid);
+      if (!registration) throw new Error("That registration could not be found.");
+      if (activeSession.status === "date_poll") {
+        for (const option of activeSession.dateOptions) {
+          const previous = registration.responses?.[option.id];
+          if (previous && activeSession.counts[option.id]?.[previous] > 0) activeSession.counts[option.id][previous]--;
+          activeSession.counts[option.id][responses[option.id]]++;
+        }
+        registration.responses = responses;
+      } else {
+        const rosterPlayer = activeSession.roster.find(player => player.id === playerId);
+        if (rosterPlayer) rosterPlayer.displayName = displayName;
+      }
+      registration.displayName = displayName;
+    } else {
+      const batch = firebase.writeBatch(firebase.db);
+      const registrationRef = firebase.doc(firebase.db, "sessions", activeSession.id, "registrations", playerId);
+      const update = { displayName, updatedAt: firebase.serverTimestamp() };
+      if (activeSession.status === "date_poll") {
+        update.responses = responses;
+        for (const [optionId, response] of Object.entries(responses)) batch.update(firebase.doc(firebase.db, "sessions", activeSession.id, "dateOptions", optionId, "responses", playerId), { response, updatedAt: firebase.serverTimestamp() });
+      } else {
+        batch.update(firebase.doc(firebase.db, "sessions", activeSession.id, "roster", playerId), { displayName, updatedAt: firebase.serverTimestamp() });
+      }
+      batch.update(registrationRef, update);
+      await batch.commit();
+    }
+    showToast("Player details updated.");
+    activeSession = await loadSession(activeSession.id); renderSession(activeSession);
+  } catch (error) { errorBox.textContent = error.message; errorBox.hidden = false; }
+}
+
+async function removePlayer(playerId, playerName) {
+  if (!isManager(activeSession) || !confirm(`Remove ${playerName || "this player"} from this event?`)) return;
+  try {
+    if (demoMode) {
+      const registration = activeSession.registrations.find(player => player.id === playerId);
+      if (activeSession.status === "date_poll" && registration?.responses) {
+        for (const [optionId, response] of Object.entries(registration.responses)) {
+          if (activeSession.counts[optionId]?.[response] > 0) activeSession.counts[optionId][response]--;
+        }
+      }
+      activeSession.registrations = activeSession.registrations.filter(player => player.id !== playerId);
+      activeSession.roster = (activeSession.roster || []).filter(player => player.id !== playerId);
+    } else {
+      const batch = firebase.writeBatch(firebase.db);
+      batch.delete(firebase.doc(firebase.db, "sessions", activeSession.id, "registrations", playerId));
+      batch.delete(firebase.doc(firebase.db, "sessions", activeSession.id, "roster", playerId));
+      for (const option of activeSession.dateOptions || []) batch.delete(firebase.doc(firebase.db, "sessions", activeSession.id, "dateOptions", option.id, "responses", playerId));
+      await batch.commit();
+    }
+    showToast("Player removed.");
+    activeSession = await loadSession(activeSession.id); renderSession(activeSession);
+  } catch (error) { showToast(`Could not remove player: ${error.message}`); }
+}
+
+async function commitDeletes(refs) {
+  for (let offset = 0; offset < refs.length; offset += 400) {
+    const batch = firebase.writeBatch(firebase.db);
+    refs.slice(offset, offset + 400).forEach(ref => batch.delete(ref));
+    await batch.commit();
+  }
+}
+
+async function deleteSession(sessionId) {
+  const session = dashboardSessions.find(item => item.id === sessionId) || (activeSession?.id === sessionId ? activeSession : null);
+  if (!session || !isManager(session) || !confirm(`Delete “${session.title}” and every player record? This cannot be undone.`)) return;
+  try {
+    if (demoMode) {
+      demoSessions = demoSessions.filter(item => item.id !== sessionId);
+    } else {
+      const nested = ["scripts", "registrations", "roster"];
+      const snapshots = await Promise.all(nested.map(name => firebase.getDocs(firebase.collection(firebase.db, "sessions", sessionId, name))));
+      const responseSnapshots = await Promise.all((session.dateOptions || []).map(option => firebase.getDocs(firebase.collection(firebase.db, "sessions", sessionId, "dateOptions", option.id, "responses"))));
+      await commitDeletes([...snapshots, ...responseSnapshots].flatMap(snapshot => snapshot.docs.map(item => item.ref)));
+      const finalBatch = firebase.writeBatch(firebase.db);
+      if (session.inviteSlug) {
+        const inviteRef = firebase.doc(firebase.db, "inviteLinks", session.inviteSlug);
+        if ((await firebase.getDoc(inviteRef)).exists()) finalBatch.delete(inviteRef);
+      }
+      finalBatch.delete(firebase.doc(firebase.db, "sessions", sessionId));
+      await finalBatch.commit();
+    }
+    activeSession = null;
+    showToast("Event and player data deleted.");
+    history.replaceState({}, "", location.pathname);
+    await openDashboard();
+  } catch (error) { showToast(`Could not delete event: ${error.message}`); }
 }
 
 async function finalizeDate(optionId) {
@@ -661,7 +812,7 @@ async function createSession(form) {
     let id;
     if (demoMode) {
       if (demoSessions.some(session => session.inviteSlug === inviteSlug)) throw new Error("That custom player link is already in use. Try another name.");
-      id = `demo-${Math.random().toString(36).slice(2, 8)}`; demoSessions.unshift({ id, ...data, scripts: initialScript ? [{ id: `script-${crypto.randomUUID()}`, ...initialScript }] : [], counts: Object.fromEntries(dateOptions.map(option => [option.id, { available: 0, maybe: 0, unavailable: 0 }])), roster: [] });
+      id = `demo-${Math.random().toString(36).slice(2, 8)}`; demoSessions.unshift({ id, ...data, scripts: initialScript ? [{ id: `script-${crypto.randomUUID()}`, ...initialScript }] : [], counts: Object.fromEntries(dateOptions.map(option => [option.id, { available: 0, maybe: 0, unavailable: 0 }])), roster: [], registrations: [] });
     } else {
       const sessionRef = firebase.doc(firebase.collection(firebase.db, "sessions"));
       const inviteRef = firebase.doc(firebase.db, "inviteLinks", inviteSlug);
@@ -685,6 +836,8 @@ document.addEventListener("click", async event => {
   const home = event.target.closest('[data-action="home"]'); if (home) { history.replaceState({}, "", location.pathname); showView("homeView"); return; }
   const open = event.target.closest("[data-open-session]"); if (open) { await openSession(open.dataset.openSession); return; }
   const finalize = event.target.closest("[data-finalize]"); if (finalize) { await finalizeDate(finalize.dataset.finalize); return; }
+  const removePlayerButton = event.target.closest("[data-remove-player]"); if (removePlayerButton) { await removePlayer(removePlayerButton.dataset.removePlayer, removePlayerButton.dataset.playerName); return; }
+  const deleteSessionButton = event.target.closest("[data-delete-session]"); if (deleteSessionButton) { await deleteSession(deleteSessionButton.dataset.deleteSession); return; }
   const mode = event.target.closest("[data-create-mode]"); if (mode) chooseCreateMode(mode.dataset.createMode);
   const viewScript = event.target.closest("[data-view-script]");
   if (viewScript) {
@@ -735,6 +888,7 @@ $("#inviteSlug").addEventListener("blur", () => { $("#inviteSlug").value = norma
 $("#createSessionForm").addEventListener("submit", event => { event.preventDefault(); createSession(event.currentTarget); });
 $("#sessionContent").addEventListener("submit", event => {
   if (event.target.id === "playerForm") { event.preventDefault(); submitPlayer(event.target); }
+  if (event.target.matches(".edit-player-form")) { event.preventDefault(); editPlayer(event.target); }
   if (event.target.id === "plannedScriptForm") { event.preventDefault(); savePlannedScript(event.target); }
 });
 $("#sessionContent").addEventListener("change", event => {

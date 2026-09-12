@@ -45,6 +45,8 @@ Admins can manage every session. Organisers can manage only sessions whose `owne
 - Session documents contain public event information only. Never put organiser email addresses or player contact details in them.
 - `/users` is readable only by that user and admins.
 - `/registrations` is readable only by the anonymous or signed-in identity that created that player entry, the session owner, and admins. One identity can securely create multiple player records.
+- Players can update only the display name and date responses on records created by their anonymous identity. They cannot change experience after registration, remove records, or edit roster status.
+- Session organisers can remove player records from their own sessions and delete their own sessions. Admins can do this for every session. The app deletes nested registrations, response documents, roster entries, scripts, and the custom invite link before deleting an event because Firestore does not cascade subcollection deletes.
 - Date-response documents are publicly countable but contain only `available`, `maybe`, or `unavailable`; no names or contact information.
 - `/inviteLinks/{slug}` can be fetched only by a signed-in or anonymous Firebase identity and cannot be listed. It contains only the target session ID and owner UID.
 - The public roster contains only the player name and experience they explicitly consented to display, plus confirmed/maybe status.
