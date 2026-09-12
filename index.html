@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260912-6">
+  <link rel="stylesheet" href="styles.css?v=20260912-7">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -21,7 +21,7 @@
       <span><strong>Chaos Planner</strong><small>A BOTC Planner</small></span>
     </a>
     <nav class="header-actions" aria-label="Account">
-      <a class="youtube-link" href="https://www.youtube.com/@SharedXPGaming" target="_blank" rel="noopener noreferrer"><span class="youtube-play" aria-hidden="true"></span><span>Watch on YouTube</span></a>
+      <a class="youtube-link" href="https://www.youtube.com/playlist?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra" target="_blank" rel="noopener noreferrer"><span class="youtube-play" aria-hidden="true"></span><span>Watch the playlist</span></a>
       <button id="dashboardButton" class="button button-ghost" type="button">Google sign in</button>
       <button id="signOutButton" class="button button-ghost" type="button" hidden>Sign out</button>
     </nav>
@@ -39,6 +39,7 @@
       <div class="eyebrow">Chaos Planner</div>
       <h1>When the clock strikes, will your players be ready?</h1>
       <p class="lede">Plan the date, share one link, and see who can brave the town square. Players join without creating an account.</p>
+      <a class="home-guide-link" href="?guide=1" data-action="guide">Learn how to use the system <span aria-hidden="true">→</span></a>
       <div class="home-grid organiser-home-grid">
         <article class="panel organiser-panel">
           <span class="panel-number">For organisers and admins</span>
@@ -47,7 +48,56 @@
           <button id="startOrganisingButton" class="button button-primary" type="button">Continue with Google</button>
           <button id="demoSessionButton" class="text-button" type="button" hidden>Preview the player-link experience</button>
         </article>
+        <article class="panel feature-panel">
+          <span class="panel-number">Everything in one place</span>
+          <h2>Built for busy Storytellers</h2>
+          <ul class="feature-list">
+            <li><strong>Find the night</strong><span>Poll up to ten dates with Available, Maybe and Unavailable responses.</span></li>
+            <li><strong>Plan the games</strong><span>Offer multiple scripts with JSON character sheets or PDF links.</span></li>
+            <li><strong>Gather the town</strong><span>Let players register whole groups without creating accounts.</span></li>
+            <li><strong>Know what can run</strong><span>See Teensyville and Full Town thresholds update automatically.</span></li>
+            <li><strong>Stay in control</strong><span>Use memorable player links and manager-only roster controls.</span></li>
+          </ul>
+        </article>
       </div>
+    </section>
+
+    <section id="guideView" class="view guide-view" hidden>
+      <a class="back-link" href="./" data-action="home">← Back to home</a>
+      <header class="guide-hero panel">
+        <div><div class="eyebrow">Storyteller’s handbook</div><h1>How to use Chaos Planner</h1><p>From choosing possible nights to gathering the final town, this guide shows what organisers and players see at every stage.</p></div>
+        <nav class="guide-jump-links" aria-label="Guide sections"><a href="#guide-organise">Organisers</a><a href="#guide-players">Players</a><a href="#guide-finalise">Finalising</a></nav>
+      </header>
+
+      <div class="guide-role-note"><strong>Two routes through the app</strong><span>Organisers and admins sign in with Google. Players never visit the login screen—they open the private session link and continue anonymously.</span></div>
+
+      <section id="guide-organise" class="guide-chapter">
+        <div class="section-heading"><div><div class="eyebrow">For organisers</div><h2>Set up the gathering</h2></div><p>Create the session, add possible scripts, then share one memorable link.</p></div>
+        <div class="guide-grid">
+          <article class="guide-step panel"><span class="guide-number">1</span><div class="guide-copy"><h3>Sign in and use the dashboard</h3><p>Choose <strong>Continue with Google</strong>. Your dashboard keeps upcoming, date-poll and closed sessions together, with search and status filters for a long-running calendar.</p></div><div class="guide-screen"><div class="guide-screen-bar"><b>Your gatherings</b><i>+ Create session</i></div><div class="guide-stats"><span><b>8</b> Upcoming</span><span><b>3</b> Finding dates</span><span><b>5</b> Finding players</span></div><div class="guide-row"><span>Friday in Ravenswood Bluff<small>Finding players · 9 registered</small></span><i>Open</i></div></div></article>
+          <article class="guide-step panel"><span class="guide-number">2</span><div class="guide-copy"><h3>Choose how the date works</h3><p>Select <strong>I have a date</strong> to begin recruiting immediately, or <strong>I need to find a date</strong> to offer up to ten options for players to answer.</p></div><div class="guide-screen"><div class="guide-screen-title">How will you plan this game?</div><div class="guide-choice"><span>✓<b>I have a date</b><small>Fixed date and time</small></span><span>?</span><span><b>I need to find a date</b><small>Ask players first</small></span></div></div></article>
+          <article class="guide-step panel"><span class="guide-number">3</span><div class="guide-copy"><h3>Add scripts and session details</h3><p>Enter the venue, capacity and notes. Leave the script as TBD, upload one or more BOTC JSON files for a character view, or add a script name with a PDF link.</p></div><div class="guide-screen"><div class="guide-screen-title">Create a gathering</div><div class="guide-fields"><span>Session name</span><span>Location</span><span>Maximum players</span><span class="accent">Upload BOTC JSON</span></div><div class="guide-file">trouble_brewing.json <b>22 characters ready</b></div></div></article>
+          <article class="guide-step panel"><span class="guide-number">4</span><div class="guide-copy"><h3>Share the player link</h3><p>Copy the custom link from the session header and send it to your group. It opens the session directly—players do not need your dashboard or a Google account.</p></div><div class="guide-screen"><div class="guide-screen-title">A night in Ravenswood Bluff</div><div class="guide-facts"><span>DATE<b>Finding a date</b></span><span>SCRIPT<b>2 on offer</b></span></div><div class="guide-link"><b>Copy player link</b><code>ravenswood-night</code></div></div></article>
+        </div>
+      </section>
+
+      <section id="guide-players" class="guide-chapter">
+        <div class="section-heading"><div><div class="eyebrow">For players</div><h2>Review and respond</h2></div><p>The shared link contains everything a player needs.</p></div>
+        <div class="guide-grid">
+          <article class="guide-step panel"><span class="guide-number">5</span><div class="guide-copy"><h3>Check the planned scripts</h3><p>Scripts appear before the date choices. Open any JSON script to see its Townsfolk, Outsiders, Minions, Demons and special characters, then return to choose dates.</p></div><div class="guide-screen"><div class="guide-screen-title">Scripts on offer</div><div class="guide-row"><span>Trouble Brewing<small>By The Pandemonium Institute</small></span><i>Characters →</i></div><div class="guide-role-strips"><i></i><i></i><i></i><i></i></div></div></article>
+          <article class="guide-step panel"><span class="guide-number">6</span><div class="guide-copy"><h3>Choose every possible date</h3><p>Add a name and experience level for each person you are answering for. Mark every option <strong>Available</strong>, <strong>Maybe</strong> or <strong>Unavailable</strong>; Maybe is shown separately.</p></div><div class="guide-screen"><div class="guide-screen-title">Thursday, 17 September</div><div class="guide-availability"><span class="available">Available</span><span class="maybe">Maybe</span><span>Unavailable</span></div><div class="guide-fields"><span>Player name</span><span>Experience</span></div></div></article>
+          <article class="guide-step panel"><span class="guide-number">7</span><div class="guide-copy"><h3>Edit your own entries</h3><p>Return using the same device and session link to correct player names or date responses. Players can only edit registrations created by their anonymous session—not anybody else’s.</p></div><div class="guide-screen"><div class="guide-screen-title">Your entries</div><div class="guide-row"><span>Alex<small>Beginner</small></span><i>Edit</i></div><div class="guide-row"><span>Morgan<small>Experienced</small></span><i>Edit</i></div></div></article>
+        </div>
+      </section>
+
+      <section id="guide-finalise" class="guide-chapter">
+        <div class="section-heading"><div><div class="eyebrow">Bring it together</div><h2>Confirm and manage the game</h2></div><p>The organiser turns the poll into a confirmed game and manages the final roster.</p></div>
+        <div class="guide-grid">
+          <article class="guide-step panel"><span class="guide-number">8</span><div class="guide-copy"><h3>Read the date indicators</h3><p>Available players determine the status: 0–4 means not enough yet, 5–6 enables Teensyville, and 7+ enables a Full Town game. Maybe never counts toward those thresholds.</p></div><div class="guide-screen"><div class="guide-screen-title">Possible dates</div><div class="guide-counts"><span class="available"><b>8</b> Available</span><span class="maybe"><b>2</b> Maybe</span><span><b>1</b> Unavailable</span></div><div class="guide-banner">Full Town game possible</div></div></article>
+          <article class="guide-step panel"><span class="guide-number">9</span><div class="guide-copy"><h3>Select the final date</h3><p>Choose <strong>Confirm this date</strong>. Available players move automatically to the interested roster, Maybe players remain visibly unconfirmed, and the session advances to Find Players.</p></div><div class="guide-screen"><div class="guide-screen-title">Thursday, 24 September</div><div class="guide-banner">Full Town game possible</div><div class="guide-primary">Confirm this date</div></div></article>
+          <article class="guide-step panel"><span class="guide-number">10</span><div class="guide-copy"><h3>Manage the final roster</h3><p>Organisers can add multiple players and remove players from their own sessions. Admins can manage every session and remove any event or player.</p></div><div class="guide-screen"><div class="guide-screen-title">Who’s gathering</div><div class="guide-player"><b>A</b><span>Alex<small>Experienced</small></span><i>Interested · Remove</i></div><div class="guide-player"><b>M</b><span>Morgan<small>Beginner</small></span><i>Maybe · Remove</i></div></div></article>
+        </div>
+      </section>
     </section>
 
     <section id="authView" class="view auth-view" hidden>
@@ -84,7 +134,7 @@
   </main>
 
   <footer class="site-footer">
-    <div class="footer-links"><span>A BOTC Planner from Chaos On The Clocktower</span><a href="https://www.youtube.com/@SharedXPGaming" target="_blank" rel="noopener noreferrer">Watch Shared XP Gaming on YouTube ↗</a></div>
+    <div class="footer-links"><span>A BOTC Planner from Chaos On The Clocktower</span><a href="https://www.youtube.com/playlist?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra" target="_blank" rel="noopener noreferrer">Watch Chaos on the Clocktower ↗</a></div>
     <p class="legal-notice"><strong>Unofficial community tool.</strong> Blood on the Clocktower and its game content are owned by Steven Medway and The Pandemonium Institute. Chaos Planner is not affiliated with or endorsed by The Pandemonium Institute. <a href="https://bloodontheclocktower.com/pages/community-created-content-policy" target="_blank" rel="noopener noreferrer">Community content policy ↗</a></p>
   </footer>
 
@@ -144,6 +194,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20260912-5"></script>
+  <script type="module" src="app.js?v=20260912-7"></script>
 </body>
 </html>
