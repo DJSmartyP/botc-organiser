@@ -21,6 +21,8 @@ try {
     watchErrors(page, viewport.name);
     await page.goto("http://127.0.0.1:4173/?demo=1&session=sample-night", { waitUntil: "networkidle" });
     await page.locator(".session-hero h1").waitFor();
+    await page.locator(".ccc-badge img").scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => document.querySelector(".ccc-badge img")?.naturalWidth > 0);
     await assertFits(page, `${viewport.name} player view`);
     await page.screenshot({ path: `qa-${viewport.name}.png`, fullPage: true });
     await page.close();

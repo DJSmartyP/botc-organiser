@@ -2,12 +2,21 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, emptyArt] = await Promise.all([
+const [html, css, app, emptyArt, communityBadge] = await Promise.all([
   readFile(new URL("../index.html", import.meta.url), "utf8"),
   readFile(new URL("../styles.css", import.meta.url), "utf8"),
   readFile(new URL("../app.js", import.meta.url), "utf8"),
-  readFile(new URL("../assets/empty-town-vignette.png", import.meta.url))
+  readFile(new URL("../assets/empty-town-vignette.png", import.meta.url)),
+  readFile(new URL("../assets/community-created-content.png", import.meta.url))
 ]);
+
+test("the official Community Created Content badge identifies the site as unofficial", () => {
+  assert.match(html, /assets\/community-created-content\.png/);
+  assert.match(html, /alt="Community Created Content"/);
+  assert.match(html, /class="ccc-badge"[^>]+community-created-content-policy/);
+  assert.match(html, /Unofficial community tool/);
+  assert.deepEqual([...communityBadge.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+});
 
 test("homepage links to the Chaos playlist and complete tutorial", () => {
   const playlist = "PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra";
