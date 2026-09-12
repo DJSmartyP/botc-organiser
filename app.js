@@ -464,10 +464,8 @@ function renderPlannedScripts(session, manager) {
     <span class="planned-script-name"><strong>${escapeHtml(script.name)}</strong>${script.author ? `<small>By ${escapeHtml(script.author)}</small>` : ""}</span>
     <span class="script-source-badge">${script.sourceType === "json" ? "Characters" : "PDF"}</span><span class="script-row-arrow" aria-hidden="true">→</span>
   </button>`).join("");
-  const addForm = manager ? `<details class="panel planned-script-manager"><summary>Add another script</summary><form id="plannedScriptForm" class="planned-script-form"><p>Upload JSON for the character view, or add a script name and PDF link.</p>
-      <div class="script-methods"><label class="radio-row"><input type="radio" name="plannedSource" value="json" checked> BOTC JSON</label><label class="radio-row"><input type="radio" name="plannedSource" value="pdf"> Name + PDF</label></div>
-      <div data-planned-json><label>BOTC script JSON<input name="scriptJsonFile" type="file" accept=".json,application/json"></label></div>
-      <div data-planned-pdf class="form-grid" hidden><label>Script name<input name="scriptName" maxlength="100"></label><label>PDF link<input name="scriptUrl" type="url" inputmode="url" placeholder="https://…/script.pdf"></label></div>
+  const addForm = manager ? `<details class="panel planned-script-manager"><summary>Add another script</summary><form id="plannedScriptForm" class="planned-script-form"><p>Upload a BOTC script JSON. Homebrew characters and their custom token artwork are imported when included in the file.</p>
+      <div><label>BOTC script JSON<input name="scriptJsonFile" type="file" accept=".json,application/json"><small class="field-hint">Supports standard character IDs and full homebrew character definitions.</small></label></div>
       <p id="scriptUploadError" class="form-error" role="alert" hidden></p><button class="button button-secondary" type="submit">Add planned script</button></form></details>` : "";
   return `<section id="plannedScripts" class="planned-scripts-section"><div class="script-offer-panel panel"><div class="script-offer-heading"><div><span class="eyebrow">Before you choose dates</span><h2>Scripts on offer</h2></div><p>${scripts.length ? "Check the possible games, then choose every date you can make." : "No scripts have been added yet. You can still choose your dates below."}</p></div>
     ${scripts.length ? `<div class="planned-script-list">${rows}</div>` : ""}</div>${addForm}</section>`;
@@ -489,20 +487,12 @@ async function savePlannedScript(form) {
   const errorBox = $("#scriptUploadError"); errorBox.hidden = true;
   try {
     if ((activeSession.scripts || []).length >= 10) throw new Error("A session can have up to 10 planned scripts.");
-    const fields = new FormData(form); const sourceType = fields.get("plannedSource");
-    let scriptData = null; let name = ""; let author = ""; let pdfUrl = "";
-    if (sourceType === "json") {
-      const scriptFile = fields.get("scriptJsonFile");
-      if (!scriptFile?.size) throw new Error("Choose a BOTC script JSON file.");
-      scriptData = await readScriptFile(scriptFile);
-      name = scriptData.name || scriptFile.name.replace(/\.json$/i, "").replace(/[-_]+/g, " ").trim() || "Uploaded script";
-      author = scriptData.author || "";
-    } else {
-      name = String(fields.get("scriptName") || "").trim(); pdfUrl = safeExternalUrl(fields.get("scriptUrl"));
-      if (!name) throw new Error("Enter the script name.");
-      if (!pdfUrl) throw new Error("Enter a valid HTTPS PDF link.");
-    }
-    const script = { name, author, sourceType, pdfUrl, scriptData };
+    const fields = new FormData(form);
+    const scriptFile = fields.get("scriptJsonFile");
+    if (!scriptFile?.size) throw new Error("Choose a BOTC script JSON file.");
+    const scriptData = await readScriptFile(scriptFile);
+    const name = scriptData.name || scriptFile.name.replace(/\.json$/i, "").replace(/[-_]+/g, " ").trim() || "Uploaded script";
+    const script = { name, author: scriptData.author || "", sourceType: "json", pdfUrl: "", scriptData };
     if (demoMode) activeSession.scripts.push({ id: `script-${crypto.randomUUID()}`, ...script });
     else await firebase.addDoc(firebase.collection(firebase.db, "sessions", activeSession.id, "scripts"), { ...script, createdAt: firebase.serverTimestamp(), updatedAt: firebase.serverTimestamp() });
     showToast("Planned script added.");
@@ -787,8 +777,8 @@ async function finalizeDate(optionId) {
 function resetCreateDialog() {
   $("#createChoice").hidden = false; $("#createFormPanel").hidden = true;
   $("#createSessionForm").reset(); $("#dateOptionList").innerHTML = ""; $("#createError").hidden = true;
-  $("#scriptJsonStatus").textContent = "The script name and character list will be read automatically. Players can print or save the displayed sheet as a PDF.";
-  $("#scriptJsonFields").hidden = false; $("#scriptPdfFields").hidden = true;
+  $("#scriptJsonStatus").textContent = "The script name, characters and any homebrew token artwork will be read automatically. Players can print or save the displayed sheet as a PDF.";
+  $("#scriptJsonFields").hidden = false;
   inviteSlugEdited = false; updateInvitePreview();
 }
 
@@ -819,15 +809,12 @@ async function createSession(form) {
     const dateOptions = createMode === "poll" ? buildDateOptions(formData.getAll("dateOption")) : [];
     if (createMode === "poll" && dateOptions.length < 2) throw new Error("Add at least two date and time options.");
     const scriptMode = formData.get("scriptMode");
-    const scriptSource = formData.get("scriptSource");
     const scriptFile = formData.get("scriptJsonFile");
-    const scriptData = scriptMode === "chosen" && scriptSource === "json" && scriptFile?.size ? await readScriptFile(scriptFile) : null;
+    const scriptData = scriptMode === "chosen" && scriptFile?.size ? await readScriptFile(scriptFile) : null;
     const inviteSlug = normalizeInviteSlug(formData.get("inviteSlug"));
     const slugError = inviteSlugError(inviteSlug);
     if (slugError) throw new Error(slugError);
-    if (scriptMode === "chosen" && scriptSource === "json" && !scriptData) throw new Error("Choose a BOTC script JSON file.");
-    if (scriptMode === "chosen" && scriptSource === "pdf" && !formData.get("scriptName")?.trim()) throw new Error("Enter the script name.");
-    if (scriptMode === "chosen" && scriptSource === "pdf" && !safeExternalUrl(formData.get("scriptUrl"))) throw new Error("Enter a valid HTTPS PDF link.");
+    if (scriptMode === "chosen" && !scriptData) throw new Error("Choose a BOTC script JSON file.");
     const jsonScriptName = scriptData?.name || scriptFile?.name?.replace(/\.json$/i, "").replace(/[-_]+/g, " ").trim() || "Uploaded script";
     const data = {
       ownerUid: demoMode ? "demo-organiser" : currentUser.uid,
@@ -835,13 +822,13 @@ async function createSession(form) {
       title: formData.get("title").trim(), location: formData.get("location").trim(), notes: formData.get("notes").trim(),
       capacity: Number(formData.get("capacity")), difficulty: formData.get("difficulty"), visibility: "public", status: createMode === "poll" ? "date_poll" : "find_players",
       fixedDate: createMode === "fixed" ? formData.get("fixedDate") : null, dateOptions,
-      scriptMode, scriptName: scriptMode === "chosen" ? (scriptSource === "json" ? jsonScriptName : formData.get("scriptName").trim()) : "", scriptUrl: scriptMode === "chosen" && scriptSource === "pdf" ? safeExternalUrl(formData.get("scriptUrl")) : "", scriptData: null, inviteSlug
+      scriptMode, scriptName: scriptMode === "chosen" ? jsonScriptName : "", scriptUrl: "", scriptData: null, inviteSlug
     };
     const initialScript = scriptMode === "chosen" ? {
       name: data.scriptName,
       author: scriptData?.author || "",
-      sourceType: scriptSource,
-      pdfUrl: data.scriptUrl,
+      sourceType: "json",
+      pdfUrl: "",
       scriptData
     } : null;
     let id;
@@ -904,10 +891,6 @@ $("#createSessionForm").addEventListener("change", async event => {
   const form = event.currentTarget;
   const changedField = event.target;
   if (event.target.name === "scriptMode") $("#scriptFields").hidden = event.target.value !== "chosen";
-  if (event.target.name === "scriptSource") {
-    const json = event.target.value === "json";
-    $("#scriptJsonFields").hidden = !json; $("#scriptPdfFields").hidden = json;
-  }
   if (changedField.name === "scriptJsonFile" && changedField.files[0]) {
     const status = $("#scriptJsonStatus"); status.textContent = "Reading the grimoire…";
     try {
@@ -928,10 +911,7 @@ $("#sessionContent").addEventListener("submit", event => {
   if (event.target.id === "plannedScriptForm") { event.preventDefault(); savePlannedScript(event.target); }
 });
 $("#sessionContent").addEventListener("change", event => {
-  if (event.target.id === "sessionDifficulty") { updateSessionDifficulty(event.target.value); return; }
-  if (event.target.name !== "plannedSource") return;
-  const form = event.target.closest("form"); const json = event.target.value === "json";
-  $("[data-planned-json]", form).hidden = !json; $("[data-planned-pdf]", form).hidden = json;
+  if (event.target.id === "sessionDifficulty") updateSessionDifficulty(event.target.value);
 });
 window.addEventListener("popstate", () => {
   const currentUrl = new URL(location.href);
