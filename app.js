@@ -907,6 +907,19 @@ window.addEventListener("popstate", () => {
   if (script) renderScriptDetail(activeSession, script); else renderSession(activeSession);
 });
 
+function initialiseHeroLogoEffect() {
+  const stage = document.querySelector("[data-hero-logo-effect]");
+  if (!stage) return;
+  const effects = ["glitch", "clock", "demon", "ghost", "ink"];
+  const randomValue = globalThis.crypto?.getRandomValues
+    ? globalThis.crypto.getRandomValues(new Uint32Array(1))[0]
+    : Math.floor(Math.random() * 0xffffffff);
+  const effect = effects[randomValue % effects.length];
+  stage.dataset.heroLogoEffect = effect;
+  stage.classList.add(`effect-${effect}`);
+}
+
+initialiseHeroLogoEffect();
 await initialiseFirebase();
 updateAccountUi();
 const initialUrl = new URL(location.href);
