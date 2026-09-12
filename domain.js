@@ -13,11 +13,17 @@ function cleanText(value, max) {
 }
 
 function safeImageUrl(value) {
-  const candidate = Array.isArray(value) ? value[0] : value;
-  try {
-    const url = new URL(String(candidate || ""));
-    return url.protocol === "https:" ? url.href.slice(0, 500) : "";
-  } catch { return ""; }
+  const candidates = Array.isArray(value) ? value : [value];
+  for (const candidate of candidates) {
+    try {
+      const url = new URL(String(candidate || ""));
+      if (url.protocol !== "https:") continue;
+      const githubBlob = url.hostname === "github.com" && url.pathname.match(/^\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/);
+      if (githubBlob) return `https://raw.githubusercontent.com/${githubBlob[1]}/${githubBlob[2]}/${githubBlob[3]}/${githubBlob[4]}`.slice(0, 500);
+      return url.href.slice(0, 500);
+    } catch { /* Try the next declared image. */ }
+  }
+  return "";
 }
 
 export function normalizeScriptTeam(value) {
@@ -45,7 +51,7 @@ export function parseScriptJson(raw, catalogue = []) {
     const supplied = typeof item === "object" ? item : {};
     const reference = known.get(id) || {};
     const fallbackName = id.replace(/[-_]+/g, " ").replace(/\b\w/g, letter => letter.toUpperCase());
-    const providedIcon = safeImageUrl(supplied.image || supplied.imageUrl || reference.image || reference.imageUrl);
+    const providedIcon = safeImageUrl(supplied.image || supplied.imageUrl || supplied.icon || supplied.iconUrl || supplied.token || supplied.tokenUrl || reference.image || reference.imageUrl || reference.icon || reference.iconUrl);
     const catalogueIcon = reference.id ? officialIconUrl(reference, id) || `https://raw.githubusercontent.com/bra1n/townsquare/develop/src/assets/icons/${encodeURIComponent(id)}.png` : "";
     const suppliedTeam = normalizeScriptTeam(supplied.team);
     return {
