@@ -28,7 +28,7 @@ body {
   color: var(--ink);
   background:
     linear-gradient(rgba(7, 6, 9, .38), rgba(7, 5, 8, .62)),
-    url("assets/clocktower-atmosphere.png?v=20260912-2") center top / cover fixed no-repeat,
+    url("assets/clocktower-atmosphere.png?v=20260912-3") center top / cover fixed no-repeat,
     #09070a;
   max-width: 100%;
   overflow-x: hidden;
@@ -95,6 +95,7 @@ main { position: relative; z-index: 1; width: min(1400px, calc(100% - 3rem)); ma
 main:focus { outline: none; }
 .view { min-height: calc(100vh - 160px); padding: clamp(1.5rem, 4vw, 3.25rem) 0; }
 .home-view { display: flex; flex-direction: column; justify-content: center; }
+.home-hero-logo { width: min(360px, 72vw); height: auto; margin-bottom: 1.25rem; object-fit: contain; object-position: left center; filter: drop-shadow(0 10px 28px rgba(0,0,0,.42)); }
 .home-view > h1 { max-width: 900px; }
 .lede { max-width: 710px; margin-bottom: 1.5rem; color: #d3c5bb; font: 1.05rem/1.5 "IM Fell English", Georgia, serif; font-size: clamp(1.02rem, 1.6vw, 1.2rem); }
 .eyebrow, .panel-number { display: flex; align-items: center; gap: .65rem; margin-bottom: .8rem; color: var(--gold-bright); font-size: .78rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
@@ -387,7 +388,8 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
 }
 
 @media (min-width: 960px) {
-  .home-view { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(360px, .75fr); grid-template-areas: "intro panel" "title panel" "lede panel"; align-content: center; column-gap: clamp(2.5rem, 6vw, 7rem); }
+  .home-view { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(360px, .75fr); grid-template-areas: "logo panel" "intro panel" "title panel" "lede panel"; align-content: center; column-gap: clamp(2.5rem, 6vw, 7rem); }
+  .home-hero-logo { grid-area: logo; width: min(380px, 36vw); margin-bottom: 1.1rem; }
   .home-view > .eyebrow { grid-area: intro; align-self: end; }
   .home-view > h1 { grid-area: title; }
   .home-view > .lede { grid-area: lede; align-self: start; }
