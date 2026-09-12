@@ -28,7 +28,7 @@ body {
   color: var(--ink);
   background:
     linear-gradient(rgba(7, 6, 9, .38), rgba(7, 5, 8, .62)),
-    url("assets/clocktower-atmosphere.png") center top / cover fixed no-repeat,
+    url("assets/clocktower-atmosphere.png?v=20260912-2") center top / cover fixed no-repeat,
     #09070a;
   max-width: 100%;
   overflow-x: hidden;
