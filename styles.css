@@ -79,8 +79,8 @@ h3 { letter-spacing: .02em; }
   box-shadow: 0 1px 0 rgba(0,0,0,.7);
 }
 .site-header > *, .header-actions { min-width: 0; }
-.brand { display: flex; align-items: center; gap: .8rem; min-width: 0; color: var(--ink); text-decoration: none; }
-.brand img { width: clamp(104px, 21vw, 175px); height: 44px; object-fit: contain; object-position: left center; }
+.brand { display: flex; align-items: center; gap: 1.25rem; min-width: 0; color: var(--ink); text-decoration: none; }
+.brand img { width: clamp(112px, 20vw, 230px); height: 68px; object-fit: contain; object-position: left center; }
 .brand span { display: none; }
 .brand strong, .brand small { display: block; }
 .brand strong { font-family: "Cinzel Decorative", Cinzel, serif; font-size: 1.08rem; letter-spacing: -.02em; }
@@ -342,8 +342,8 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
 @media (max-width: 420px) {
   .site-header, main, .site-footer { width: calc(100% - 1rem); }
   .site-header { gap: .4rem; }
-  .brand { gap: .35rem; }
-  .brand img { width: 82px; height: 38px; }
+  .brand { gap: .5rem; }
+  .brand img { width: 104px; height: 52px; }
   .header-actions { gap: .25rem; }
   .header-actions .button { min-height: 38px; padding: .4rem .5rem; font-size: .75rem; letter-spacing: .03em; }
   h1 { font-size: clamp(1.65rem, 10vw, 2.2rem); }
