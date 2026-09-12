@@ -53,7 +53,7 @@
           <h2>Built for busy Storytellers</h2>
           <ul class="feature-list">
             <li><strong>Find the night</strong><span>Poll up to ten dates with Available, Maybe and Unavailable responses.</span></li>
-            <li><strong>Plan the games</strong><span>Offer multiple scripts with JSON character sheets or PDF links.</span></li>
+            <li><strong>Plan the games</strong><span>Offer multiple JSON scripts with character sheets and homebrew token art.</span></li>
             <li><strong>Gather the town</strong><span>Let players register whole groups without creating accounts.</span></li>
             <li><strong>Know what can run</strong><span>See Teensyville and Full Town thresholds update automatically.</span></li>
             <li><strong>Stay in control</strong><span>Use memorable player links and manager-only roster controls.</span></li>
@@ -76,7 +76,7 @@
         <div class="guide-grid">
           <article class="guide-step panel"><span class="guide-number">1</span><div class="guide-copy"><h3>Sign in and use the dashboard</h3><p>Choose <strong>Continue with Google</strong>. Your dashboard keeps upcoming, date-poll and closed sessions together, with search and status filters for a long-running calendar.</p></div><div class="guide-screen"><div class="guide-screen-bar"><b>Your gatherings</b><i>+ Create session</i></div><div class="guide-stats"><span><b>8</b> Upcoming</span><span><b>3</b> Finding dates</span><span><b>5</b> Finding players</span></div><div class="guide-row"><span>Friday in Ravenswood Bluff<small>Finding players · 9 registered</small></span><i>Open</i></div></div></article>
           <article class="guide-step panel"><span class="guide-number">2</span><div class="guide-copy"><h3>Choose how the date works</h3><p>Select <strong>I have a date</strong> to begin recruiting immediately, or <strong>I need to find a date</strong> to offer up to ten options for players to answer.</p></div><div class="guide-screen"><div class="guide-screen-title">How will you plan this game?</div><div class="guide-choice"><span>✓<b>I have a date</b><small>Fixed date and time</small></span><span>?</span><span><b>I need to find a date</b><small>Ask players first</small></span></div></div></article>
-          <article class="guide-step panel"><span class="guide-number">3</span><div class="guide-copy"><h3>Add scripts and session details</h3><p>Enter the venue, capacity and notes. Leave the script as TBD, upload one or more BOTC JSON files for a character view, or add a script name with a PDF link.</p></div><div class="guide-screen"><div class="guide-screen-title">Create a gathering</div><div class="guide-fields"><span>Session name</span><span>Location</span><span>Maximum players</span><span class="accent">Upload BOTC JSON</span></div><div class="guide-file">trouble_brewing.json <b>22 characters ready</b></div></div></article>
+          <article class="guide-step panel"><span class="guide-number">3</span><div class="guide-copy"><h3>Add scripts and session details</h3><p>Enter the venue, difficulty, capacity and notes. Leave the script as TBD or upload one or more BOTC JSON files. Homebrew character details and custom token artwork are read directly from the JSON.</p></div><div class="guide-screen"><div class="guide-screen-title">Create a gathering</div><div class="guide-fields"><span>Session name</span><span>Location</span><span>Maximum players</span><span class="accent">Upload BOTC JSON</span></div><div class="guide-file">trouble_brewing.json <b>22 characters ready</b></div></div></article>
           <article class="guide-step panel"><span class="guide-number">4</span><div class="guide-copy"><h3>Share the player link</h3><p>Copy the custom link from the session header and send it to your group. It opens the session directly—players do not need your dashboard or a Google account.</p></div><div class="guide-screen"><div class="guide-screen-title">A night in Ravenswood Bluff</div><div class="guide-facts"><span>DATE<b>Finding a date</b></span><span>SCRIPT<b>2 on offer</b></span></div><div class="guide-link"><b>Copy player link</b><code>ravenswood-night</code></div></div></article>
         </div>
       </section>
@@ -177,19 +177,11 @@
           <label class="radio-row"><input type="radio" name="scriptMode" value="tbd" checked> Script TBD</label>
           <label class="radio-row"><input type="radio" name="scriptMode" value="chosen"> Chosen script</label>
           <div id="scriptFields" class="nested-fields" hidden>
-            <div class="script-methods" role="group" aria-label="How to add the script">
-              <label class="radio-row"><input type="radio" name="scriptSource" value="json" checked> Upload BOTC JSON <span class="recommended">Recommended</span></label>
-              <label class="radio-row"><input type="radio" name="scriptSource" value="pdf"> Enter script name + PDF link</label>
-            </div>
             <div id="scriptJsonFields">
               <label>BOTC script JSON
                 <input id="scriptJsonFile" name="scriptJsonFile" type="file" accept=".json,application/json">
-                <small id="scriptJsonStatus" class="field-hint">The script name and character list will be read automatically. Players can print or save the displayed sheet as a PDF.</small>
+                <small id="scriptJsonStatus" class="field-hint">The script name, characters and any homebrew token artwork will be read automatically. Players can print or save the displayed sheet as a PDF.</small>
               </label>
-            </div>
-            <div id="scriptPdfFields" class="nested-fields" hidden>
-              <label>Script name<input name="scriptName" maxlength="100"></label>
-              <label>PDF link<input name="scriptUrl" type="url" inputmode="url" placeholder="https://…/script.pdf"></label>
             </div>
           </div>
         </fieldset>
@@ -201,6 +193,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20260912-8"></script>
+  <script type="module" src="app.js?v=20260912-9"></script>
 </body>
 </html>
