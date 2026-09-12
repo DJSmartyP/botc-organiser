@@ -59,11 +59,11 @@ test("BOTC script JSON resolves standard character ids and metadata", () => {
 
 test("official role references place newer and previously unresolved characters in the right teams", () => {
   const parsed = parseScriptJson([{ id: "alsaahir", name: "Alsaahir", team: "unknown", ability: "", iconUrl: "" }, "hermit", "wizard", "gnome", "duchess"], [
-    { id: "alsaahir", name: "Alsaahir", team: "townsfolk", edition: "carousel" },
-    { id: "hermit", name: "Hermit", team: "outsider", edition: "carousel" },
-    { id: "wizard", name: "Wizard", team: "minion", edition: "carousel" },
-    { id: "gnome", name: "Gnome", team: "traveller", edition: "carousel" },
-    { id: "duchess", name: "Duchess", team: "fabled", edition: "fabled", ability: "Each day, 3 players may choose to visit you." }
+    { id: "alsaahir", name: "Alsaahir", team: "townsfolk", edition: "carousel", _officialAsset: true },
+    { id: "hermit", name: "Hermit", team: "outsider", edition: "carousel", _officialAsset: true },
+    { id: "wizard", name: "Wizard", team: "minion", edition: "carousel", _officialAsset: true },
+    { id: "gnome", name: "Gnome", team: "traveller", edition: "carousel", _officialAsset: true },
+    { id: "duchess", name: "Duchess", team: "fabled", edition: "fabled", ability: "Each day, 3 players may choose to visit you.", _officialAsset: true }
   ]);
   assert.deepEqual(parsed.characters.map(character => character.team), ["townsfolk", "outsider", "minion", "traveller", "fabled"]);
   assert.equal(parsed.characters[0].iconUrl, "https://release.botc.app/resources/characters/carousel/alsaahir_g.webp");
@@ -73,10 +73,10 @@ test("official role references place newer and previously unresolved characters 
   assert.equal(parsed.characters[4].ability, "Each day, 3 players may choose to visit you.");
 });
 
-test("BOTC script JSON supports embedded custom characters and rejects invalid files", () => {
+test("BOTC script JSON ignores custom artwork and uses initials for homebrew", () => {
   const parsed = parseScriptJson([{ id: "custom-demon", name: "Night Beast", team: "demons", ability: "Each night, choose a player.", image: ["http://unsafe.example/token.png", "https://github.com/clockmaker/homebrew/blob/main/tokens/night-beast.png"] }]);
   assert.equal(parsed.characters[0].team, "demon");
-  assert.equal(parsed.characters[0].iconUrl, "https://raw.githubusercontent.com/clockmaker/homebrew/main/tokens/night-beast.png");
+  assert.equal(parsed.characters[0].iconUrl, "");
   assert.throws(() => parseScriptJson("not json"), /valid JSON/);
   assert.throws(() => parseScriptJson({}), /list of characters/);
 });
