@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260912-11">
+  <link rel="stylesheet" href="styles.css?v=20260912-12">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -76,7 +76,7 @@
         <div class="guide-grid">
           <article class="guide-step panel"><span class="guide-number">1</span><div class="guide-copy"><h3>Sign in and use the dashboard</h3><p>Choose <strong>Continue with Google</strong>. Your dashboard keeps upcoming, date-poll and closed sessions together, with search and status filters for a long-running calendar.</p></div><div class="guide-screen"><div class="guide-screen-bar"><b>Your gatherings</b><i>+ Create session</i></div><div class="guide-stats"><span><b>8</b> Upcoming</span><span><b>3</b> Finding dates</span><span><b>5</b> Finding players</span></div><div class="guide-row"><span>Friday in Ravenswood Bluff<small>Finding players · 9 registered</small></span><i>Open</i></div></div></article>
           <article class="guide-step panel"><span class="guide-number">2</span><div class="guide-copy"><h3>Choose how the date works</h3><p>Select <strong>I have a date</strong> to begin recruiting immediately, or <strong>I need to find a date</strong> to offer up to ten options for players to answer.</p></div><div class="guide-screen"><div class="guide-screen-title">How will you plan this game?</div><div class="guide-choice"><span>✓<b>I have a date</b><small>Fixed date and time</small></span><span>?</span><span><b>I need to find a date</b><small>Ask players first</small></span></div></div></article>
-          <article class="guide-step panel"><span class="guide-number">3</span><div class="guide-copy"><h3>Add scripts and session details</h3><p>Enter the venue, difficulty, capacity and notes. Leave the script as TBD or upload one or more BOTC JSON files. Official characters display their official tokens; homebrew characters use a styled initial.</p></div><div class="guide-screen"><div class="guide-screen-title">Create a gathering</div><div class="guide-fields"><span>Session name</span><span>Location</span><span>Maximum players</span><span class="accent">Upload BOTC JSON</span></div><div class="guide-file">trouble_brewing.json <b>22 characters ready</b></div></div></article>
+          <article class="guide-step panel"><span class="guide-number">3</span><div class="guide-copy"><h3>Add scripts and session details</h3><p>Enter all Storyteller names, the venue, difficulty, capacity and notes. Pick a built-in base script, upload a BOTC JSON, or leave scripts as TBD. Official characters display their official tokens; homebrew characters use a styled initial.</p></div><div class="guide-screen"><div class="guide-screen-title">Create a gathering</div><div class="guide-fields"><span>Session name</span><span>Storytellers</span><span>Maximum players</span><span class="accent">Choose or upload script</span></div><div class="guide-file">Trouble Brewing <b>Built in</b></div></div></article>
           <article class="guide-step panel"><span class="guide-number">4</span><div class="guide-copy"><h3>Share the player link</h3><p>Copy the custom link from the session header and send it to your group. It opens the session directly—players do not need your dashboard or a Google account.</p></div><div class="guide-screen"><div class="guide-screen-title">A night in Ravenswood Bluff</div><div class="guide-facts"><span>DATE<b>Finding a date</b></span><span>SCRIPT<b>2 on offer</b></span></div><div class="guide-link"><b>Copy player link</b><code>ravenswood-night</code></div></div></article>
         </div>
       </section>
@@ -115,6 +115,10 @@
       <div class="page-heading">
         <div><div class="eyebrow">Organiser portal</div><h1 id="dashboardTitle">Your gatherings</h1></div>
         <button id="createSessionButton" class="button button-primary" type="button">+ Create session</button>
+      </div>
+      <div id="dashboardTabs" class="dashboard-tabs" role="tablist" aria-label="Admin dashboard sections" hidden>
+        <button class="dashboard-tab is-active" data-dashboard-tab="sessions" role="tab" aria-selected="true" type="button">Gatherings</button>
+        <button class="dashboard-tab" data-dashboard-tab="organizers" role="tab" aria-selected="false" type="button">Organisers</button>
       </div>
       <div id="dashboardNotice" class="notice" hidden></div>
       <div id="dashboardStats" class="dashboard-stats" aria-label="Session overview"></div>
@@ -165,10 +169,18 @@
           <input id="inviteSlug" name="inviteSlug" minlength="4" maxlength="48" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="friday-ravenswood-bluff" required>
           <small id="invitePreview" class="field-hint">Generated from the session name. You can edit it before saving.</small>
         </label>
+        <label>Storyteller name(s)<input name="storytellerNames" maxlength="160" placeholder="Nick, Ellie" required><small class="field-hint">Separate multiple Storytellers with commas.</small></label>
         <label>Location<input name="location" maxlength="120" placeholder="Venue or online details" required></label>
         <div id="fixedDateFields"><label>Date and time<input name="fixedDate" type="datetime-local"></label></div>
         <div id="pollDateFields" hidden>
           <div class="label-row"><span>Date and time options</span><small>2–10 options</small></div>
+          <div class="date-series-builder panel">
+            <label>First option<input id="dateSeriesStart" type="datetime-local"></label>
+            <label>Repeat<select id="dateSeriesInterval"><option value="daily">Every day</option><option value="weekly" selected>Every week</option><option value="monthly">Every month</option></select></label>
+            <label>Number of options<input id="dateSeriesCount" type="number" min="2" max="10" value="4"></label>
+            <button id="generateDateSeries" class="button button-small button-secondary" type="button">Generate dates</button>
+            <small>Builds a series you can still adjust individually below.</small>
+          </div>
           <div id="dateOptionList" class="date-options"></div>
           <button id="addDateOption" class="button button-small button-ghost" type="button">+ Add another option</button>
         </div>
@@ -185,7 +197,13 @@
           <label class="radio-row"><input type="radio" name="scriptMode" value="tbd" checked> Script TBD</label>
           <label class="radio-row"><input type="radio" name="scriptMode" value="chosen"> Chosen script</label>
           <div id="scriptFields" class="nested-fields" hidden>
-            <div id="scriptJsonFields">
+            <div class="built-in-script-picker" role="radiogroup" aria-label="Choose a script source">
+              <label><input type="radio" name="scriptChoice" value="tb" checked><span><img src="assets/script-tb.webp" alt=""><strong>Trouble Brewing</strong><small>Built-in base script</small></span></label>
+              <label><input type="radio" name="scriptChoice" value="bmr"><span><img src="assets/script-bmr.webp" alt=""><strong>Bad Moon Rising</strong><small>Built-in base script</small></span></label>
+              <label><input type="radio" name="scriptChoice" value="snv"><span><img src="assets/script-snv.webp" alt=""><strong>Sects &amp; Violets</strong><small>Built-in base script</small></span></label>
+              <label><input type="radio" name="scriptChoice" value="upload"><span class="script-upload-choice"><b aria-hidden="true">JSON</b><strong>Custom script</strong><small>Upload a BOTC JSON</small></span></label>
+            </div>
+            <div id="scriptJsonFields" hidden>
               <label>BOTC script JSON
                 <input id="scriptJsonFile" name="scriptJsonFile" type="file" accept=".json,application/json">
                 <small id="scriptJsonStatus" class="field-hint">The script name and characters will be read automatically. Official characters use official tokens; homebrew characters use their initial. Players can print or save the displayed sheet as a PDF.</small>
@@ -208,6 +226,7 @@
       <input name="sessionId" type="hidden">
       <label>Session name<input name="title" maxlength="80" required></label>
       <label>Custom player link<input name="inviteSlug" minlength="4" maxlength="48" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required><small class="field-hint">Changing this invalidates the previous shared link.</small></label>
+      <label>Storyteller name(s)<input name="storytellerNames" maxlength="160" required><small class="field-hint">Separate multiple Storytellers with commas.</small></label>
       <label>Location<input name="location" maxlength="120" required></label>
       <div id="editDateField"><label>Confirmed date and time<input name="scheduledDate" type="datetime-local"></label></div>
       <p id="editPollDateNotice" class="notice compact-notice" hidden>Date options stay locked while polling so existing player responses cannot be detached. Finalise a date first to change the confirmed time.</p>
@@ -220,6 +239,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20260912-12"></script>
+  <script type="module" src="app.js?v=20260912-13"></script>
 </body>
 </html>

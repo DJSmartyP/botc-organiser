@@ -101,6 +101,30 @@ export function buildDateOptions(values) {
   return values.filter(Boolean).slice(0, 10).map((startAt, index) => ({ id: `option-${index + 1}`, startAt }));
 }
 
+export function buildRecurringDates(startAt, interval, count) {
+  const match = String(startAt || "").match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  if (!match) throw new Error("Choose the first date and time for the series.");
+  if (!["daily", "weekly", "monthly"].includes(interval)) throw new Error("Choose daily, weekly or monthly repeats.");
+  const total = Number(count);
+  if (!Number.isInteger(total) || total < 2 || total > 10) throw new Error("Generate between 2 and 10 date options.");
+  const [, year, month, day, hour, minute] = match.map(Number);
+  const anchor = new Date(Date.UTC(year, month - 1, day, hour, minute));
+  if (anchor.getUTCFullYear() !== year || anchor.getUTCMonth() !== month - 1 || anchor.getUTCDate() !== day) throw new Error("Choose a valid first date and time.");
+  const pad = value => String(value).padStart(2, "0");
+  return Array.from({ length: total }, (_, index) => {
+    let date;
+    if (interval === "monthly") {
+      const monthStart = new Date(Date.UTC(year, month - 1 + index, 1, hour, minute));
+      const lastDay = new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + 1, 0)).getUTCDate();
+      date = new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth(), Math.min(day, lastDay), hour, minute));
+    } else {
+      date = new Date(anchor);
+      date.setUTCDate(date.getUTCDate() + index * (interval === "weekly" ? 7 : 1));
+    }
+    return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
+  });
+}
+
 export function promotedStatus(response) {
   if (response === "available") return "confirmed";
   if (response === "maybe") return "maybe";

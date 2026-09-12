@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildDateOptions, dateIndicator, gameSize, inviteSlugError, normalizeInviteSlug, normalizeSessionCode, parseScriptJson, promotedStatus, validatePlayer } from "../domain.js";
+import { buildDateOptions, buildRecurringDates, dateIndicator, gameSize, inviteSlugError, normalizeInviteSlug, normalizeSessionCode, parseScriptJson, promotedStatus, validatePlayer } from "../domain.js";
 
 test("date thresholds exclude maybe responses", () => {
   assert.equal(dateIndicator(4).label, "Not enough players yet");
@@ -33,6 +33,14 @@ test("date options are capped at ten and given stable ids", () => {
   assert.equal(result.length, 10);
   assert.equal(result[0].id, "option-1");
   assert.equal(result[9].id, "option-10");
+});
+
+test("daily, weekly and monthly date series preserve the chosen local time", () => {
+  assert.deepEqual(buildRecurringDates("2026-09-12T19:30", "daily", 3), ["2026-09-12T19:30", "2026-09-13T19:30", "2026-09-14T19:30"]);
+  assert.deepEqual(buildRecurringDates("2026-09-12T19:30", "weekly", 3), ["2026-09-12T19:30", "2026-09-19T19:30", "2026-09-26T19:30"]);
+  assert.deepEqual(buildRecurringDates("2027-01-31T19:30", "monthly", 4), ["2027-01-31T19:30", "2027-02-28T19:30", "2027-03-31T19:30", "2027-04-30T19:30"]);
+  assert.throws(() => buildRecurringDates("", "weekly", 3), /first date/);
+  assert.throws(() => buildRecurringDates("2026-09-12T19:30", "weekly", 11), /between 2 and 10/);
 });
 
 test("final-date promotion preserves available and maybe states", () => {

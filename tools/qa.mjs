@@ -90,8 +90,35 @@ try {
   await mobileManager.locator(".script-management-row").first().waitFor({ state: "visible" });
   await assertFits(mobileManager, "mobile expanded manager controls");
   await mobileManager.close();
+
+  const creationPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  watchErrors(creationPage, "session creation");
+  await creationPage.goto("http://127.0.0.1:4173/?demo=1", { waitUntil: "networkidle" });
+  await creationPage.locator("#dashboardButton").click();
+  await creationPage.locator("#createSessionButton").click();
+  await creationPage.locator("[data-create-mode='poll']").click();
+  await creationPage.locator("#createSessionForm [name='title']").fill("Recurring Ravenswood QA");
+  await creationPage.locator("#createSessionForm [name='storytellerNames']").fill("Avery, Morgan");
+  await creationPage.locator("#createSessionForm [name='location']").fill("The Town Square");
+  await creationPage.locator("#dateSeriesStart").fill("2026-10-03T19:30");
+  await creationPage.locator("#dateSeriesInterval").selectOption("weekly");
+  await creationPage.locator("#dateSeriesCount").fill("4");
+  await creationPage.locator("#generateDateSeries").click();
+  assert.deepEqual(await creationPage.locator("#dateOptionList [name='dateOption']").evaluateAll(inputs => inputs.map(input => input.value)), ["2026-10-03T19:30", "2026-10-10T19:30", "2026-10-17T19:30", "2026-10-24T19:30"]);
+  await creationPage.locator("#createSessionForm [name='scriptMode'][value='chosen']").check();
+  assert.equal(await creationPage.locator(".built-in-script-picker img").count(), 3);
+  await creationPage.locator("#createSessionForm button[type='submit']").click();
+  await creationPage.locator(".session-hero h1").filter({ hasText: "Recurring Ravenswood QA" }).waitFor();
+  assert.match(await creationPage.locator(".session-facts").innerText(), /Avery, Morgan/);
+  assert.match(await creationPage.locator(".planned-script-card").innerText(), /Trouble Brewing/);
+  assert.match(await creationPage.locator(".planned-script-card").innerText(), /22 characters/);
+  await creationPage.locator(".script-edition-logo").waitFor();
+  await creationPage.waitForFunction(() => document.querySelector(".script-edition-logo")?.naturalWidth > 0);
+  await assertFits(creationPage, "mobile recurring session and built-in script");
+  await creationPage.screenshot({ path: "qa-creation.png", fullPage: true });
+  await creationPage.close();
   assert.deepEqual(pageErrors, []);
-  console.log("QA passed: desktop, 390px mobile, manager controls, script controls, player heatmap, duplication, empty states, dialogs, and horizontal-overflow checks.");
+  console.log("QA passed: desktop, 390px mobile, manager controls, recurring dates, multi-Storytellers, built-in scripts, player heatmap, duplication, empty states, dialogs, and horizontal-overflow checks.");
 } finally {
   await browser.close();
 }

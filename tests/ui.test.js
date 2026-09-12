@@ -2,12 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, emptyArt, communityBadge] = await Promise.all([
+const [html, css, app, emptyArt, communityBadge, officialRoles, tbLogo, bmrLogo, snvLogo] = await Promise.all([
   readFile(new URL("../index.html", import.meta.url), "utf8"),
   readFile(new URL("../styles.css", import.meta.url), "utf8"),
   readFile(new URL("../app.js", import.meta.url), "utf8"),
   readFile(new URL("../assets/empty-town-vignette.png", import.meta.url)),
-  readFile(new URL("../assets/community-created-content.png", import.meta.url))
+  readFile(new URL("../assets/community-created-content.png", import.meta.url)),
+  readFile(new URL("../assets/official-roles.json", import.meta.url), "utf8"),
+  readFile(new URL("../assets/script-tb.webp", import.meta.url)),
+  readFile(new URL("../assets/script-bmr.webp", import.meta.url)),
+  readFile(new URL("../assets/script-snv.webp", import.meta.url))
 ]);
 
 test("the official Community Created Content badge identifies the site as unofficial", () => {
@@ -16,6 +20,33 @@ test("the official Community Created Content badge identifies the site as unoffi
   assert.match(html, /class="ccc-badge"[^>]+community-created-content-policy/);
   assert.match(html, /Unofficial community tool/);
   assert.deepEqual([...communityBadge.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+});
+
+test("session creation supports recurring date series, multiple Storytellers and built-in base scripts", () => {
+  assert.match(html, /id="generateDateSeries"/);
+  assert.match(html, /value="daily">Every day/);
+  assert.match(html, /value="weekly" selected>Every week/);
+  assert.match(html, /value="monthly">Every month/);
+  assert.equal(html.split('name="storytellerNames"').length - 1, 2);
+  assert.match(html, /name="scriptChoice" value="tb"/);
+  assert.match(html, /name="scriptChoice" value="bmr"/);
+  assert.match(html, /name="scriptChoice" value="snv"/);
+  assert.match(app, /function builtInScriptData/);
+  assert.match(app, /assets\/official-roles\.json/);
+  const roles = JSON.parse(officialRoles);
+  const baseTeams = new Set(["townsfolk", "outsider", "minion", "demon"]);
+  assert.deepEqual(Object.fromEntries(["tb", "bmr", "snv"].map(edition => [edition, roles.filter(role => role.edition === edition && baseTeams.has(role.team)).length])), { tb: 22, bmr: 25, snv: 25 });
+  for (const logo of [tbLogo, bmrLogo, snvLogo]) {
+    assert.equal(logo.subarray(0, 4).toString("ascii"), "RIFF");
+    assert.equal(logo.subarray(8, 12).toString("ascii"), "WEBP");
+  }
+});
+
+test("admins have an organiser directory with direct session management", () => {
+  assert.match(html, /data-dashboard-tab="organizers"/);
+  assert.match(app, /function renderOrganiserDirectory/);
+  assert.match(app, /collection\(firebase\.db, "users"\)/);
+  assert.match(app, /currentProfile\?\.role === "admin"/);
 });
 
 test("homepage links to the Chaos playlist and complete tutorial", () => {
@@ -50,7 +81,7 @@ test("events have a visible and manager-editable difficulty signal", () => {
   assert.match(css, /\.difficulty-badge/);
 });
 
-test("new scripts are JSON-only and homebrew characters use initials", () => {
+test("new scripts avoid external PDFs and homebrew characters use initials", () => {
   assert.doesNotMatch(html, /name="scriptSource"/);
   assert.doesNotMatch(html, /name="scriptUrl"/);
   assert.doesNotMatch(app, /name="plannedSource"/);

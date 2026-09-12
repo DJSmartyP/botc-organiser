@@ -1,5 +1,5 @@
 import { firebaseConfig } from "./firebase-config.js";
-import { buildDateOptions, dateIndicator, gameSize, inviteSlugError, normalizeInviteSlug, normalizeSessionCode, parseScriptJson, promotedStatus, validatePlayer } from "./domain.js";
+import { buildDateOptions, buildRecurringDates, dateIndicator, gameSize, inviteSlugError, normalizeInviteSlug, normalizeSessionCode, parseScriptJson, promotedStatus, validatePlayer } from "./domain.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -14,14 +14,23 @@ let activeSession = null;
 let demoSessions = [];
 let demoManager = false;
 let dashboardSessions = [];
+let dashboardOrganizers = [];
+let dashboardMode = "sessions";
 let dashboardVisibleLimit = 25;
 let characterCataloguePromise = null;
 const demoPlayerUid = "demo-player";
+
+const BUILT_IN_SCRIPTS = {
+  tb: { name: "Trouble Brewing", logo: "assets/script-tb.webp" },
+  bmr: { name: "Bad Moon Rising", logo: "assets/script-bmr.webp" },
+  snv: { name: "Sects & Violets", logo: "assets/script-snv.webp" }
+};
 
 const sampleSession = {
   id: "sample-night",
   ownerUid: "demo-organiser",
   organizerName: "The Storyteller",
+  storytellerNames: "The Storyteller, A Helpful Imp",
   title: "A night in Ravenswood Bluff",
   location: "The Old Bell, upstairs room",
   timezone: "Europe/London",
@@ -58,8 +67,8 @@ const sampleSession = {
 };
 
 sampleSession.scripts = [
-  { id: "trouble-brewing", name: "Trouble Brewing", author: "The Pandemonium Institute", sourceType: "json", pdfUrl: "", preferred: true, order: 0, scriptData: sampleSession.scriptData },
-  { id: "bad-moon-rising", name: "Bad Moon Rising", author: "The Pandemonium Institute", sourceType: "json", pdfUrl: "", preferred: false, order: 1, scriptData: { name: "Bad Moon Rising", author: "The Pandemonium Institute", characters: [
+  { id: "trouble-brewing", name: "Trouble Brewing", author: "The Pandemonium Institute", edition: "tb", sourceType: "json", pdfUrl: "", preferred: true, order: 0, scriptData: sampleSession.scriptData },
+  { id: "bad-moon-rising", name: "Bad Moon Rising", author: "The Pandemonium Institute", edition: "bmr", sourceType: "json", pdfUrl: "", preferred: false, order: 1, scriptData: { name: "Bad Moon Rising", author: "The Pandemonium Institute", characters: [
     { id: "grandmother", name: "Grandmother", team: "townsfolk", ability: "You start knowing a good player and their character. If the Demon kills them, you die too.", iconUrl: "https://release.botc.app/resources/characters/bmr/grandmother_g.webp" },
     { id: "lunatic", name: "Lunatic", team: "outsider", ability: "You think you are a Demon, but you are not. The Demon knows who you are and who you choose at night.", iconUrl: "https://release.botc.app/resources/characters/bmr/lunatic_g.webp" },
     { id: "devilsadvocate", name: "Devil's Advocate", team: "minion", ability: "Each night, choose a living player. If executed tomorrow, they do not die.", iconUrl: "https://release.botc.app/resources/characters/bmr/devilsadvocate_e.webp" },
@@ -144,7 +153,7 @@ function officialTokenUrl(value) {
 
 async function loadCharacterCatalogue() {
   characterCataloguePromise ||= Promise.all([
-    fetch("https://release.botc.app/resources/data/roles.json").then(response => response.ok ? response.json() : []).catch(() => []),
+    fetch("assets/official-roles.json?v=1").then(response => response.ok ? response.json() : fetch("https://release.botc.app/resources/data/roles.json").then(fallback => fallback.ok ? fallback.json() : [])).catch(() => []),
     fetch("https://raw.githubusercontent.com/bra1n/townsquare/develop/src/roles.json").then(response => response.ok ? response.json() : []).catch(() => [])
   ]).then(([official, community]) => {
     const roles = new Map();
@@ -153,6 +162,36 @@ async function loadCharacterCatalogue() {
     return [...roles.values()];
   });
   return characterCataloguePromise;
+}
+
+async function builtInScriptData(edition) {
+  const definition = BUILT_IN_SCRIPTS[edition];
+  if (!definition) throw new Error("Choose a built-in script or upload a JSON file.");
+  const catalogue = await loadCharacterCatalogue();
+  const ids = catalogue.filter(role => role._officialAsset === true && role.edition === edition && ["townsfolk", "outsider", "minion", "demon"].includes(role.team)).map(role => role.id);
+  if (!ids.length) throw new Error("The built-in script catalogue could not be loaded. Try again online.");
+  return parseScriptJson([{ id: "_meta", name: definition.name, author: "The Pandemonium Institute" }, ...ids], catalogue);
+}
+
+async function scriptFromChoice(choice, file) {
+  if (BUILT_IN_SCRIPTS[choice]) {
+    const scriptData = await builtInScriptData(choice);
+    return { name: BUILT_IN_SCRIPTS[choice].name, author: scriptData.author, edition: choice, sourceType: "json", pdfUrl: "", scriptData };
+  }
+  if (choice !== "upload" || !file?.size) throw new Error("Choose a built-in script or a BOTC script JSON file.");
+  const scriptData = await readScriptFile(file);
+  return { name: scriptData.name || file.name.replace(/\.json$/i, "").replace(/[-_]+/g, " ").trim() || "Uploaded script", author: scriptData.author || "", edition: "", sourceType: "json", pdfUrl: "", scriptData };
+}
+
+function storytellerNames(session) {
+  return String(session?.storytellerNames || session?.organizerName || "Organiser").trim();
+}
+
+function normalizeStorytellerNames(value) {
+  const names = String(value || "").split(",").map(name => name.trim()).filter(Boolean);
+  const result = names.join(", ").slice(0, 160);
+  if (result.length < 2) throw new Error("Enter at least one Storyteller name.");
+  return result;
 }
 
 async function readScriptFile(file) {
@@ -310,6 +349,7 @@ async function renderDashboard() {
   let sessions = [];
   if (demoMode) {
     sessions = demoSessions.map(session => ({ ...session, registeredCount: (session.registrations || []).length }));
+    dashboardOrganizers = [{ id: "demo-organiser", displayName: "Demo Organiser", email: "demo@example.com", role: "organizer" }];
     $("#dashboardNotice").hidden = false;
   } else if (currentUser && !currentUser.isAnonymous) {
     const { collection, getDocs, query, where } = firebase;
@@ -323,11 +363,15 @@ async function renderDashboard() {
         session.registeredCount = count.data().count;
       } catch { session.registeredCount = null; }
     }));
+    dashboardOrganizers = currentProfile?.role === "admin"
+      ? (await getDocs(collection(firebase.db, "users"))).docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
+      : [];
   }
   dashboardSessions = sessions;
   dashboardVisibleLimit = 25;
-  $("#dashboardTitle").textContent = currentProfile?.role === "admin" ? "All gatherings" : "Your gatherings";
-  renderDashboardSessions();
+  dashboardMode = currentProfile?.role === "admin" ? dashboardMode : "sessions";
+  $("#dashboardTabs").hidden = currentProfile?.role !== "admin";
+  renderDashboardContent();
 }
 
 function dashboardDate(session) {
@@ -381,7 +425,7 @@ function renderDashboardSessions() {
   const status = $("#sessionStatusFilter").value;
   const sort = $("#sessionSort").value;
   const matches = dashboardSessions.filter(session => {
-    const haystack = [session.title, session.location, session.organizerName, session.inviteSlug].join(" ").toLowerCase();
+    const haystack = [session.title, session.location, session.organizerName, storytellerNames(session), session.inviteSlug].join(" ").toLowerCase();
     return (!query || haystack.includes(query)) && (status === "all" || session.status === status);
   }).sort((left, right) => {
     if (sort === "name") return String(left.title).localeCompare(String(right.title));
@@ -405,16 +449,49 @@ function renderDashboardSessions() {
     const isAdmin = currentProfile?.role === "admin";
     return `<article class="session-card ${sessionNeedsAttention(session) ? "needs-attention" : ""}">
       <div class="session-card-main"><div class="session-card-top">${renderStatusPill(session.status)}${sessionNeedsAttention(session) ? '<span class="status-pill status-attention"><span class="status-mark" aria-hidden="true">!</span>Needs attention</span>' : ""}${isAdmin ? `<span class="session-owner">${escapeHtml(session.organizerName || "Organiser")}</span>` : ""}</div>
-      <h2>${escapeHtml(session.title)}</h2><div class="session-card-meta"><span>◷ ${date ? formatDate(date, sessionTimezone(session)) : `${session.dateOptions?.length || 0} dates proposed`}</span><span>⌖ ${escapeHtml(session.location || "Location TBD")}</span><span>♟ ${Number.isInteger(session.registeredCount) ? `${session.registeredCount} registered · ` : ""}Up to ${Number(session.capacity) || 0}</span>${renderDifficultyBadge(session.difficulty)}</div>
+      <h2>${escapeHtml(session.title)}</h2><div class="session-card-meta"><span>◷ ${date ? formatDate(date, sessionTimezone(session)) : `${session.dateOptions?.length || 0} dates proposed`}</span><span>⌖ ${escapeHtml(session.location || "Location TBD")}</span><span>♛ ${escapeHtml(storytellerNames(session))}</span><span>♟ ${Number.isInteger(session.registeredCount) ? `${session.registeredCount} registered · ` : ""}Up to ${Number(session.capacity) || 0}</span>${renderDifficultyBadge(session.difficulty)}</div>
       <code class="session-slug">${escapeHtml(session.inviteSlug || session.id)}</code></div>
       <div class="session-card-actions"><button class="button button-small button-ghost" data-copy-session="${session.id}" data-copy-slug="${escapeHtml(session.inviteSlug || "")}" type="button">Copy player link</button><button class="button button-small button-secondary" data-open-session="${session.id}" type="button">Manage</button><details class="card-more-menu"><summary aria-label="More actions">•••</summary><div><button class="button button-small button-danger" data-delete-session="${session.id}" type="button">Delete event</button></div></details></div>
     </article>`;
   }).join("") + (visible.length < matches.length ? '<button class="button button-ghost dashboard-load-more" data-load-more type="button">Show 25 more</button>' : "");
 }
 
+function renderOrganiserDirectory() {
+  const list = $("#sessionList");
+  const query = $("#sessionSearch").value.trim().toLowerCase();
+  const status = $("#sessionStatusFilter").value;
+  const profiles = [...dashboardOrganizers];
+  dashboardSessions.forEach(session => {
+    if (!profiles.some(profile => profile.id === session.ownerUid)) profiles.push({ id: session.ownerUid, displayName: session.organizerName || "Organiser", email: "" });
+  });
+  const groups = profiles.map(profile => {
+    const allSessions = dashboardSessions.filter(session => session.ownerUid === profile.id);
+    const sessions = allSessions.filter(session => status === "all" || session.status === status);
+    const haystack = [profile.displayName, profile.email, ...allSessions.flatMap(session => [session.title, session.location, storytellerNames(session), session.inviteSlug])].join(" ").toLowerCase();
+    return { profile, allSessions, sessions, matches: !query || haystack.includes(query) };
+  }).filter(group => group.matches && (status === "all" || group.sessions.length)).sort((left, right) => String(left.profile.displayName || left.profile.email).localeCompare(String(right.profile.displayName || right.profile.email)));
+  $("#sessionResultCount").textContent = `${groups.length} organiser${groups.length === 1 ? "" : "s"} shown`;
+  if (!groups.length) {
+    list.innerHTML = renderEmptyState("No matching organisers", "Try a different search or status filter.", true);
+    return;
+  }
+  list.innerHTML = `<div class="organiser-directory">${groups.map(({ profile, allSessions, sessions }) => `<article class="organiser-card panel"><header><div class="organiser-avatar" aria-hidden="true">${escapeHtml((profile.displayName || profile.email || "O")[0].toUpperCase())}</div><div><h2>${escapeHtml(profile.displayName || "Organiser")}</h2>${profile.email ? `<p>${escapeHtml(profile.email)}</p>` : ""}</div><span class="status-pill">${allSessions.length} gathering${allSessions.length === 1 ? "" : "s"}</span></header><div class="organiser-session-list">${sessions.length ? sessions.map(session => { const date = dashboardDate(session); return `<div class="organiser-session-row"><div>${renderStatusPill(session.status)}<strong>${escapeHtml(session.title)}</strong><small>${date ? escapeHtml(formatDate(date, sessionTimezone(session))) : `${session.dateOptions?.length || 0} dates proposed`} · ${escapeHtml(storytellerNames(session))}</small></div><button class="button button-small button-secondary" data-open-session="${escapeHtml(session.id)}" type="button">Manage</button></div>`; }).join("") : '<p class="muted-copy">No gatherings match this status.</p>'}</div></article>`).join("")}</div>`;
+}
+
+function renderDashboardContent() {
+  const admin = currentProfile?.role === "admin";
+  dashboardMode = admin ? dashboardMode : "sessions";
+  const totals = Object.fromEntries(["date_poll", "find_players", "closed", "cancelled", "archived"].map(key => [key, dashboardSessions.filter(session => session.status === key).length]));
+  $("#dashboardStats").innerHTML = `<div><strong>${dashboardSessions.length}</strong><span>Total</span></div><div><strong>${totals.date_poll}</strong><span>Finding dates</span></div><div><strong>${totals.find_players}</strong><span>Finding players</span></div><div><strong>${totals.closed + totals.cancelled + totals.archived}</strong><span>Finished</span></div>`;
+  $("#dashboardTitle").textContent = dashboardMode === "organizers" ? "Organisers" : admin ? "All gatherings" : "Your gatherings";
+  $("#sessionSearch").placeholder = dashboardMode === "organizers" ? "Organiser, email, event or Storyteller…" : "Name, venue, Storyteller or link…";
+  $$("[data-dashboard-tab]").forEach(button => { const selected = button.dataset.dashboardTab === dashboardMode; button.classList.toggle("is-active", selected); button.setAttribute("aria-selected", String(selected)); });
+  if (dashboardMode === "organizers") renderOrganiserDirectory(); else renderDashboardSessions();
+}
+
 function updateDashboardFilters() {
   dashboardVisibleLimit = 25;
-  renderDashboardSessions();
+  renderDashboardContent();
 }
 
 async function loadSession(id) {
@@ -529,7 +606,7 @@ function renderSession(session) {
       <div class="session-facts">
         ${date ? `<div><span>Date</span><strong>${formatDate(date, sessionTimezone(session))}</strong></div>` : ""}
         <div><span>Location</span><strong>${escapeHtml(session.location)}</strong></div>
-        <div><span>Storyteller</span><strong>${escapeHtml(session.organizerName || "Organiser")}</strong></div>
+        <div><span>Storyteller${storytellerNames(session).includes(",") ? "s" : ""}</span><strong>${escapeHtml(storytellerNames(session))}</strong></div>
         <div><span>Script</span><strong>${script}</strong></div>
         <div><span>Time zone</span><strong>${escapeHtml(sessionTimezone(session))}</strong></div>
         <div class="difficulty-fact"><span>Difficulty</span><strong>${renderDifficultyBadge(session.difficulty)}</strong>${manager ? `<select id="sessionDifficulty" class="difficulty-select" aria-label="Change event difficulty"><option value="">Choose level</option>${Object.keys(difficultyDetails).map(value => `<option value="${value}"${session.difficulty === value ? " selected" : ""}>${value}</option>`).join("")}</select>` : ""}</div>
@@ -570,11 +647,13 @@ function renderPlannedScripts(session, manager) {
     const teamCounts = Object.fromEntries(["townsfolk", "outsider", "minion", "demon", "other"].map(team => [team, 0]));
     characters.forEach(character => { const team = teamCounts[character.team] === undefined ? "other" : character.team; teamCounts[team]++; });
     const strip = Object.entries(teamCounts).filter(([, count]) => count).map(([team, count]) => `<i class="team-${team}" style="--team-weight:${count}" title="${count} ${team}"></i>`).join("");
-    return `<article class="planned-script-card${script.preferred ? " is-preferred" : ""}"><span class="script-team-strip" aria-hidden="true">${strip}</span><button class="planned-script-view" data-view-script="${escapeHtml(script.id)}" type="button"><span class="planned-script-name"><strong>${escapeHtml(script.name)}</strong>${script.author ? `<small>By ${escapeHtml(script.author)}</small>` : ""}</span><span class="script-card-meta">${characters.length} character${characters.length === 1 ? "" : "s"}</span>${script.preferred ? '<span class="preferred-ribbon">★ Preferred</span>' : ""}<span class="script-row-arrow" aria-hidden="true">→</span></button></article>`;
+    const logo = BUILT_IN_SCRIPTS[script.edition]?.logo;
+    return `<article class="planned-script-card${script.preferred ? " is-preferred" : ""}"><span class="script-team-strip" aria-hidden="true">${strip}</span><button class="planned-script-view" data-view-script="${escapeHtml(script.id)}" type="button">${logo ? `<img class="script-edition-logo" src="${logo}" alt="">` : ""}<span class="planned-script-name"><strong>${escapeHtml(script.name)}</strong>${script.author ? `<small>By ${escapeHtml(script.author)}</small>` : ""}</span><span class="script-card-meta">${characters.length} character${characters.length === 1 ? "" : "s"}</span>${script.preferred ? '<span class="preferred-ribbon">★ Preferred</span>' : ""}<span class="script-row-arrow" aria-hidden="true">→</span></button></article>`;
   }).join("");
   const management = manager && scripts.length ? `<details class="script-management"><summary>Manage scripts</summary><div class="script-management-list">${scripts.map((script, index) => `<div class="script-management-row"><span>${escapeHtml(script.name)}</span><div>${script.legacy ? "" : `<button class="icon-button" data-move-script="${escapeHtml(script.id)}" data-direction="up" type="button" ${index === 0 ? "disabled" : ""} aria-label="Move ${escapeHtml(script.name)} up">↑</button><button class="icon-button" data-move-script="${escapeHtml(script.id)}" data-direction="down" type="button" ${index === scripts.length - 1 ? "disabled" : ""} aria-label="Move ${escapeHtml(script.name)} down">↓</button>${script.preferred ? "" : `<button class="button button-small button-ghost" data-prefer-script="${escapeHtml(script.id)}" type="button">Prefer</button>`}` }<button class="icon-button danger" data-remove-script="${escapeHtml(script.id)}" data-script-name="${escapeHtml(script.name)}" type="button">Remove</button></div></div>`).join("")}</div></details>` : "";
-  const addForm = manager ? `<details class="panel planned-script-manager"><summary>Add another script</summary><form id="plannedScriptForm" class="planned-script-form"><p>Upload a BOTC script JSON. Official characters use official tokens; homebrew characters use a clear initial marker.</p>
-      <div><label>BOTC script JSON<input name="scriptJsonFile" type="file" accept=".json,application/json"><small class="field-hint">Supports standard character IDs and full homebrew character definitions.</small></label></div>
+  const addForm = manager ? `<details class="panel planned-script-manager"><summary>Add another script</summary><form id="plannedScriptForm" class="planned-script-form"><p>Choose an official base script or upload a BOTC script JSON. Official characters use official tokens; homebrew characters use a clear initial marker.</p>
+      <label>Script<select name="scriptChoice" required><option value="" selected>Choose a script…</option><option value="tb">Trouble Brewing · built in</option><option value="bmr">Bad Moon Rising · built in</option><option value="snv">Sects &amp; Violets · built in</option><option value="upload">Upload custom JSON</option></select></label>
+      <div data-planned-json-fields hidden><label>BOTC script JSON<input name="scriptJsonFile" type="file" accept=".json,application/json"><small class="field-hint">Supports standard character IDs and full homebrew character definitions.</small></label></div>
       <p id="scriptUploadError" class="form-error" role="alert" hidden></p><button class="button button-secondary" type="submit">Add planned script</button></form></details>` : "";
   return `<section id="plannedScripts" class="planned-scripts-section"><div class="script-offer-panel panel"><div class="script-offer-heading"><div><span class="eyebrow">Before you choose dates</span><h2>Scripts on offer</h2></div><p>${scripts.length ? "Check the possible games, then choose every date you can make." : "No scripts have been added yet. You can still choose your dates below."}</p></div>
     ${scripts.length ? `<div class="planned-script-list">${rows}</div>${management}` : renderEmptyState("No scripts announced", "The Storyteller can still add possibilities later.", true)}</div>${addForm}</section>`;
@@ -586,7 +665,7 @@ function renderScriptDetail(session, script) {
   const characters = script.scriptData?.characters || [];
   $("#sessionContent").innerHTML = `<section id="scriptSheet" class="script-detail-view ${characters.length > 24 ? "print-dense" : ""}" data-character-count="${characters.length}">
     <button class="back-link no-print" data-back-session type="button">← Back to scripts & dates</button>
-    <header class="script-detail-header panel"><div><div class="eyebrow">Planned script</div><h1>${escapeHtml(script.name)}</h1>${script.author ? `<p>By ${escapeHtml(script.author)}</p>` : ""}</div>
+    <header class="script-detail-header panel">${BUILT_IN_SCRIPTS[script.edition] ? `<img class="script-detail-logo" src="${BUILT_IN_SCRIPTS[script.edition].logo}" alt="">` : ""}<div class="script-detail-copy"><div class="eyebrow">Planned script</div><h1>${escapeHtml(script.name)}</h1>${script.author ? `<p>By ${escapeHtml(script.author)}</p>` : ""}</div>
       <div class="script-detail-actions no-print">${characters.length ? '<button class="button button-ghost" data-print-script type="button">Print / save as PDF</button>' : ""}${pdfUrl ? `<a class="button button-secondary" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">Open PDF ↗</a>` : ""}</div></header>
     ${characters.length ? `<div class="script-section">${renderCharacterGroups(script.scriptData)}</div><p class="catalogue-credit no-print">Character details and icons use the current <a href="https://release.botc.app/resources/" target="_blank" rel="noopener noreferrer">official BOTC toolmaker resources ↗</a>, with the Townsquare catalogue as a fallback.</p><footer class="print-script-footer">Created with Chaos Planner · Unofficial community tool · Blood on the Clocktower is owned by Steven Medway and The Pandemonium Institute.</footer>` : pdfUrl ? `<div class="pdf-frame-wrap"><iframe class="pdf-frame" src="${escapeHtml(pdfUrl)}" title="${escapeHtml(script.name)} PDF"></iframe><p>If the PDF does not appear here, use “Open PDF” above.</p></div>` : '<div class="notice">This script has no character data or PDF link.</div>'}
   </section>`;
@@ -597,11 +676,10 @@ async function savePlannedScript(form) {
   try {
     if ((activeSession.scripts || []).length >= 10) throw new Error("A session can have up to 10 planned scripts.");
     const fields = new FormData(form);
-    const scriptFile = fields.get("scriptJsonFile");
-    if (!scriptFile?.size) throw new Error("Choose a BOTC script JSON file.");
-    const scriptData = await readScriptFile(scriptFile);
-    const name = scriptData.name || scriptFile.name.replace(/\.json$/i, "").replace(/[-_]+/g, " ").trim() || "Uploaded script";
-    const script = { name, author: scriptData.author || "", sourceType: "json", pdfUrl: "", scriptData, order: activeSession.scripts.length, preferred: activeSession.scripts.length === 0 };
+    const choice = fields.get("scriptChoice");
+    if (BUILT_IN_SCRIPTS[choice] && activeSession.scripts.some(script => script.edition === choice)) throw new Error(`${BUILT_IN_SCRIPTS[choice].name} is already on offer.`);
+    const selected = await scriptFromChoice(choice, fields.get("scriptJsonFile"));
+    const script = { ...selected, order: activeSession.scripts.length, preferred: activeSession.scripts.length === 0 };
     if (demoMode) activeSession.scripts.push({ id: `script-${crypto.randomUUID()}`, ...script });
     else await firebase.addDoc(firebase.collection(firebase.db, "sessions", activeSession.id, "scripts"), { ...script, createdAt: firebase.serverTimestamp(), updatedAt: firebase.serverTimestamp() });
     showToast("Planned script added.");
@@ -926,6 +1004,7 @@ function openEditSessionDialog() {
   form.elements.sessionId.value = activeSession.id;
   form.elements.title.value = activeSession.title || "";
   form.elements.inviteSlug.value = activeSession.inviteSlug || "";
+  form.elements.storytellerNames.value = storytellerNames(activeSession);
   form.elements.location.value = activeSession.location || "";
   form.elements.capacity.value = activeSession.capacity || 15;
   form.elements.difficulty.value = activeSession.difficulty || "Beginner";
@@ -950,7 +1029,7 @@ async function saveSessionEdits(form) {
     const capacity = Number(fields.get("capacity"));
     if (!Number.isInteger(capacity) || capacity < 5 || capacity > 20) throw new Error("Maximum players must be between 5 and 20.");
     const timezone = validTimezone(fields.get("timezone")); if (!timezone) throw new Error("Choose a valid time zone.");
-    const update = { title: String(fields.get("title") || "").trim(), inviteSlug, location: String(fields.get("location") || "").trim(), capacity, difficulty: fields.get("difficulty"), notes: String(fields.get("notes") || "").trim(), timezone };
+    const update = { title: String(fields.get("title") || "").trim(), inviteSlug, storytellerNames: normalizeStorytellerNames(fields.get("storytellerNames")), location: String(fields.get("location") || "").trim(), capacity, difficulty: fields.get("difficulty"), notes: String(fields.get("notes") || "").trim(), timezone };
     if (!update.title || !update.location) throw new Error("Session name and location are required.");
     const scheduledDate = fields.get("scheduledDate");
     if (!isPollStage(activeSession) && scheduledDate) {
@@ -995,7 +1074,7 @@ async function duplicateSession() {
   try {
     const slug = `${normalizeInviteSlug(activeSession.inviteSlug || activeSession.title).slice(0, 38)}-copy-${Math.random().toString(36).slice(2, 6)}`;
     const status = activeSession.selectedDate || activeSession.fixedDate ? "find_players" : "date_poll";
-    const copy = { ownerUid: demoMode ? "demo-organiser" : currentUser.uid, organizerName: demoMode ? "Demo Storyteller" : currentProfile.displayName, title: `${activeSession.title} (Copy)`.slice(0, 80), location: activeSession.location || "", notes: activeSession.notes || "", capacity: activeSession.capacity, difficulty: activeSession.difficulty || "Beginner", timezone: sessionTimezone(activeSession), visibility: "public", status, fixedDate: activeSession.fixedDate || null, selectedDate: activeSession.selectedDate || null, selectedOptionId: activeSession.selectedOptionId || null, dateOptions: structuredClone(activeSession.dateOptions || []), scriptMode: "tbd", scriptName: "", scriptUrl: "", scriptData: null, inviteSlug: slug };
+    const copy = { ownerUid: demoMode ? "demo-organiser" : currentUser.uid, organizerName: demoMode ? "Demo Storyteller" : currentProfile.displayName, storytellerNames: storytellerNames(activeSession), title: `${activeSession.title} (Copy)`.slice(0, 80), location: activeSession.location || "", notes: activeSession.notes || "", capacity: activeSession.capacity, difficulty: activeSession.difficulty || "Beginner", timezone: sessionTimezone(activeSession), visibility: "public", status, fixedDate: activeSession.fixedDate || null, selectedDate: activeSession.selectedDate || null, selectedOptionId: activeSession.selectedOptionId || null, dateOptions: structuredClone(activeSession.dateOptions || []), scriptMode: "tbd", scriptName: "", scriptUrl: "", scriptData: null, inviteSlug: slug };
     let id;
     const scripts = (activeSession.scripts || []).filter(script => !script.legacy).map(({ id: ignored, createdAt: ignoredCreated, updatedAt: ignoredUpdated, ...script }) => script);
     if (demoMode) {
@@ -1072,7 +1151,11 @@ function resetCreateDialog() {
   $("#createChoice").hidden = false; $("#createFormPanel").hidden = true;
   $("#createSessionForm").reset(); $("#dateOptionList").innerHTML = ""; $("#createError").hidden = true;
   $("#scriptJsonStatus").textContent = "The script name and characters will be read automatically. Official characters use official tokens; homebrew characters use their initial. Players can print or save the displayed sheet as a PDF.";
-  $("#scriptJsonFields").hidden = false;
+  $("#scriptJsonFields").hidden = true;
+  $("#dateSeriesStart").value = "";
+  $("#dateSeriesInterval").value = "weekly";
+  $("#dateSeriesCount").value = "4";
+  $("#createSessionForm").elements.storytellerNames.value = demoMode ? "Demo Storyteller" : currentProfile?.displayName || currentUser?.displayName || "";
   inviteSlugEdited = false; updateInvitePreview();
   populateTimezoneSelect($("#createTimezone"));
 }
@@ -1090,6 +1173,16 @@ function addDateOption(value = "") {
   list.append(row);
 }
 
+function generateDateSeries() {
+  const errorBox = $("#createError");
+  try {
+    const values = buildRecurringDates($("#dateSeriesStart").value, $("#dateSeriesInterval").value, Number($("#dateSeriesCount").value));
+    $("#dateOptionList").innerHTML = "";
+    values.forEach(addDateOption);
+    errorBox.hidden = true;
+  } catch (error) { errorBox.textContent = error.message; errorBox.hidden = false; }
+}
+
 function chooseCreateMode(mode) {
   createMode = mode; $("#createChoice").hidden = true; $("#createFormPanel").hidden = false;
   const poll = mode === "poll"; $("#fixedDateFields").hidden = poll; $("#pollDateFields").hidden = !poll;
@@ -1104,27 +1197,21 @@ async function createSession(form) {
     const dateOptions = createMode === "poll" ? buildDateOptions(formData.getAll("dateOption")) : [];
     if (createMode === "poll" && dateOptions.length < 2) throw new Error("Add at least two date and time options.");
     const scriptMode = formData.get("scriptMode");
-    const scriptFile = formData.get("scriptJsonFile");
-    const scriptData = scriptMode === "chosen" && scriptFile?.size ? await readScriptFile(scriptFile) : null;
+    const selectedScript = scriptMode === "chosen" ? await scriptFromChoice(formData.get("scriptChoice"), formData.get("scriptJsonFile")) : null;
     const inviteSlug = normalizeInviteSlug(formData.get("inviteSlug"));
     const slugError = inviteSlugError(inviteSlug);
     if (slugError) throw new Error(slugError);
-    if (scriptMode === "chosen" && !scriptData) throw new Error("Choose a BOTC script JSON file.");
-    const jsonScriptName = scriptData?.name || scriptFile?.name?.replace(/\.json$/i, "").replace(/[-_]+/g, " ").trim() || "Uploaded script";
     const data = {
       ownerUid: demoMode ? "demo-organiser" : currentUser.uid,
       organizerName: demoMode ? "Demo Storyteller" : currentProfile.displayName,
+      storytellerNames: normalizeStorytellerNames(formData.get("storytellerNames")),
       title: formData.get("title").trim(), location: formData.get("location").trim(), notes: formData.get("notes").trim(), timezone: validTimezone(formData.get("timezone")) || "Europe/London",
       capacity: Number(formData.get("capacity")), difficulty: formData.get("difficulty"), visibility: "public", status: createMode === "poll" ? "date_poll" : "find_players",
       fixedDate: createMode === "fixed" ? formData.get("fixedDate") : null, dateOptions,
-      scriptMode, scriptName: scriptMode === "chosen" ? jsonScriptName : "", scriptUrl: "", scriptData: null, inviteSlug
+      scriptMode, scriptName: scriptMode === "chosen" ? selectedScript.name : "", scriptUrl: "", scriptData: null, inviteSlug
     };
     const initialScript = scriptMode === "chosen" ? {
-      name: data.scriptName,
-      author: scriptData?.author || "",
-      sourceType: "json",
-      pdfUrl: "",
-      scriptData,
+      ...selectedScript,
       order: 0,
       preferred: true
     } : null;
@@ -1179,6 +1266,8 @@ document.addEventListener("click", async event => {
   if (event.target.id === "copyLinkButton") { await navigator.clipboard.writeText(buildSessionLink(activeSession.id, activeSession.inviteSlug)); showToast("Player link copied."); }
   const copy = event.target.closest("[data-copy-session]"); if (copy) { await navigator.clipboard.writeText(buildSessionLink(copy.dataset.copySession, copy.dataset.copySlug)); showToast("Player link copied."); }
   if (event.target.closest("[data-load-more]")) { dashboardVisibleLimit += 25; renderDashboardSessions(); }
+  const dashboardTab = event.target.closest("[data-dashboard-tab]");
+  if (dashboardTab) { dashboardMode = dashboardTab.dataset.dashboardTab; dashboardVisibleLimit = 25; renderDashboardContent(); }
 });
 
 $("#demoSessionButton").addEventListener("click", () => { demoManager = false; openSession("sample-night"); });
@@ -1192,10 +1281,12 @@ $("#signOutButton").addEventListener("click", async () => { await firebase?.sign
 $("#createSessionButton").addEventListener("click", () => { resetCreateDialog(); $("#createDialog").showModal(); });
 $("#backToChoice").addEventListener("click", resetCreateDialog);
 $("#addDateOption").addEventListener("click", () => addDateOption());
+$("#generateDateSeries").addEventListener("click", generateDateSeries);
 $("#createSessionForm").addEventListener("change", async event => {
   const form = event.currentTarget;
   const changedField = event.target;
   if (event.target.name === "scriptMode") $("#scriptFields").hidden = event.target.value !== "chosen";
+  if (event.target.name === "scriptChoice") $("#scriptJsonFields").hidden = event.target.value !== "upload";
   if (changedField.name === "scriptJsonFile" && changedField.files[0]) {
     const status = $("#scriptJsonStatus"); status.textContent = "Reading the grimoire…";
     try {
@@ -1218,6 +1309,7 @@ $("#sessionContent").addEventListener("submit", event => {
 });
 $("#sessionContent").addEventListener("change", event => {
   if (event.target.id === "sessionDifficulty") updateSessionDifficulty(event.target.value);
+  if (event.target.name === "scriptChoice") event.target.form?.querySelector("[data-planned-json-fields]")?.toggleAttribute("hidden", event.target.value !== "upload");
 });
 window.addEventListener("popstate", () => {
   const currentUrl = new URL(location.href);

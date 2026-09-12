@@ -55,13 +55,17 @@ service cloud.firestore {
 
     function validSession() {
       return request.resource.data.keys().hasOnly([
-        'ownerUid', 'organizerName', 'title', 'location', 'notes', 'capacity', 'difficulty',
+        'ownerUid', 'organizerName', 'storytellerNames', 'title', 'location', 'notes', 'capacity', 'difficulty',
         'visibility', 'status', 'fixedDate', 'selectedDate', 'selectedOptionId',
         'dateOptions', 'scriptMode', 'scriptName', 'scriptUrl', 'scriptData', 'inviteSlug', 'timezone', 'createdAt', 'updatedAt'
       ])
       && request.resource.data.ownerUid is string
       && request.resource.data.organizerName is string
       && request.resource.data.organizerName.size() <= 60
+      && (!request.resource.data.keys().hasAny(['storytellerNames'])
+        || (request.resource.data.storytellerNames is string
+          && request.resource.data.storytellerNames.size() >= 2
+          && request.resource.data.storytellerNames.size() <= 160))
       && request.resource.data.title is string
       && request.resource.data.title.size() > 0
       && request.resource.data.title.size() <= 80
@@ -89,13 +93,15 @@ service cloud.firestore {
 
     function validPlannedScript() {
       return request.resource.data.keys().hasOnly([
-        'name', 'author', 'sourceType', 'pdfUrl', 'scriptData', 'order', 'preferred', 'createdAt', 'updatedAt'
+        'name', 'author', 'edition', 'sourceType', 'pdfUrl', 'scriptData', 'order', 'preferred', 'createdAt', 'updatedAt'
       ])
       && request.resource.data.name is string
       && request.resource.data.name.size() > 0
       && request.resource.data.name.size() <= 100
       && request.resource.data.author is string
       && request.resource.data.author.size() <= 80
+      && (!request.resource.data.keys().hasAny(['edition'])
+        || request.resource.data.edition in ['', 'tb', 'bmr', 'snv'])
       && request.resource.data.sourceType == 'json'
       && request.resource.data.pdfUrl is string
       && request.resource.data.pdfUrl == ''
