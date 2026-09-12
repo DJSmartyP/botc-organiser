@@ -107,7 +107,10 @@ function showView(id) {
 
 function updateAccountUi() {
   const signedIn = currentUser && !currentUser.isAnonymous;
-  $("#dashboardButton").textContent = signedIn ? "Dashboard" : "Organiser sign in";
+  $("#dashboardButton").textContent = signedIn ? "Dashboard" : "Google sign in";
+  $("#startOrganisingButton").textContent = signedIn ? "Open organiser portal" : "Continue with Google";
+  $("#startOrganisingButton").classList.toggle("button-primary", !signedIn);
+  $("#startOrganisingButton").classList.toggle("button-secondary", signedIn);
   $("#signOutButton").hidden = !signedIn;
 }
 
@@ -190,8 +193,7 @@ async function openInvite(slug) {
 
 async function openDashboard() {
   if (!demoMode && (!currentUser || currentUser.isAnonymous)) {
-    $("#authError").hidden = true;
-    showView("authView");
+    await signInWithGoogle();
     return;
   }
   if (demoMode) demoManager = true;
@@ -417,8 +419,10 @@ function renderSession(session) {
       ${session.notes ? `<p class="session-notes">${escapeHtml(session.notes)}</p>` : ""}
       <div class="share-row"><button id="copyLinkButton" class="button button-ghost" type="button">Copy player link</button><code>${escapeHtml(session.inviteSlug || session.id)}</code>${session.inviteSlug ? '<span class="status-pill">Custom link</span>' : ""}${manager ? `<button class="button button-danger" data-delete-session="${escapeHtml(session.id)}" type="button">Delete event</button>` : ""}</div>
     </article>
-    ${renderPlannedScripts(session, manager)}
-    ${session.status === "date_poll" ? renderDatePoll(session, manager) : renderFindPlayers(session, manager)}
+    <div class="session-workspace ${manager ? "manager-workspace" : "player-workspace"}">
+      ${renderPlannedScripts(session, manager)}
+      ${session.status === "date_poll" ? renderDatePoll(session, manager) : renderFindPlayers(session, manager)}
+    </div>
   `;
 }
 
