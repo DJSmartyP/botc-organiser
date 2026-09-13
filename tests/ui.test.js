@@ -16,6 +16,22 @@ const [html, css, app, emptyArt, communityBadge, officialBotcLogo, officialAppPu
   readFile(new URL("../assets/script-snv.webp", import.meta.url))
 ]);
 const episodeThumbnails = (await readdir(new URL("../assets/episodes/", import.meta.url))).filter(name => name.endsWith(".png"));
+const [favicon32, favicon192, favicon512, appleTouchIcon, webManifest] = await Promise.all([
+  readFile(new URL("../assets/favicon-32.png", import.meta.url)),
+  readFile(new URL("../assets/favicon-192.png", import.meta.url)),
+  readFile(new URL("../assets/favicon-512.png", import.meta.url)),
+  readFile(new URL("../assets/apple-touch-icon.png", import.meta.url)),
+  readFile(new URL("../site.webmanifest", import.meta.url), "utf8")
+]);
+
+test("the site exposes branded favicons and installable app icons", () => {
+  assert.match(html, /rel="icon" href="assets\/favicon\.svg/);
+  assert.match(html, /rel="icon" href="assets\/favicon-32\.png/);
+  assert.match(html, /rel="apple-touch-icon" href="assets\/apple-touch-icon\.png/);
+  assert.match(html, /rel="manifest" href="site\.webmanifest/);
+  for (const png of [favicon32, favicon192, favicon512, appleTouchIcon]) assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+  assert.equal(JSON.parse(webManifest).name, "Chaos Planner");
+});
 
 test("the official Community Created Content badge identifies the site as unofficial", () => {
   assert.match(html, /assets\/community-created-content\.png/);
