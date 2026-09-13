@@ -104,6 +104,10 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /function showEpisodeDetails/);
   assert.match(app, /dataset\.playEpisode = String\(index\)/);
   assert.match(app, /Episode \$\{episode\.number\} of Chaos on the Clocktower/);
+  assert.match(app, /scripts: \[\]/);
+  assert.match(app, /Scripts this episode/);
+  assert.match(app, /dataset\.startSeconds/);
+  assert.match(app, /formatEpisodeTime/);
   assert.match(app, /card\.classList\.toggle\("is-active", active\)/);
   assert.match(html, /data-action="watch"/);
   assert.match(app, /searchParams\.set\("watch", "1"\)/);
@@ -111,6 +115,8 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(css, /\.episode-card\.is-active/);
   assert.match(css, /\.episode-dossier-art/);
   assert.match(css, /\.episode-dossier-body/);
+  assert.match(css, /\.episode-scripts/);
+  assert.match(css, /\.episode-timestamp/);
   assert.match(html, /class="archive-link"/);
   assert.match(html, /class="archive-sigil"/);
   assert.doesNotMatch(html, /class="youtube-link"/);

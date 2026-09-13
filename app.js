@@ -45,7 +45,17 @@ const CHAOS_EPISODES = [
   { number: 3, videoId: "_EVyWJP2fTo", title: "Stuck in Hermit Havoc" },
   { number: 2, videoId: "G4DUPryv8Aw", title: "The First Whale Buffet" },
   { number: 1, videoId: "5w-Ry7TrzvA", title: "The Fastest Game" }
-];
+].map(episode => ({ description: CHAOS_SERIES_DESCRIPTION, scripts: [], ...episode }));
+
+function formatEpisodeTime(totalSeconds = 0) {
+  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = Math.floor(safeSeconds % 60);
+  return hours
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+    : `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
 
 function renderEpisodePicker() {
   const list = $("#episodeList");
@@ -108,13 +118,51 @@ function showEpisodeDetails(index = 0, focusPlay = false) {
   const title = document.createElement("h3");
   title.textContent = episode.title;
   const description = document.createElement("p");
-  description.textContent = `Episode ${episode.number} of Chaos on the Clocktower. ${CHAOS_SERIES_DESCRIPTION}`;
+  description.textContent = `Episode ${episode.number} of Chaos on the Clocktower. ${episode.description}`;
+  const scriptPanel = document.createElement("section");
+  scriptPanel.className = "episode-scripts";
+  const scriptHeading = document.createElement("h4");
+  scriptHeading.textContent = "Scripts this episode";
+  scriptPanel.append(scriptHeading);
+  if (episode.scripts.length) {
+    const scriptList = document.createElement("ul");
+    episode.scripts.forEach(script => {
+      const item = document.createElement("li");
+      const copy = document.createElement("span");
+      const name = document.createElement("strong");
+      name.textContent = script.name;
+      copy.append(name);
+      if (script.notes) {
+        const notes = document.createElement("small");
+        notes.textContent = script.notes;
+        copy.append(notes);
+      }
+      item.append(copy);
+      if (Number.isFinite(script.startSeconds)) {
+        const timestamp = document.createElement("button");
+        timestamp.type = "button";
+        timestamp.className = "episode-timestamp";
+        timestamp.dataset.playEpisode = String(index);
+        timestamp.dataset.startSeconds = String(script.startSeconds);
+        timestamp.textContent = `Play from ${formatEpisodeTime(script.startSeconds)}`;
+        timestamp.setAttribute("aria-label", `Play ${script.name} from ${formatEpisodeTime(script.startSeconds)}`);
+        item.append(timestamp);
+      }
+      scriptList.append(item);
+    });
+    scriptPanel.append(scriptList);
+  } else {
+    const pending = document.createElement("p");
+    pending.className = "episode-scripts-pending";
+    pending.textContent = "Script details coming soon.";
+    scriptPanel.append(pending);
+  }
   const play = document.createElement("button");
   play.type = "button";
   play.className = "button button-primary episode-dossier-play";
   play.dataset.playEpisode = String(index);
   play.innerHTML = '<span class="dossier-play-mark" aria-hidden="true"></span><span>Play episode</span>';
-  body.append(label, title, description, play);
+  body.append(label, title, description, scriptPanel, play);
   dossier.append(artwork, body);
   frame.replaceChildren(dossier);
   setActiveEpisode(index);
@@ -123,14 +171,15 @@ function showEpisodeDetails(index = 0, focusPlay = false) {
   if (focusPlay) play.focus({ preventScroll: true });
 }
 
-function loadEpisode(index = 0) {
+function loadEpisode(index = 0, startSeconds = 0) {
   const episode = CHAOS_EPISODES[index] || CHAOS_EPISODES[0];
   const frame = $("#episodeStage");
   if (!frame) return;
   frame.classList.remove("has-dossier");
   frame.classList.add("is-playing");
   const iframe = document.createElement("iframe");
-  iframe.src = `https://www.youtube-nocookie.com/embed/${episode.videoId}?list=${CHAOS_PLAYLIST_ID}&index=${CHAOS_EPISODES.length - episode.number + 1}&autoplay=1&rel=0`;
+  const start = Math.max(0, Number(startSeconds) || 0);
+  iframe.src = `https://www.youtube-nocookie.com/embed/${episode.videoId}?list=${CHAOS_PLAYLIST_ID}&index=${CHAOS_EPISODES.length - episode.number + 1}&autoplay=1&rel=0${start ? `&start=${Math.floor(start)}` : ""}`;
   iframe.title = `Chaos on the Clocktower — Episode ${episode.number}: ${episode.title}`;
   iframe.referrerPolicy = "strict-origin-when-cross-origin";
   iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
@@ -1398,7 +1447,7 @@ document.addEventListener("click", async event => {
   const episodeCard = event.target.closest("[data-episode-index]");
   if (episodeCard) { showEpisodeDetails(Number(episodeCard.dataset.episodeIndex), true); return; }
   const playEpisode = event.target.closest("[data-play-episode]");
-  if (playEpisode) { loadEpisode(Number(playEpisode.dataset.playEpisode)); return; }
+  if (playEpisode) { loadEpisode(Number(playEpisode.dataset.playEpisode), Number(playEpisode.dataset.startSeconds || 0)); return; }
   const open = event.target.closest("[data-open-session]"); if (open) { await openSession(open.dataset.openSession); return; }
   const finalize = event.target.closest("[data-finalize]"); if (finalize) { await finalizeDate(finalize.dataset.finalize); return; }
   const removePlayerButton = event.target.closest("[data-remove-player]"); if (removePlayerButton) { await removePlayer(removePlayerButton.dataset.removePlayer, removePlayerButton.dataset.playerName); return; }
