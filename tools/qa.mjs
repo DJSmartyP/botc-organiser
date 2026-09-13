@@ -23,6 +23,8 @@ try {
     await page.locator(".session-hero h1").waitFor();
     await page.locator(".ccc-badge img").scrollIntoViewIfNeeded();
     await page.waitForFunction(() => document.querySelector(".ccc-badge img")?.naturalWidth > 0);
+    if (viewport.name === "desktop") assert.equal(await page.locator(".header-resources a:visible").count(), 2);
+    if (viewport.name === "mobile") assert.equal(await page.locator(".header-resources a:visible").count(), 0);
     await assertFits(page, `${viewport.name} player view`);
     await page.screenshot({ path: `qa-${viewport.name}.png`, fullPage: true });
     await page.close();

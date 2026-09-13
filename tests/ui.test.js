@@ -72,6 +72,14 @@ test("homepage links to the Chaos playlist and complete tutorial", () => {
   assert.match(html, /Built for busy Storytellers/);
 });
 
+test("wide headers use spare space for official game resources", () => {
+  assert.match(html, /class="header-resources"/);
+  assert.match(html, /https:\/\/wiki\.bloodontheclocktower\.com\/Main_Page/);
+  assert.match(html, /https:\/\/botc\.app\//);
+  assert.match(css, /@media \(min-width: 1120px\)/);
+  assert.match(css, /\.header-resources \{ display: flex; \}/);
+});
+
 test("hero uses one stable looping glitch treatment", () => {
   assert.match(app, /classList\.add\("effect-glitch"\)/);
   assert.doesNotMatch(app, /effects\[randomValue/);
