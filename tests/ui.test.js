@@ -91,6 +91,10 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /searchParams\.set\("watch", "1"\)/);
   assert.match(css, /\.episode-player-frame/);
   assert.match(css, /\.episode-card\.is-active/);
+  assert.match(html, /class="archive-link"/);
+  assert.match(html, /class="archive-sigil"/);
+  assert.doesNotMatch(html, /class="youtube-link"/);
+  assert.match(css, /\.archive-sigil::before/);
 });
 
 test("wide headers use spare space for official game resources", () => {
