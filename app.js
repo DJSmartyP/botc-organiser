@@ -27,6 +27,7 @@ const BUILT_IN_SCRIPTS = {
 };
 
 const CHAOS_PLAYLIST_ID = "PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra";
+const CHAOS_SERIES_DESCRIPTION = "Some of the most chaotic players take on interesting, game-changing and sometimes janky scripts. We embrace the madness, sometimes break it, and have a great time doing it.";
 const CHAOS_EPISODES = [
   { number: 16, videoId: "6cLpnO2VfAA", title: "Back To Basics..." },
   { number: 15, videoId: "FMkcNCn9YTk", title: "More Muppet Madness..." },
@@ -55,7 +56,7 @@ function renderEpisodePicker() {
     button.className = "episode-card";
     button.dataset.episodeIndex = String(index);
     button.setAttribute("aria-pressed", "false");
-    button.setAttribute("aria-label", `Play Episode ${episode.number}: ${episode.title}`);
+    button.setAttribute("aria-label", `View Episode ${episode.number}: ${episode.title}`);
     const image = document.createElement("img");
     image.src = `assets/episodes/${episode.videoId}.png`;
     image.alt = "";
@@ -77,10 +78,57 @@ function renderEpisodePicker() {
   }));
 }
 
+function setActiveEpisode(index) {
+  $$(".episode-card").forEach((card, cardIndex) => {
+    const active = cardIndex === index;
+    card.classList.toggle("is-active", active);
+    card.setAttribute("aria-pressed", String(active));
+  });
+}
+
+function showEpisodeDetails(index = 0, focusPlay = false) {
+  const episode = CHAOS_EPISODES[index] || CHAOS_EPISODES[0];
+  const frame = $("#episodeStage");
+  if (!frame) return;
+  frame.classList.add("has-dossier");
+  frame.classList.remove("is-playing");
+  const dossier = document.createElement("article");
+  dossier.className = "episode-dossier";
+  const artwork = document.createElement("img");
+  artwork.className = "episode-dossier-art";
+  artwork.src = `assets/episodes/${episode.videoId}.png`;
+  artwork.alt = `Episode ${episode.number}: ${episode.title}`;
+  artwork.width = 320;
+  artwork.height = 180;
+  const body = document.createElement("div");
+  body.className = "episode-dossier-body";
+  const label = document.createElement("span");
+  label.className = "eyebrow";
+  label.textContent = `Case file · Episode ${episode.number}`;
+  const title = document.createElement("h3");
+  title.textContent = episode.title;
+  const description = document.createElement("p");
+  description.textContent = `Episode ${episode.number} of Chaos on the Clocktower. ${CHAOS_SERIES_DESCRIPTION}`;
+  const play = document.createElement("button");
+  play.type = "button";
+  play.className = "button button-primary episode-dossier-play";
+  play.dataset.playEpisode = String(index);
+  play.innerHTML = '<span class="dossier-play-mark" aria-hidden="true"></span><span>Play episode</span>';
+  body.append(label, title, description, play);
+  dossier.append(artwork, body);
+  frame.replaceChildren(dossier);
+  setActiveEpisode(index);
+  const status = $("#episodeNowPlaying");
+  if (status) status.textContent = `Selected · Episode ${episode.number} · Press Play episode to begin.`;
+  if (focusPlay) play.focus({ preventScroll: true });
+}
+
 function loadEpisode(index = 0) {
   const episode = CHAOS_EPISODES[index] || CHAOS_EPISODES[0];
-  const frame = $(".episode-player-frame");
+  const frame = $("#episodeStage");
   if (!frame) return;
+  frame.classList.remove("has-dossier");
+  frame.classList.add("is-playing");
   const iframe = document.createElement("iframe");
   iframe.src = `https://www.youtube-nocookie.com/embed/${episode.videoId}?list=${CHAOS_PLAYLIST_ID}&index=${CHAOS_EPISODES.length - episode.number + 1}&autoplay=1&rel=0`;
   iframe.title = `Chaos on the Clocktower — Episode ${episode.number}: ${episode.title}`;
@@ -88,11 +136,7 @@ function loadEpisode(index = 0) {
   iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
   iframe.allowFullscreen = true;
   frame.replaceChildren(iframe);
-  $$(".episode-card").forEach((card, cardIndex) => {
-    const active = cardIndex === index;
-    card.classList.toggle("is-active", active);
-    card.setAttribute("aria-pressed", String(active));
-  });
+  setActiveEpisode(index);
   const status = $("#episodeNowPlaying");
   if (status) status.textContent = `Now playing · Episode ${episode.number} · ${episode.title}`;
   iframe.focus();
@@ -1352,8 +1396,9 @@ document.addEventListener("click", async event => {
   const guide = event.target.closest('[data-action="guide"]'); if (guide) { event.preventDefault(); const url = new URL(location.href); url.search = ""; url.searchParams.set("guide", "1"); history.pushState({}, "", url); document.title = "How to use Chaos Planner"; showView("guideView"); scrollTo({ top: 0, behavior: "smooth" }); return; }
   const watch = event.target.closest('[data-action="watch"]'); if (watch) { event.preventDefault(); const url = new URL(location.href); url.search = ""; url.searchParams.set("watch", "1"); history.pushState({}, "", url); document.title = "Watch Chaos on the Clocktower"; showView("watchView"); return; }
   const episodeCard = event.target.closest("[data-episode-index]");
-  if (episodeCard) { loadEpisode(Number(episodeCard.dataset.episodeIndex)); return; }
-  if (event.target.closest("[data-load-episodes]")) { loadEpisode(0); return; }
+  if (episodeCard) { showEpisodeDetails(Number(episodeCard.dataset.episodeIndex), true); return; }
+  const playEpisode = event.target.closest("[data-play-episode]");
+  if (playEpisode) { loadEpisode(Number(playEpisode.dataset.playEpisode)); return; }
   const open = event.target.closest("[data-open-session]"); if (open) { await openSession(open.dataset.openSession); return; }
   const finalize = event.target.closest("[data-finalize]"); if (finalize) { await finalizeDate(finalize.dataset.finalize); return; }
   const removePlayerButton = event.target.closest("[data-remove-player]"); if (removePlayerButton) { await removePlayer(removePlayerButton.dataset.removePlayer, removePlayerButton.dataset.playerName); return; }
@@ -1443,6 +1488,7 @@ function initialiseHeroLogoEffect() {
 
 initialiseHeroLogoEffect();
 renderEpisodePicker();
+showEpisodeDetails(0);
 await initialiseFirebase();
 updateAccountUi();
 const initialUrl = new URL(location.href);

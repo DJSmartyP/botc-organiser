@@ -130,6 +130,16 @@ main:focus { outline: none; }
 .episode-player-column { min-width: 0; }
 .episode-player-frame { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid rgba(216,189,124,.32); border-radius: 9px; background: #050507; box-shadow: 0 18px 45px rgba(0,0,0,.42); }
 .episode-player-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.episode-player-frame.has-dossier { aspect-ratio: auto; }
+.episode-dossier { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(250px, .65fr); min-height: 438px; background: radial-gradient(circle at 28% 50%, rgba(123,31,45,.2), transparent 42%), #07070a; }
+.episode-dossier-art { align-self: stretch; display: block; width: 100%; height: 100%; min-height: 0; padding: clamp(.55rem, 1.5vw, 1rem); object-fit: contain; background: linear-gradient(145deg, rgba(6,9,14,.28), rgba(18,8,13,.74)); filter: drop-shadow(0 12px 28px rgba(0,0,0,.55)); }
+.episode-dossier-body { position: relative; display: flex; min-width: 0; flex-direction: column; justify-content: center; align-items: flex-start; padding: clamp(1rem, 2.3vw, 1.65rem); border-left: 1px solid rgba(216,189,124,.2); background: linear-gradient(160deg, rgba(53,25,36,.96), rgba(18,16,22,.98)); }
+.episode-dossier-body::before { content: ""; position: absolute; top: 1rem; right: 1rem; width: 42px; aspect-ratio: 1; border: 1px solid rgba(216,189,124,.15); border-radius: 50%; box-shadow: inset 0 0 0 4px rgba(148,42,53,.12); }
+.episode-dossier-body h3 { margin: .45rem 0 .7rem; font-size: clamp(1.25rem, 2.4vw, 1.8rem); }
+.episode-dossier-body p { margin-bottom: 1rem; color: #cfc1bd; font: .87rem/1.52 "IM Fell English", Georgia, serif; }
+.episode-dossier-play { display: inline-flex; align-items: center; gap: .52rem; margin-top: auto; }
+.dossier-play-mark { position: relative; width: 1.3rem; aspect-ratio: 1; flex: 0 0 auto; border: 1px solid rgba(255,235,207,.55); border-radius: 50%; background: rgba(65,10,19,.45); }
+.dossier-play-mark::after { content: ""; position: absolute; top: 50%; left: 54%; border-width: .22rem 0 .22rem .34rem; border-style: solid; border-color: transparent transparent transparent #fff1df; transform: translate(-50%, -50%); }
 .episode-player-poster { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: .65rem; width: 100%; max-width: none; padding: clamp(1rem, 5vw, 3rem); overflow: hidden; border: 0; color: var(--ink); background: linear-gradient(rgba(4,7,12,.22), rgba(9,6,10,.78)), url("assets/clocktower-atmosphere.png?v=2") center 42% / cover no-repeat; cursor: pointer; }
 .episode-player-poster::before { content: ""; position: absolute; inset: 0; border: clamp(7px, 1.2vw, 14px) solid rgba(20,11,17,.8); box-shadow: inset 0 0 80px rgba(0,0,0,.82); pointer-events: none; }
 .episode-player-poster::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(129,23,36,.12), transparent 44%), linear-gradient(90deg, rgba(0,0,0,.48), transparent 24%, transparent 76%, rgba(0,0,0,.48)); pointer-events: none; }
@@ -731,6 +741,12 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
   .episode-player-poster strong { font-size: 1rem; }
   .episode-player-poster small { font-size: .64rem; }
   .episode-browser { grid-template-columns: 1fr; }
+  .episode-dossier { grid-template-columns: 1fr; min-height: 0; }
+  .episode-dossier-art { width: 100%; height: auto; aspect-ratio: 16 / 9; padding: .45rem; }
+  .episode-dossier-body { min-height: 210px; padding: .9rem; border-top: 1px solid rgba(216,189,124,.2); border-left: 0; }
+  .episode-dossier-body h3 { margin-bottom: .5rem; }
+  .episode-dossier-body p { margin-bottom: .75rem; font-size: .78rem; line-height: 1.4; }
+  .episode-dossier-play { width: 100%; justify-content: center; }
   .episode-picker { max-height: none; }
   .episode-list { display: flex; gap: .5rem; padding: .55rem; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; }
   .episode-card { grid-template-columns: 126px; align-content: start; flex: 0 0 134px; min-height: 118px; gap: .35rem; padding: .28rem; scroll-snap-align: start; }

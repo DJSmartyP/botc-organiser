@@ -95,18 +95,22 @@ test("homepage links to the Chaos playlist and complete tutorial", () => {
 
 test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(html, /id="watchView"/);
-  assert.match(html, /data-load-episodes/);
+  assert.match(html, /id="episodeStage"/);
   assert.match(html, /id="episodeList"/);
-  assert.match(html, /Enter the town square/);
   assert.match(app, /const CHAOS_EPISODES = \[/);
   assert.equal((app.match(/videoId: "/g) || []).length, 16);
   assert.equal(episodeThumbnails.length, 16);
   assert.match(app, /youtube-nocookie\.com\/embed\/\$\{episode\.videoId\}/);
+  assert.match(app, /function showEpisodeDetails/);
+  assert.match(app, /dataset\.playEpisode = String\(index\)/);
+  assert.match(app, /Episode \$\{episode\.number\} of Chaos on the Clocktower/);
   assert.match(app, /card\.classList\.toggle\("is-active", active\)/);
   assert.match(html, /data-action="watch"/);
   assert.match(app, /searchParams\.set\("watch", "1"\)/);
   assert.match(css, /\.episode-player-frame/);
   assert.match(css, /\.episode-card\.is-active/);
+  assert.match(css, /\.episode-dossier-art/);
+  assert.match(css, /\.episode-dossier-body/);
   assert.match(html, /class="archive-link"/);
   assert.match(html, /class="archive-sigil"/);
   assert.doesNotMatch(html, /class="youtube-link"/);

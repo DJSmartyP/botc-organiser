@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260913-11">
+  <link rel="stylesheet" href="styles.css?v=20260913-12">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -111,7 +111,7 @@
       <section id="guide-watch" class="guide-chapter">
         <div class="section-heading"><div><div class="eyebrow">Beyond the grimoire</div><h2>Watch Chaos on the Clocktower</h2></div><p>The complete video collection lives inside Chaos Planner.</p></div>
         <div class="guide-grid">
-          <article class="guide-step panel"><span class="guide-number">11</span><div class="guide-copy"><h3>Choose an episode</h3><p>Select <strong>Watch episodes</strong> in the header. Pick from the complete thumbnail library, then your chosen episode loads in the privacy-enhanced player without leaving Chaos Planner.</p></div><div class="guide-screen guide-watch-screen"><div class="guide-watch-preview"><img src="assets/chaos-logo.png?v=20260912-4" alt=""><span class="guide-watch-play" aria-hidden="true"></span></div><div class="guide-watch-episodes"><span><img src="assets/episodes/6cLpnO2VfAA.png" alt="">Episode 16</span><span><img src="assets/episodes/FMkcNCn9YTk.png" alt="">Episode 15</span><span><img src="assets/episodes/Oiqgyiskbe8.png" alt="">Episode 14</span></div></div></article>
+          <article class="guide-step panel"><span class="guide-number">11</span><div class="guide-copy"><h3>Choose an episode</h3><p>Select <strong>Watch episodes</strong> in the header. Pick a thumbnail to open its artwork, title and description, then press <strong>Play episode</strong> to load the privacy-enhanced player without leaving Chaos Planner.</p></div><div class="guide-screen guide-watch-screen"><div class="guide-watch-preview"><img src="assets/episodes/6cLpnO2VfAA.png" alt=""><span class="guide-watch-play" aria-hidden="true"></span></div><div class="guide-watch-episodes"><span><img src="assets/episodes/6cLpnO2VfAA.png" alt="">Episode 16</span><span><img src="assets/episodes/FMkcNCn9YTk.png" alt="">Episode 15</span><span><img src="assets/episodes/Oiqgyiskbe8.png" alt="">Episode 14</span></div></div></article>
         </div>
       </section>
     </section>
@@ -126,14 +126,14 @@
         <div class="episode-player-heading"><div><span class="panel-number">The complete collection</span><h2>Pick an episode</h2></div><p>Choose one of all 16 episodes. The newest sits at the top; every story plays here without leaving Chaos Planner.</p></div>
         <div class="episode-browser">
           <div class="episode-player-column">
-            <div class="episode-player-frame">
-              <button class="episode-player-poster" type="button" data-load-episodes aria-label="Play the newest Chaos on the Clocktower episode">
+            <div id="episodeStage" class="episode-player-frame">
+              <div class="episode-player-poster" aria-hidden="true">
                 <span class="episode-poster-smoke" aria-hidden="true"></span>
                 <img src="assets/chaos-logo.png?v=20260912-4" alt="">
                 <span class="episode-play-button" aria-hidden="true"></span>
                 <strong>Enter the town square</strong>
                 <small>Start with Episode 16 or choose from the library</small>
-              </button>
+              </div>
             </div>
             <p id="episodeNowPlaying" class="episode-now-playing" aria-live="polite">Choose an episode from the complete collection.</p>
           </div>
@@ -285,6 +285,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20260913-7"></script>
+  <script type="module" src="app.js?v=20260913-8"></script>
 </body>
 </html>
