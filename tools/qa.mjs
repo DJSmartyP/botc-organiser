@@ -82,6 +82,15 @@ try {
     await watchPage.close();
   }
 
+  const guidePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  watchErrors(guidePage, "mobile guide");
+  await guidePage.goto("http://127.0.0.1:4173/?demo=1&guide=1", { waitUntil: "domcontentloaded" });
+  await guidePage.locator("#guide-watch .guide-watch-screen").scrollIntoViewIfNeeded();
+  await guidePage.waitForFunction(() => document.querySelector("#guide-watch img")?.naturalWidth > 0);
+  await assertFits(guidePage, "mobile updated guide");
+  await guidePage.screenshot({ path: "qa-guide-mobile.png", fullPage: true });
+  await guidePage.close();
+
   const emptyPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
   watchErrors(emptyPage, "empty state");
   await emptyPage.goto("http://127.0.0.1:4173/?demo=1", { waitUntil: "networkidle" });

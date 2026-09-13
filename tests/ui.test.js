@@ -69,9 +69,11 @@ test("homepage links to the Chaos playlist and complete tutorial", () => {
   const playlist = "PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra";
   assert.equal(html.split(playlist).length - 1, 2);
   assert.match(html, /id="guideView"/);
-  assert.equal(html.split('class="guide-step panel"').length - 1, 10);
+  assert.equal(html.split('class="guide-step panel"').length - 1, 11);
   assert.match(html, /Learn how to use the system/);
   assert.match(html, /Built for busy Storytellers/);
+  assert.match(html, /id="guide-watch"/);
+  assert.match(html, /class="guide-screen guide-watch-screen"/);
 });
 
 test("episodes have a dedicated privacy-enhanced playlist player", () => {

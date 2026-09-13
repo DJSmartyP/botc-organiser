@@ -20,6 +20,8 @@ The site is a static, mobile-first app for GitHub Pages. Firebase Authentication
 
 The dedicated **Chaos on the Clocktower** watch page presents a cinematic, locally hosted poster before loading the channel playlist through YouTube's privacy-enhanced `youtube-nocookie.com` player. YouTube is contacted only after the viewer chooses to play. Viewers can then choose any episode using the player's playlist control, move between episodes, use fullscreen, or open the complete playlist on YouTube. Because the player references the playlist rather than individual video IDs, newly added episodes appear automatically without a site deployment.
 
+The built-in **Learn how to use the system** guide includes a responsive recreation of the watch landing page alongside its organiser, player and finalisation walkthroughs, so the documentation stays visually consistent without relying on fixed-resolution screenshots.
+
 ## Firebase setup
 
 1. Create a Firebase project at <https://console.firebase.google.com/>.
