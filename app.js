@@ -180,10 +180,10 @@ function loadEpisode(index = 0, startSeconds = 0) {
   frame.classList.add("is-playing");
   const iframe = document.createElement("iframe");
   const start = Math.max(0, Number(startSeconds) || 0);
-  iframe.src = `https://www.youtube-nocookie.com/embed/${episode.videoId}?list=${CHAOS_PLAYLIST_ID}&index=${CHAOS_EPISODES.length - episode.number + 1}&autoplay=1&rel=0${start ? `&start=${Math.floor(start)}` : ""}`;
+  iframe.src = `https://www.youtube-nocookie.com/embed/${episode.videoId}?list=${CHAOS_PLAYLIST_ID}&index=${CHAOS_EPISODES.length - episode.number + 1}&autoplay=1&rel=0&playsinline=1&fs=1${start ? `&start=${Math.floor(start)}` : ""}`;
   iframe.title = `Chaos on the Clocktower — Episode ${episode.number}: ${episode.title}`;
   iframe.referrerPolicy = "strict-origin-when-cross-origin";
-  iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+  iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share";
   iframe.allowFullscreen = true;
   frame.replaceChildren(iframe);
   setActiveEpisode(index);
