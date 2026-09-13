@@ -27,7 +27,6 @@ const BUILT_IN_SCRIPTS = {
 };
 
 const CHAOS_PLAYLIST_ID = "PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra";
-const CHAOS_SERIES_DESCRIPTION = "Some of the most chaotic players take on interesting, game-changing and sometimes janky scripts. We embrace the madness, sometimes break it, and have a great time doing it.";
 const CHAOS_EPISODES = [
   { number: 16, videoId: "6cLpnO2VfAA", title: "Back To Basics..." },
   { number: 15, videoId: "FMkcNCn9YTk", title: "More Muppet Madness..." },
@@ -45,7 +44,7 @@ const CHAOS_EPISODES = [
   { number: 3, videoId: "_EVyWJP2fTo", title: "Stuck in Hermit Havoc" },
   { number: 2, videoId: "G4DUPryv8Aw", title: "The First Whale Buffet" },
   { number: 1, videoId: "5w-Ry7TrzvA", title: "The Fastest Game" }
-].map(episode => ({ description: CHAOS_SERIES_DESCRIPTION, scripts: [], ...episode }));
+].map(episode => ({ scripts: [], ...episode }));
 
 function formatEpisodeTime(totalSeconds = 0) {
   const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
@@ -117,8 +116,6 @@ function showEpisodeDetails(index = 0, focusPlay = false) {
   label.textContent = `Case file · Episode ${episode.number}`;
   const title = document.createElement("h3");
   title.textContent = episode.title;
-  const description = document.createElement("p");
-  description.textContent = `Episode ${episode.number} of Chaos on the Clocktower. ${episode.description}`;
   const scriptPanel = document.createElement("section");
   scriptPanel.className = "episode-scripts";
   const scriptHeading = document.createElement("h4");
@@ -162,7 +159,7 @@ function showEpisodeDetails(index = 0, focusPlay = false) {
   play.className = "button button-primary episode-dossier-play";
   play.dataset.playEpisode = String(index);
   play.innerHTML = '<span class="dossier-play-mark" aria-hidden="true"></span><span>Play episode</span>';
-  body.append(label, title, description, scriptPanel, play);
+  body.append(label, title, scriptPanel, play);
   dossier.append(artwork, body);
   frame.replaceChildren(dossier);
   setActiveEpisode(index);

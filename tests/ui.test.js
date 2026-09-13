@@ -104,7 +104,7 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /youtube-nocookie\.com\/embed\/\$\{episode\.videoId\}/);
   assert.match(app, /function showEpisodeDetails/);
   assert.match(app, /dataset\.playEpisode = String\(index\)/);
-  assert.match(app, /Episode \$\{episode\.number\} of Chaos on the Clocktower/);
+  assert.doesNotMatch(app, /CHAOS_SERIES_DESCRIPTION/);
   assert.match(app, /scripts: \[\]/);
   assert.match(app, /Scripts this episode/);
   assert.match(app, /dataset\.startSeconds/);
