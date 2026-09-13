@@ -2,12 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, css, app, emptyArt, communityBadge, officialRoles, tbLogo, bmrLogo, snvLogo] = await Promise.all([
+const [html, css, app, emptyArt, communityBadge, officialBotcLogo, officialAppPuck, officialRoles, tbLogo, bmrLogo, snvLogo] = await Promise.all([
   readFile(new URL("../index.html", import.meta.url), "utf8"),
   readFile(new URL("../styles.css", import.meta.url), "utf8"),
   readFile(new URL("../app.js", import.meta.url), "utf8"),
   readFile(new URL("../assets/empty-town-vignette.png", import.meta.url)),
   readFile(new URL("../assets/community-created-content.png", import.meta.url)),
+  readFile(new URL("../assets/official-botc-logo.png", import.meta.url)),
+  readFile(new URL("../assets/official-app-puck.png", import.meta.url)),
   readFile(new URL("../assets/official-roles.json", import.meta.url), "utf8"),
   readFile(new URL("../assets/script-tb.webp", import.meta.url)),
   readFile(new URL("../assets/script-bmr.webp", import.meta.url)),
@@ -76,6 +78,10 @@ test("wide headers use spare space for official game resources", () => {
   assert.match(html, /class="header-resources"/);
   assert.match(html, /https:\/\/wiki\.bloodontheclocktower\.com\/Main_Page/);
   assert.match(html, /https:\/\/botc\.app\//);
+  assert.match(html, /assets\/official-botc-logo\.png/);
+  assert.match(html, /assets\/official-app-puck\.png/);
+  assert.deepEqual([...officialBotcLogo.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+  assert.deepEqual([...officialAppPuck.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
   assert.match(css, /@media \(min-width: 1120px\)/);
   assert.match(css, /\.header-resources \{ display: flex; \}/);
 });
