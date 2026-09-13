@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260913-13">
+  <link rel="stylesheet" href="styles.css?v=20260913-14">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -123,16 +123,17 @@
         <div><div class="eyebrow">Watch the story unfold</div><h1>Chaos on the Clocktower</h1><p>Bluffs, betrayals and bodies in the town square. Choose any episode from the playlist and watch without leaving Chaos Planner.</p></div>
       </header>
       <article class="episode-player-panel panel">
-        <div class="episode-player-heading"><div><span class="panel-number">The complete collection</span><h2>Pick an episode</h2></div><p>Choose one of all 16 episodes. The newest sits at the top; every story plays here without leaving Chaos Planner.</p></div>
+        <div class="episode-player-heading"><div><span class="panel-number">The complete collection</span><h2>Pick an episode</h2></div><p>Start with Episode 1 at the top or left, then follow the chaos in order through Episode 16.</p></div>
         <div class="episode-browser">
           <div class="episode-player-column">
             <div id="episodeStage" class="episode-player-frame">
-              <div class="episode-player-poster" aria-hidden="true">
-                <span class="episode-poster-smoke" aria-hidden="true"></span>
-                <img src="assets/chaos-logo.png?v=20260912-4" alt="">
-                <span class="episode-play-button" aria-hidden="true"></span>
-                <strong>Enter the town square</strong>
-                <small>Start with Episode 16 or choose from the library</small>
+              <div class="episode-player-poster theatre-poster">
+                <img class="episode-theatre-art" src="assets/chaos-theatre.png" alt="">
+                <div class="episode-theatre-copy">
+                  <img src="assets/chaos-logo.png?v=20260912-4" alt="Chaos on the Clocktower">
+                  <strong>Chaos Theatre</strong>
+                  <small>Pick your brand of chaos!</small>
+                </div>
               </div>
             </div>
             <p id="episodeNowPlaying" class="episode-now-playing" aria-live="polite">Choose an episode from the complete collection.</p>
@@ -285,6 +286,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20260913-11"></script>
+  <script type="module" src="app.js?v=20260913-12"></script>
 </body>
 </html>

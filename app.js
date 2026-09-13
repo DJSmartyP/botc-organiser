@@ -41,10 +41,14 @@ const CHAOS_EPISODES = [
   { number: 6, videoId: "pof-V0Vs334", title: "No ED...But We Do Have Ringworm..." },
   { number: 5, videoId: "s6dfwXIgJfQ", title: "Devious Damsels and Covert Cults" },
   { number: 4, videoId: "rlUBo8nGEIU", title: "Teensyville Turmoil and Trouble" },
-  { number: 3, videoId: "_EVyWJP2fTo", title: "Stuck in Hermit Havoc" },
+  { number: 3, videoId: "_EVyWJP2fTo", title: "Stuck in Hermit Havoc", artwork: "episode-03-hermit-havoc.jpg" },
   { number: 2, videoId: "G4DUPryv8Aw", title: "The First Whale Buffet" },
   { number: 1, videoId: "5w-Ry7TrzvA", title: "The Fastest Game" }
-].map(episode => ({ scripts: [], ...episode }));
+].sort((left, right) => left.number - right.number).map(episode => ({ scripts: [], ...episode }));
+
+function episodeArtwork(episode) {
+  return `assets/episodes/${episode.artwork || `${episode.videoId}.jpg`}`;
+}
 
 function formatEpisodeTime(totalSeconds = 0) {
   const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
@@ -67,7 +71,7 @@ function renderEpisodePicker() {
     button.setAttribute("aria-pressed", "false");
     button.setAttribute("aria-label", `View Episode ${episode.number}: ${episode.title}`);
     const image = document.createElement("img");
-    image.src = `assets/episodes/${episode.videoId}.jpg`;
+    image.src = episodeArtwork(episode);
     image.alt = "";
     image.loading = "lazy";
     image.width = 320;
@@ -105,7 +109,7 @@ function showEpisodeDetails(index = 0, focusPlay = false) {
   dossier.className = "episode-dossier";
   const artwork = document.createElement("img");
   artwork.className = "episode-dossier-art";
-  artwork.src = `assets/episodes/${episode.videoId}.jpg`;
+  artwork.src = episodeArtwork(episode);
   artwork.alt = `Episode ${episode.number}: ${episode.title}`;
   artwork.width = 320;
   artwork.height = 180;
@@ -1534,7 +1538,6 @@ function initialiseHeroLogoEffect() {
 
 initialiseHeroLogoEffect();
 renderEpisodePicker();
-showEpisodeDetails(0);
 await initialiseFirebase();
 updateAccountUi();
 const initialUrl = new URL(location.href);

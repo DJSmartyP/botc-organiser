@@ -100,7 +100,11 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /const CHAOS_EPISODES = \[/);
   assert.equal((app.match(/videoId: "/g) || []).length, 16);
   assert.equal(episodeThumbnails.length, 16);
-  assert.match(app, /assets\/episodes\/\$\{episode\.videoId\}\.jpg/);
+  assert.match(app, /sort\(\(left, right\) => left\.number - right\.number\)/);
+  assert.match(app, /episode-03-hermit-havoc\.jpg/);
+  assert.match(html, /assets\/chaos-theatre\.png/);
+  assert.match(app, /function episodeArtwork\(episode\)/);
+  assert.match(app, /episode\.artwork \|\|/);
   assert.match(app, /youtube-nocookie\.com\/embed\/\$\{episode\.videoId\}/);
   assert.match(app, /function showEpisodeDetails/);
   assert.match(app, /dataset\.playEpisode = String\(index\)/);
