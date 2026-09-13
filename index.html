@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260913-7">
+  <link rel="stylesheet" href="styles.css?v=20260913-10">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -107,7 +107,7 @@
       <section id="guide-watch" class="guide-chapter">
         <div class="section-heading"><div><div class="eyebrow">Beyond the grimoire</div><h2>Watch Chaos on the Clocktower</h2></div><p>The complete video collection lives inside Chaos Planner.</p></div>
         <div class="guide-grid">
-          <article class="guide-step panel"><span class="guide-number">11</span><div class="guide-copy"><h3>Choose an episode</h3><p>Select <strong>Watch episodes</strong> in the header. The cinematic poster loads first; press <strong>Enter the town square</strong> to open the privacy-enhanced playlist player, then use its playlist control to choose any episode. New videos appear automatically when they join the playlist.</p></div><div class="guide-screen guide-watch-screen"><img src="assets/chaos-logo.png?v=20260912-4" alt=""><span class="guide-watch-play" aria-hidden="true"></span><strong>Enter the town square</strong><small>Play the series and choose your episode</small></div></article>
+          <article class="guide-step panel"><span class="guide-number">11</span><div class="guide-copy"><h3>Choose an episode</h3><p>Select <strong>Watch episodes</strong> in the header. Pick from the complete thumbnail library, then your chosen episode loads in the privacy-enhanced player without leaving Chaos Planner.</p></div><div class="guide-screen guide-watch-screen"><div class="guide-watch-preview"><img src="assets/chaos-logo.png?v=20260912-4" alt=""><span class="guide-watch-play" aria-hidden="true"></span></div><div class="guide-watch-episodes"><span><img src="assets/episodes/6cLpnO2VfAA.png" alt="">Episode 16</span><span><img src="assets/episodes/FMkcNCn9YTk.png" alt="">Episode 15</span><span><img src="assets/episodes/Oiqgyiskbe8.png" alt="">Episode 14</span></div></div></article>
         </div>
       </section>
     </section>
@@ -119,17 +119,26 @@
         <div><div class="eyebrow">Watch the story unfold</div><h1>Chaos on the Clocktower</h1><p>Bluffs, betrayals and bodies in the town square. Choose any episode from the playlist and watch without leaving Chaos Planner.</p></div>
       </header>
       <article class="episode-player-panel panel">
-        <div class="episode-player-heading"><div><span class="panel-number">The complete collection</span><h2>Pick an episode</h2></div><p>Use the playlist control inside the player to browse every episode, or move through them with the previous and next controls.</p></div>
-        <div class="episode-player-frame">
-          <button class="episode-player-poster" type="button" data-load-episodes data-youtube-src="https://www.youtube-nocookie.com/embed/videoseries?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra&amp;rel=0&amp;autoplay=1" aria-label="Open the Chaos on the Clocktower episode player">
-            <span class="episode-poster-smoke" aria-hidden="true"></span>
-            <img src="assets/chaos-logo.png?v=20260912-4" alt="">
-            <span class="episode-play-button" aria-hidden="true"></span>
-            <strong>Enter the town square</strong>
-            <small>Play the series and choose your episode</small>
-          </button>
+        <div class="episode-player-heading"><div><span class="panel-number">The complete collection</span><h2>Pick an episode</h2></div><p>Choose one of all 16 episodes. The newest sits at the top; every story plays here without leaving Chaos Planner.</p></div>
+        <div class="episode-browser">
+          <div class="episode-player-column">
+            <div class="episode-player-frame">
+              <button class="episode-player-poster" type="button" data-load-episodes aria-label="Play the newest Chaos on the Clocktower episode">
+                <span class="episode-poster-smoke" aria-hidden="true"></span>
+                <img src="assets/chaos-logo.png?v=20260912-4" alt="">
+                <span class="episode-play-button" aria-hidden="true"></span>
+                <strong>Enter the town square</strong>
+                <small>Start with Episode 16 or choose from the library</small>
+              </button>
+            </div>
+            <p id="episodeNowPlaying" class="episode-now-playing" aria-live="polite">Choose an episode from the complete collection.</p>
+          </div>
+          <aside class="episode-picker" aria-labelledby="episodePickerTitle">
+            <div class="episode-picker-heading"><div><span class="eyebrow">All sixteen cases</span><h3 id="episodePickerTitle">Episode library</h3></div><span class="episode-count">16 episodes</span></div>
+            <div id="episodeList" class="episode-list"></div>
+          </aside>
         </div>
-        <footer class="episode-player-footer"><span>New episodes appear automatically when they are added to the YouTube playlist.</span><a class="button button-ghost" href="https://www.youtube.com/playlist?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra" target="_blank" rel="noopener noreferrer">Open playlist on YouTube ↗</a></footer>
+        <footer class="episode-player-footer"><span>The complete 16-episode Chaos on the Clocktower collection.</span><a class="button button-ghost" href="https://www.youtube.com/playlist?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra" target="_blank" rel="noopener noreferrer">Open playlist on YouTube ↗</a></footer>
       </article>
     </section>
 
@@ -272,6 +281,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20260913-6"></script>
+  <script type="module" src="app.js?v=20260913-7"></script>
 </body>
 </html>

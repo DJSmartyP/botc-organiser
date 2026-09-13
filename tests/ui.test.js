@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 
 const [html, css, app, emptyArt, communityBadge, officialBotcLogo, officialAppPuck, officialRoles, tbLogo, bmrLogo, snvLogo] = await Promise.all([
   readFile(new URL("../index.html", import.meta.url), "utf8"),
@@ -15,6 +15,7 @@ const [html, css, app, emptyArt, communityBadge, officialBotcLogo, officialAppPu
   readFile(new URL("../assets/script-bmr.webp", import.meta.url)),
   readFile(new URL("../assets/script-snv.webp", import.meta.url))
 ]);
+const episodeThumbnails = (await readdir(new URL("../assets/episodes/", import.meta.url))).filter(name => name.endsWith(".png"));
 
 test("the official Community Created Content badge identifies the site as unofficial", () => {
   assert.match(html, /assets\/community-created-content\.png/);
@@ -67,7 +68,7 @@ test("player experience levels are explained at selection and roster review", ()
 
 test("homepage links to the Chaos playlist and complete tutorial", () => {
   const playlist = "PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra";
-  assert.equal(html.split(playlist).length - 1, 2);
+  assert.ok(html.includes(playlist));
   assert.match(html, /id="guideView"/);
   assert.equal(html.split('class="guide-step panel"').length - 1, 11);
   assert.match(html, /Learn how to use the system/);
@@ -78,13 +79,18 @@ test("homepage links to the Chaos playlist and complete tutorial", () => {
 
 test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(html, /id="watchView"/);
-  assert.match(html, /youtube-nocookie\.com\/embed\/videoseries\?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra/);
   assert.match(html, /data-load-episodes/);
+  assert.match(html, /id="episodeList"/);
   assert.match(html, /Enter the town square/);
-  assert.match(app, /iframe\.title = "Chaos on the Clocktower episode playlist"/);
+  assert.match(app, /const CHAOS_EPISODES = \[/);
+  assert.equal((app.match(/videoId: "/g) || []).length, 16);
+  assert.equal(episodeThumbnails.length, 16);
+  assert.match(app, /youtube-nocookie\.com\/embed\/\$\{episode\.videoId\}/);
+  assert.match(app, /card\.classList\.toggle\("is-active", active\)/);
   assert.match(html, /data-action="watch"/);
   assert.match(app, /searchParams\.set\("watch", "1"\)/);
   assert.match(css, /\.episode-player-frame/);
+  assert.match(css, /\.episode-card\.is-active/);
 });
 
 test("wide headers use spare space for official game resources", () => {

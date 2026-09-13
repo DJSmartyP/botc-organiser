@@ -26,6 +26,78 @@ const BUILT_IN_SCRIPTS = {
   snv: { name: "Sects & Violets", logo: "assets/script-snv.webp" }
 };
 
+const CHAOS_PLAYLIST_ID = "PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra";
+const CHAOS_EPISODES = [
+  { number: 16, videoId: "6cLpnO2VfAA", title: "Back To Basics..." },
+  { number: 15, videoId: "FMkcNCn9YTk", title: "More Muppet Madness..." },
+  { number: 14, videoId: "Oiqgyiskbe8", title: "Chaos, Assemble..." },
+  { number: 13, videoId: "TMPYR60R4P0", title: "The Case For Cannibalism..." },
+  { number: 12, videoId: "Dpf0T0v7uPI", title: "Nobody F****** Move..." },
+  { number: 11, videoId: "00EaJpX2Tpg", title: "Whale Buffet 2 — More Whale..." },
+  { number: 10, videoId: "bLzod4_0okM", title: "Just A Po Girl, Living In A Po World..." },
+  { number: 9, videoId: "kBd3Rtc6mpM", title: "Waka, Waka, Waka!" },
+  { number: 8, videoId: "zZfY3mDNMzQ", title: "It's Cold Outside..." },
+  { number: 7, videoId: "Yi1ZkK774QM", title: "Veiled But Vicious" },
+  { number: 6, videoId: "pof-V0Vs334", title: "No ED...But We Do Have Ringworm..." },
+  { number: 5, videoId: "s6dfwXIgJfQ", title: "Devious Damsels and Covert Cults" },
+  { number: 4, videoId: "rlUBo8nGEIU", title: "Teensyville Turmoil and Trouble" },
+  { number: 3, videoId: "_EVyWJP2fTo", title: "Stuck in Hermit Havoc" },
+  { number: 2, videoId: "G4DUPryv8Aw", title: "The First Whale Buffet" },
+  { number: 1, videoId: "5w-Ry7TrzvA", title: "The Fastest Game" }
+];
+
+function renderEpisodePicker() {
+  const list = $("#episodeList");
+  if (!list) return;
+  list.replaceChildren(...CHAOS_EPISODES.map((episode, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "episode-card";
+    button.dataset.episodeIndex = String(index);
+    button.setAttribute("aria-pressed", "false");
+    button.setAttribute("aria-label", `Play Episode ${episode.number}: ${episode.title}`);
+    const image = document.createElement("img");
+    image.src = `assets/episodes/${episode.videoId}.png`;
+    image.alt = "";
+    image.loading = "lazy";
+    image.width = 320;
+    image.height = 180;
+    const copy = document.createElement("span");
+    copy.className = "episode-card-copy";
+    const number = document.createElement("small");
+    number.textContent = `Episode ${episode.number}`;
+    const title = document.createElement("strong");
+    title.textContent = episode.title;
+    copy.append(number, title);
+    const play = document.createElement("span");
+    play.className = "episode-card-play";
+    play.setAttribute("aria-hidden", "true");
+    button.append(image, copy, play);
+    return button;
+  }));
+}
+
+function loadEpisode(index = 0) {
+  const episode = CHAOS_EPISODES[index] || CHAOS_EPISODES[0];
+  const frame = $(".episode-player-frame");
+  if (!frame) return;
+  const iframe = document.createElement("iframe");
+  iframe.src = `https://www.youtube-nocookie.com/embed/${episode.videoId}?list=${CHAOS_PLAYLIST_ID}&index=${CHAOS_EPISODES.length - episode.number + 1}&autoplay=1&rel=0`;
+  iframe.title = `Chaos on the Clocktower — Episode ${episode.number}: ${episode.title}`;
+  iframe.referrerPolicy = "strict-origin-when-cross-origin";
+  iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+  iframe.allowFullscreen = true;
+  frame.replaceChildren(iframe);
+  $$(".episode-card").forEach((card, cardIndex) => {
+    const active = cardIndex === index;
+    card.classList.toggle("is-active", active);
+    card.setAttribute("aria-pressed", String(active));
+  });
+  const status = $("#episodeNowPlaying");
+  if (status) status.textContent = `Now playing · Episode ${episode.number} · ${episode.title}`;
+  iframe.focus();
+}
+
 const sampleSession = {
   id: "sample-night",
   ownerUid: "demo-organiser",
@@ -1279,19 +1351,9 @@ document.addEventListener("click", async event => {
   const home = event.target.closest('[data-action="home"]'); if (home) { event.preventDefault(); history.replaceState({}, "", location.pathname); document.title = "Chaos Planner · Chaos On The Clocktower"; showView("homeView"); return; }
   const guide = event.target.closest('[data-action="guide"]'); if (guide) { event.preventDefault(); const url = new URL(location.href); url.search = ""; url.searchParams.set("guide", "1"); history.pushState({}, "", url); document.title = "How to use Chaos Planner"; showView("guideView"); scrollTo({ top: 0, behavior: "smooth" }); return; }
   const watch = event.target.closest('[data-action="watch"]'); if (watch) { event.preventDefault(); const url = new URL(location.href); url.search = ""; url.searchParams.set("watch", "1"); history.pushState({}, "", url); document.title = "Watch Chaos on the Clocktower"; showView("watchView"); return; }
-  const loadEpisodes = event.target.closest("[data-load-episodes]");
-  if (loadEpisodes) {
-    const frame = loadEpisodes.closest(".episode-player-frame");
-    const iframe = document.createElement("iframe");
-    iframe.src = loadEpisodes.dataset.youtubeSrc;
-    iframe.title = "Chaos on the Clocktower episode playlist";
-    iframe.referrerPolicy = "strict-origin-when-cross-origin";
-    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-    iframe.allowFullscreen = true;
-    frame.replaceChildren(iframe);
-    iframe.focus();
-    return;
-  }
+  const episodeCard = event.target.closest("[data-episode-index]");
+  if (episodeCard) { loadEpisode(Number(episodeCard.dataset.episodeIndex)); return; }
+  if (event.target.closest("[data-load-episodes]")) { loadEpisode(0); return; }
   const open = event.target.closest("[data-open-session]"); if (open) { await openSession(open.dataset.openSession); return; }
   const finalize = event.target.closest("[data-finalize]"); if (finalize) { await finalizeDate(finalize.dataset.finalize); return; }
   const removePlayerButton = event.target.closest("[data-remove-player]"); if (removePlayerButton) { await removePlayer(removePlayerButton.dataset.removePlayer, removePlayerButton.dataset.playerName); return; }
@@ -1380,6 +1442,7 @@ function initialiseHeroLogoEffect() {
 }
 
 initialiseHeroLogoEffect();
+renderEpisodePicker();
 await initialiseFirebase();
 updateAccountUi();
 const initialUrl = new URL(location.href);

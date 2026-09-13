@@ -74,11 +74,17 @@ try {
     watchErrors(watchPage, `${viewport.name} episodes`);
     await watchPage.goto("http://127.0.0.1:4173/?demo=1&watch=1", { waitUntil: "domcontentloaded" });
     await watchPage.locator("#watchView:not([hidden]) .episode-player-poster").waitFor();
+    assert.equal(await watchPage.locator(".episode-card").count(), 16);
+    await watchPage.waitForFunction(() => [...document.querySelectorAll(".episode-card img")].slice(0, 3).every(image => image.complete && image.naturalWidth > 0));
     await assertFits(watchPage, `${viewport.name} episode player`);
     await watchPage.screenshot({ path: `qa-watch-${viewport.name}.png`, fullPage: true });
-    await watchPage.locator("[data-load-episodes]").click();
+    await watchPage.locator(".episode-card").nth(2).click();
     await watchPage.locator(".episode-player-frame iframe").waitFor();
-    assert.match(await watchPage.locator(".episode-player-frame iframe").getAttribute("src"), /youtube-nocookie\.com\/embed\/videoseries/);
+    assert.match(await watchPage.locator(".episode-player-frame iframe").getAttribute("src"), /youtube-nocookie\.com\/embed\/Oiqgyiskbe8/);
+    assert.equal(await watchPage.locator(".episode-card.is-active").count(), 1);
+    assert.equal(await watchPage.locator(".episode-card").nth(2).getAttribute("aria-pressed"), "true");
+    assert.match(await watchPage.locator("#episodeNowPlaying").innerText(), /Episode 14/);
+    await assertFits(watchPage, `${viewport.name} selected episode`);
     await watchPage.close();
   }
 
@@ -155,7 +161,7 @@ try {
   await assertFits(creationPage, "mobile colour-coded experience roster");
   await creationPage.close();
   assert.deepEqual(pageErrors, []);
-  console.log("QA passed: desktop, 390px mobile, manager controls, recurring dates, multi-Storytellers, built-in scripts, colour-coded experience and difficulty, player heatmap, duplication, empty states, dialogs, and horizontal-overflow checks.");
+  console.log("QA passed: desktop, 390px mobile, 16-thumbnail episode picker, manager controls, recurring dates, multi-Storytellers, built-in scripts, colour-coded experience and difficulty, player heatmap, duplication, empty states, dialogs, and horizontal-overflow checks.");
 } finally {
   await browser.close();
 }

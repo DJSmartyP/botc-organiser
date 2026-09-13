@@ -118,6 +118,8 @@ main:focus { outline: none; }
 .episode-player-heading { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; margin-bottom: .8rem; }
 .episode-player-heading h2 { margin: .15rem 0 0; }
 .episode-player-heading p { max-width: 500px; margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.45; }
+.episode-browser { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(280px, .75fr); align-items: stretch; gap: .9rem; }
+.episode-player-column { min-width: 0; }
 .episode-player-frame { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid rgba(216,189,124,.32); border-radius: 9px; background: #050507; box-shadow: 0 18px 45px rgba(0,0,0,.42); }
 .episode-player-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .episode-player-poster { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: .65rem; width: 100%; max-width: none; padding: clamp(1rem, 5vw, 3rem); overflow: hidden; border: 0; color: var(--ink); background: linear-gradient(rgba(4,7,12,.22), rgba(9,6,10,.78)), url("assets/clocktower-atmosphere.png?v=2") center 42% / cover no-repeat; cursor: pointer; }
@@ -131,6 +133,24 @@ main:focus { outline: none; }
 .episode-play-button::after { content: ""; position: absolute; top: 50%; left: 53%; border-width: .55rem 0 .55rem .82rem; border-style: solid; border-color: transparent transparent transparent #fff3e5; transform: translate(-50%, -50%); }
 .episode-player-poster:hover .episode-play-button { transform: scale(1.06); box-shadow: 0 0 0 9px rgba(255,255,255,.08), 0 12px 38px rgba(140,10,25,.7); }
 .episode-player-poster:focus-visible { outline: 4px solid rgba(239,74,79,.72); outline-offset: -6px; }
+.episode-now-playing { min-height: 1.25rem; margin: .6rem .15rem 0; color: #d8c7b6; font: 700 .72rem/1.35 Inter, sans-serif; letter-spacing: .025em; }
+.episode-picker { display: flex; min-width: 0; max-height: 480px; flex-direction: column; overflow: hidden; border: 1px solid rgba(216,189,124,.25); border-radius: 9px; background: linear-gradient(180deg, rgba(43,23,31,.82), rgba(10,13,19,.88)); }
+.episode-picker-heading { display: flex; align-items: end; justify-content: space-between; gap: .75rem; padding: .7rem .75rem .55rem; border-bottom: 1px solid rgba(216,189,124,.18); }
+.episode-picker-heading h3 { margin: .12rem 0 0; font-size: 1rem; }
+.episode-picker-heading .eyebrow { font-size: .56rem; }
+.episode-count { flex: 0 0 auto; color: var(--gold); font-size: .62rem; font-weight: 800; letter-spacing: .075em; text-transform: uppercase; }
+.episode-list { display: grid; align-content: start; gap: .35rem; min-height: 0; padding: .5rem; overflow-y: auto; scrollbar-color: rgba(210,74,81,.65) rgba(255,255,255,.04); scrollbar-width: thin; }
+.episode-card { position: relative; display: grid; grid-template-columns: 112px minmax(0, 1fr) 22px; align-items: center; gap: .55rem; width: 100%; min-height: 70px; max-width: none; padding: .32rem; overflow: hidden; border: 1px solid rgba(216,189,124,.13); border-radius: 6px; color: var(--ink); background: rgba(8,9,14,.6); cursor: pointer; text-align: left; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
+.episode-card img { display: block; width: 112px; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; background: #07070a; }
+.episode-card-copy { display: grid; min-width: 0; gap: .15rem; }
+.episode-card-copy small { color: var(--gold); font-size: .58rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.episode-card-copy strong { display: -webkit-box; overflow: hidden; font: 700 .73rem/1.25 Cinzel, Georgia, serif; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.episode-card-play { position: relative; width: 21px; aspect-ratio: 1; border: 1px solid rgba(240,217,154,.45); border-radius: 50%; background: rgba(133,24,37,.75); }
+.episode-card-play::after { content: ""; position: absolute; top: 50%; left: 54%; border-width: .24rem 0 .24rem .36rem; border-style: solid; border-color: transparent transparent transparent #fff1df; transform: translate(-50%, -50%); }
+.episode-card:hover { z-index: 1; border-color: rgba(240,217,154,.55); background: rgba(88,31,42,.5); transform: translateX(-2px); }
+.episode-card.is-active { border-color: var(--blood-bright); background: linear-gradient(90deg, rgba(142,31,46,.5), rgba(34,25,33,.88)); box-shadow: inset 3px 0 var(--blood-bright); }
+.episode-card.is-active .episode-card-play { border-color: var(--gold-bright); box-shadow: 0 0 13px rgba(210,74,81,.5); }
+.episode-card:focus-visible { z-index: 2; outline: 3px solid rgba(240,217,154,.55); outline-offset: -2px; }
 .episode-player-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: .8rem; color: var(--muted); font-size: .75rem; }
 .episode-player-footer .button { flex: 0 0 auto; text-decoration: none; }
 .hero-logo-stage { position: relative; isolation: isolate; width: min(520px, 92vw); margin: 0 0 1rem; line-height: 0; }
@@ -287,12 +307,14 @@ label { display: grid; gap: .42rem; color: #d8cfc4; font-size: .9rem; font-weigh
 .guide-primary { width: fit-content; border-color: #d15a60; color: #fff; background: #851f2c; }
 .guide-player > b { display: grid; place-content: center; width: 1.7rem; height: 1.7rem; flex: 0 0 auto; border: 1px solid var(--line); border-radius: 50%; color: var(--gold); }
 .guide-player > i { color: var(--green); font-size: .62rem; font-style: normal; text-align: right; }
-.guide-watch-screen { position: relative; display: grid; place-content: center; justify-items: center; gap: .35rem; min-height: 150px; overflow: hidden; text-align: center; background: linear-gradient(rgba(4,7,12,.25), rgba(9,6,10,.76)), url("assets/clocktower-atmosphere.png?v=2") center 42% / cover no-repeat; }
+.guide-watch-screen { position: relative; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(105px, .6fr); gap: .45rem; min-height: 150px; overflow: hidden; text-align: center; background: linear-gradient(rgba(4,7,12,.25), rgba(9,6,10,.76)), url("assets/clocktower-atmosphere.png?v=2") center 42% / cover no-repeat; }
 .guide-watch-screen::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 35px #050407; pointer-events: none; }
 .guide-watch-screen > * { position: relative; z-index: 1; }
-.guide-watch-screen > img { width: min(145px, 52%); max-height: 54px; object-fit: contain; }
-.guide-watch-screen > strong { font: 700 .78rem Cinzel, serif; }
-.guide-watch-screen > small { color: #cbbdb8; }
+.guide-watch-preview { display: grid; place-content: center; justify-items: center; gap: .35rem; min-width: 0; padding: .5rem; }
+.guide-watch-preview > img { width: min(145px, 72%); max-height: 54px; object-fit: contain; }
+.guide-watch-episodes { display: grid; align-content: center; gap: .25rem; padding: .35rem; background: rgba(7,8,12,.72); }
+.guide-watch-episodes span { display: grid; grid-template-columns: 45px minmax(0,1fr); align-items: center; gap: .3rem; color: #e3d7ca; font-size: .49rem; font-weight: 700; text-align: left; }
+.guide-watch-episodes img { display: block; width: 45px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 2px; }
 .guide-watch-play { display: block; width: 34px; height: 34px; border: 1px solid rgba(255,210,174,.65); border-radius: 50%; background: #9b2431; box-shadow: 0 0 0 4px rgba(255,255,255,.06); }
 .guide-watch-play::after { content: ""; position: absolute; top: 50%; left: 54%; border-width: .3rem 0 .3rem .45rem; border-style: solid; border-color: transparent transparent transparent #fff3e5; transform: translate(-50%, -50%); }
 .auth-panel h1 { font-size: clamp(2rem, 7vw, 3.1rem); }
@@ -700,6 +722,15 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
   .episode-play-button { width: 42px; }
   .episode-player-poster strong { font-size: 1rem; }
   .episode-player-poster small { font-size: .64rem; }
+  .episode-browser { grid-template-columns: 1fr; }
+  .episode-picker { max-height: none; }
+  .episode-list { display: flex; gap: .5rem; padding: .55rem; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; }
+  .episode-card { grid-template-columns: 126px; align-content: start; flex: 0 0 134px; min-height: 118px; gap: .35rem; padding: .28rem; scroll-snap-align: start; }
+  .episode-card img { width: 126px; }
+  .episode-card-copy { padding: 0 .16rem .2rem; }
+  .episode-card-copy strong { min-height: 2.5em; font-size: .66rem; }
+  .episode-card-play { position: absolute; top: 42px; left: 53px; width: 26px; box-shadow: 0 2px 8px rgba(0,0,0,.65); }
+  .episode-card:hover { transform: none; }
 }
 
 @media (min-width: 680px) {
