@@ -88,6 +88,9 @@ test("homepage links to the Chaos playlist and complete tutorial", () => {
   assert.match(html, /id="guideView"/);
   assert.equal(html.split('class="guide-step panel"').length - 1, 11);
   assert.match(html, /Learn how to use the system/);
+  assert.match(html, /Watch Chaos on the Clocktower/);
+  assert.match(html, /All 16 episodes · No sign-in required/);
+  assert.match(html, /class="home-watch-link" href="\?watch=1" data-action="watch"/);
   assert.match(html, /Built for busy Storytellers/);
   assert.match(html, /id="guide-watch"/);
   assert.match(html, /class="guide-screen guide-watch-screen"/);

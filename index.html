@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260913-14">
+  <link rel="stylesheet" href="styles.css?v=20260913-15">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -48,7 +48,10 @@
       <div class="eyebrow">Chaos Planner</div>
       <h1>When the clock strikes, will your players be ready?</h1>
       <p class="lede">Plan the date, share one link, and see who can brave the town square. Players join without creating an account.</p>
-      <a class="home-guide-link" href="?guide=1" data-action="guide">Learn how to use the system <span aria-hidden="true">→</span></a>
+      <nav class="home-public-links" aria-label="Public pages">
+        <a class="home-watch-link" href="?watch=1" data-action="watch"><span class="archive-sigil" aria-hidden="true"><i></i></span><span><strong>Watch Chaos on the Clocktower</strong><small>All 16 episodes · No sign-in required</small></span><b aria-hidden="true">→</b></a>
+        <a class="home-guide-link" href="?guide=1" data-action="guide">Learn how to use the system <span aria-hidden="true">→</span></a>
+      </nav>
       <div class="home-grid organiser-home-grid">
         <article class="panel organiser-panel">
           <span class="panel-number">For organisers and admins</span>
@@ -111,7 +114,7 @@
       <section id="guide-watch" class="guide-chapter">
         <div class="section-heading"><div><div class="eyebrow">Beyond the grimoire</div><h2>Watch Chaos on the Clocktower</h2></div><p>The complete video collection lives inside Chaos Planner.</p></div>
         <div class="guide-grid">
-          <article class="guide-step panel"><span class="guide-number">11</span><div class="guide-copy"><h3>Choose an episode</h3><p>Select <strong>Watch episodes</strong> in the header. Pick a thumbnail to open its artwork, title and description, then press <strong>Play episode</strong> to load the privacy-enhanced player without leaving Chaos Planner.</p></div><div class="guide-screen guide-watch-screen"><div class="guide-watch-preview"><img src="assets/episodes/6cLpnO2VfAA.jpg" alt=""><span class="guide-watch-play" aria-hidden="true"></span></div><div class="guide-watch-episodes"><span><img src="assets/episodes/6cLpnO2VfAA.jpg" alt="">Episode 16</span><span><img src="assets/episodes/FMkcNCn9YTk.jpg" alt="">Episode 15</span><span><img src="assets/episodes/Oiqgyiskbe8.jpg" alt="">Episode 14</span></div></div></article>
+          <article class="guide-step panel"><span class="guide-number">11</span><div class="guide-copy"><h3>Choose an episode</h3><p>Open the public episode archive from the home page or header—no sign-in is required. Pick a thumbnail to view its artwork, title and script information, then press <strong>Play episode</strong> to load the privacy-enhanced player.</p></div><div class="guide-screen guide-watch-screen"><div class="guide-watch-preview"><img src="assets/episodes/5w-Ry7TrzvA.jpg" alt=""><span class="guide-watch-play" aria-hidden="true"></span></div><div class="guide-watch-episodes"><span><img src="assets/episodes/5w-Ry7TrzvA.jpg" alt="">Episode 1</span><span><img src="assets/episodes/G4DUPryv8Aw.jpg" alt="">Episode 2</span><span><img src="assets/episodes/episode-03-hermit-havoc.jpg" alt="">Episode 3</span></div></div></article>
         </div>
       </section>
     </section>
@@ -286,6 +289,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20260913-12"></script>
+  <script type="module" src="app.js?v=20260913-13"></script>
 </body>
 </html>

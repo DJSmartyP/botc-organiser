@@ -230,6 +230,15 @@ main:focus { outline: none; }
 .home-guide-link { display: inline-flex; align-items: center; gap: .65rem; width: fit-content; margin: -.35rem 0 1.35rem; color: var(--gold-bright); font-family: Cinzel, Georgia, serif; font-size: .82rem; font-weight: 700; letter-spacing: .075em; text-decoration: none; text-transform: uppercase; }
 .home-guide-link span { transition: transform .18s ease; }
 .home-guide-link:hover span { transform: translateX(.3rem); }
+.home-public-links { display: grid; justify-items: start; gap: .8rem; width: min(100%, 520px); margin: -.35rem 0 1.35rem; }
+.home-public-links .home-guide-link { margin: 0; }
+.home-watch-link { display: flex; align-items: center; gap: .7rem; width: 100%; padding: .65rem .8rem; border: 1px solid rgba(216,189,124,.42); border-radius: 8px; color: var(--ink); background: linear-gradient(110deg, rgba(111,18,33,.72), rgba(23,15,22,.9)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.025), 0 10px 28px rgba(0,0,0,.24); text-decoration: none; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.home-watch-link > span:not(.archive-sigil) { display: grid; min-width: 0; gap: .1rem; }
+.home-watch-link strong { font: 700 .84rem/1.2 Cinzel, Georgia, serif; letter-spacing: .04em; text-transform: uppercase; }
+.home-watch-link small { color: #d8c9c0; font-size: .72rem; }
+.home-watch-link > b { margin-left: auto; color: var(--gold-bright); font-size: 1.2rem; transition: transform .18s ease; }
+.home-watch-link:hover { border-color: var(--gold-bright); box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 12px 34px rgba(76,8,20,.34); transform: translateY(-1px); }
+.home-watch-link:hover > b { transform: translateX(.25rem); }
 .eyebrow, .panel-number { display: flex; align-items: center; gap: .65rem; margin-bottom: .8rem; color: var(--gold-bright); font-size: .78rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
 .eyebrow::before, .panel-number::before { content: ""; width: 1.8rem; height: 1px; background: linear-gradient(90deg, var(--blood-bright), var(--gold)); }
 
@@ -807,7 +816,7 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
   .home-view > .eyebrow { grid-area: intro; align-self: end; }
   .home-view > h1 { grid-area: title; }
   .home-view > .lede { grid-area: lede; align-self: start; }
-  .home-guide-link { grid-area: guide; }
+  .home-public-links { grid-area: guide; }
   .organiser-home-grid { grid-area: panel; max-width: none; }
   .dashboard-tools { grid-template-columns: minmax(230px, 1fr) 160px 170px auto; }
   .dashboard-tools .result-count { grid-column: auto; padding: .35rem 0; }

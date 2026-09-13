@@ -1538,11 +1538,21 @@ function initialiseHeroLogoEffect() {
 
 initialiseHeroLogoEffect();
 renderEpisodePicker();
-await initialiseFirebase();
-updateAccountUi();
 const initialUrl = new URL(location.href);
 const initialInvite = initialUrl.searchParams.get("join");
 const initialSession = initialUrl.searchParams.get("session");
 const initialGuide = initialUrl.searchParams.get("guide") === "1";
 const initialWatch = initialUrl.searchParams.get("watch") === "1";
-if (initialInvite) openInvite(initialInvite); else if (initialSession) openSession(initialSession); else if (initialWatch) { document.title = "Watch Chaos on the Clocktower"; showView("watchView"); } else if (initialGuide) { document.title = "How to use Chaos Planner"; showView("guideView"); } else showView("homeView");
+if (initialWatch) {
+  document.title = "Watch Chaos on the Clocktower";
+  showView("watchView");
+} else if (initialGuide) {
+  document.title = "How to use Chaos Planner";
+  showView("guideView");
+} else {
+  showView("homeView");
+}
+await initialiseFirebase();
+updateAccountUi();
+if (initialInvite) openInvite(initialInvite);
+else if (initialSession) openSession(initialSession);
