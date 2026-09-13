@@ -18,6 +18,8 @@ Chaos Planner uses the same custom-link convention as the IDP app: a readable `?
 
 The site is a static, mobile-first app for GitHub Pages. Firebase Authentication and Cloud Firestore provide identity and authoritative shared data. The placeholder configuration starts a clearly labelled in-memory preview; it does not use `localStorage` and does not persist data.
 
+The dedicated **Chaos on the Clocktower** watch page presents a cinematic, locally hosted poster before loading the channel playlist through YouTube's privacy-enhanced `youtube-nocookie.com` player. YouTube is contacted only after the viewer chooses to play. Viewers can then choose any episode using the player's playlist control, move between episodes, use fullscreen, or open the complete playlist on YouTube. Because the player references the playlist rather than individual video IDs, newly added episodes appear automatically without a site deployment.
+
 ## Firebase setup
 
 1. Create a Firebase project at <https://console.firebase.google.com/>.

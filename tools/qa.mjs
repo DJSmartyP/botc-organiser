@@ -69,6 +69,19 @@ try {
   assert.deepEqual(pageErrors, []);
   await page.close();
 
+  for (const viewport of [{ width: 390, height: 844, name: "mobile" }, { width: 1440, height: 900, name: "desktop" }]) {
+    const watchPage = await browser.newPage({ viewport });
+    watchErrors(watchPage, `${viewport.name} episodes`);
+    await watchPage.goto("http://127.0.0.1:4173/?demo=1&watch=1", { waitUntil: "domcontentloaded" });
+    await watchPage.locator("#watchView:not([hidden]) .episode-player-poster").waitFor();
+    await assertFits(watchPage, `${viewport.name} episode player`);
+    await watchPage.screenshot({ path: `qa-watch-${viewport.name}.png`, fullPage: true });
+    await watchPage.locator("[data-load-episodes]").click();
+    await watchPage.locator(".episode-player-frame iframe").waitFor();
+    assert.match(await watchPage.locator(".episode-player-frame iframe").getAttribute("src"), /youtube-nocookie\.com\/embed\/videoseries/);
+    await watchPage.close();
+  }
+
   const emptyPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
   watchErrors(emptyPage, "empty state");
   await emptyPage.goto("http://127.0.0.1:4173/?demo=1", { waitUntil: "networkidle" });

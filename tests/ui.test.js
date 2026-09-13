@@ -74,6 +74,17 @@ test("homepage links to the Chaos playlist and complete tutorial", () => {
   assert.match(html, /Built for busy Storytellers/);
 });
 
+test("episodes have a dedicated privacy-enhanced playlist player", () => {
+  assert.match(html, /id="watchView"/);
+  assert.match(html, /youtube-nocookie\.com\/embed\/videoseries\?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra/);
+  assert.match(html, /data-load-episodes/);
+  assert.match(html, /Enter the town square/);
+  assert.match(app, /iframe\.title = "Chaos on the Clocktower episode playlist"/);
+  assert.match(html, /data-action="watch"/);
+  assert.match(app, /searchParams\.set\("watch", "1"\)/);
+  assert.match(css, /\.episode-player-frame/);
+});
+
 test("wide headers use spare space for official game resources", () => {
   assert.match(html, /class="header-resources"/);
   assert.match(html, /https:\/\/wiki\.bloodontheclocktower\.com\/Main_Page/);

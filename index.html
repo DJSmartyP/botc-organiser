@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260913-5">
+  <link rel="stylesheet" href="styles.css?v=20260913-6">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -26,7 +26,7 @@
       <a href="https://botc.app/" target="_blank" rel="noopener noreferrer"><img src="assets/official-app-puck.png" alt=""><strong>BOTC App</strong><small>Play online</small></a>
     </nav>
     <nav class="header-actions" aria-label="Account">
-      <a class="youtube-link" href="https://www.youtube.com/playlist?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra" target="_blank" rel="noopener noreferrer"><span class="youtube-play" aria-hidden="true"></span><span>Watch the playlist</span></a>
+      <a class="youtube-link" href="?watch=1" data-action="watch"><span class="youtube-play" aria-hidden="true"></span><span>Watch episodes</span></a>
       <button id="dashboardButton" class="button button-ghost" type="button">Google sign in</button>
       <button id="signOutButton" class="button button-ghost" type="button" hidden>Sign out</button>
     </nav>
@@ -105,6 +105,27 @@
       </section>
     </section>
 
+    <section id="watchView" class="view watch-view" hidden>
+      <a class="back-link" href="./" data-action="home">← Back to home</a>
+      <header class="watch-hero panel">
+        <img src="assets/chaos-logo.png?v=20260912-4" alt="Chaos on the Clocktower">
+        <div><div class="eyebrow">Watch the story unfold</div><h1>Chaos on the Clocktower</h1><p>Bluffs, betrayals and bodies in the town square. Choose any episode from the playlist and watch without leaving Chaos Planner.</p></div>
+      </header>
+      <article class="episode-player-panel panel">
+        <div class="episode-player-heading"><div><span class="panel-number">The complete collection</span><h2>Pick an episode</h2></div><p>Use the playlist control inside the player to browse every episode, or move through them with the previous and next controls.</p></div>
+        <div class="episode-player-frame">
+          <button class="episode-player-poster" type="button" data-load-episodes data-youtube-src="https://www.youtube-nocookie.com/embed/videoseries?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra&amp;rel=0&amp;autoplay=1" aria-label="Open the Chaos on the Clocktower episode player">
+            <span class="episode-poster-smoke" aria-hidden="true"></span>
+            <img src="assets/chaos-logo.png?v=20260912-4" alt="">
+            <span class="episode-play-button" aria-hidden="true"></span>
+            <strong>Enter the town square</strong>
+            <small>Play the series and choose your episode</small>
+          </button>
+        </div>
+        <footer class="episode-player-footer"><span>New episodes appear automatically when they are added to the YouTube playlist.</span><a class="button button-ghost" href="https://www.youtube.com/playlist?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra" target="_blank" rel="noopener noreferrer">Open playlist on YouTube ↗</a></footer>
+      </article>
+    </section>
+
     <section id="authView" class="view auth-view" hidden>
       <button class="back-link" data-action="home" type="button">← Back to home</button>
       <div class="panel auth-panel">
@@ -145,7 +166,7 @@
   <footer class="site-footer">
     <div class="footer-compliance">
       <div class="footer-copy">
-        <div class="footer-links"><span>A BOTC Planner from Chaos On The Clocktower</span><a href="https://www.youtube.com/playlist?list=PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra" target="_blank" rel="noopener noreferrer">Watch Chaos on the Clocktower ↗</a></div>
+        <div class="footer-links"><span>A BOTC Planner from Chaos On The Clocktower</span><a href="?watch=1" data-action="watch">Watch Chaos on the Clocktower →</a></div>
         <p class="legal-notice"><strong>Unofficial community tool.</strong> Blood on the Clocktower and its game content are owned by Steven Medway and The Pandemonium Institute. Chaos Planner is not affiliated with or endorsed by The Pandemonium Institute. <a href="https://bloodontheclocktower.com/pages/community-created-content-policy" target="_blank" rel="noopener noreferrer">Community Created Content Policy ↗</a></p>
       </div>
       <a class="ccc-badge" href="https://bloodontheclocktower.com/pages/community-created-content-policy" target="_blank" rel="noopener noreferrer" aria-label="Read the Community Created Content Policy">
@@ -244,6 +265,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js?v=20260913-3"></script>
+  <script type="module" src="app.js?v=20260913-6"></script>
 </body>
 </html>

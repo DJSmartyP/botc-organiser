@@ -1278,6 +1278,20 @@ async function createSession(form) {
 document.addEventListener("click", async event => {
   const home = event.target.closest('[data-action="home"]'); if (home) { event.preventDefault(); history.replaceState({}, "", location.pathname); document.title = "Chaos Planner · Chaos On The Clocktower"; showView("homeView"); return; }
   const guide = event.target.closest('[data-action="guide"]'); if (guide) { event.preventDefault(); const url = new URL(location.href); url.search = ""; url.searchParams.set("guide", "1"); history.pushState({}, "", url); document.title = "How to use Chaos Planner"; showView("guideView"); scrollTo({ top: 0, behavior: "smooth" }); return; }
+  const watch = event.target.closest('[data-action="watch"]'); if (watch) { event.preventDefault(); const url = new URL(location.href); url.search = ""; url.searchParams.set("watch", "1"); history.pushState({}, "", url); document.title = "Watch Chaos on the Clocktower"; showView("watchView"); return; }
+  const loadEpisodes = event.target.closest("[data-load-episodes]");
+  if (loadEpisodes) {
+    const frame = loadEpisodes.closest(".episode-player-frame");
+    const iframe = document.createElement("iframe");
+    iframe.src = loadEpisodes.dataset.youtubeSrc;
+    iframe.title = "Chaos on the Clocktower episode playlist";
+    iframe.referrerPolicy = "strict-origin-when-cross-origin";
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    iframe.allowFullscreen = true;
+    frame.replaceChildren(iframe);
+    iframe.focus();
+    return;
+  }
   const open = event.target.closest("[data-open-session]"); if (open) { await openSession(open.dataset.openSession); return; }
   const finalize = event.target.closest("[data-finalize]"); if (finalize) { await finalizeDate(finalize.dataset.finalize); return; }
   const removePlayerButton = event.target.closest("[data-remove-player]"); if (removePlayerButton) { await removePlayer(removePlayerButton.dataset.removePlayer, removePlayerButton.dataset.playerName); return; }
@@ -1350,6 +1364,7 @@ $("#sessionContent").addEventListener("change", event => {
 });
 window.addEventListener("popstate", () => {
   const currentUrl = new URL(location.href);
+  if (currentUrl.searchParams.get("watch") === "1") { document.title = "Watch Chaos on the Clocktower"; showView("watchView"); return; }
   if (currentUrl.searchParams.get("guide") === "1") { document.title = "How to use Chaos Planner"; showView("guideView"); return; }
   if (!activeSession || $("#sessionView").hidden) { document.title = "Chaos Planner · Chaos On The Clocktower"; showView("homeView"); return; }
   const scriptId = currentUrl.searchParams.get("script");
@@ -1371,4 +1386,5 @@ const initialUrl = new URL(location.href);
 const initialInvite = initialUrl.searchParams.get("join");
 const initialSession = initialUrl.searchParams.get("session");
 const initialGuide = initialUrl.searchParams.get("guide") === "1";
-if (initialInvite) openInvite(initialInvite); else if (initialSession) openSession(initialSession); else if (initialGuide) { document.title = "How to use Chaos Planner"; showView("guideView"); } else showView("homeView");
+const initialWatch = initialUrl.searchParams.get("watch") === "1";
+if (initialInvite) openInvite(initialInvite); else if (initialSession) openSession(initialSession); else if (initialWatch) { document.title = "Watch Chaos on the Clocktower"; showView("watchView"); } else if (initialGuide) { document.title = "How to use Chaos Planner"; showView("guideView"); } else showView("homeView");
