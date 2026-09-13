@@ -15,7 +15,7 @@ const [html, css, app, emptyArt, communityBadge, officialBotcLogo, officialAppPu
   readFile(new URL("../assets/script-bmr.webp", import.meta.url)),
   readFile(new URL("../assets/script-snv.webp", import.meta.url))
 ]);
-const episodeThumbnails = (await readdir(new URL("../assets/episodes/", import.meta.url))).filter(name => name.endsWith(".png"));
+const episodeThumbnails = (await readdir(new URL("../assets/episodes/", import.meta.url))).filter(name => name.endsWith(".jpg"));
 const [favicon32, favicon192, favicon512, appleTouchIcon, webManifest] = await Promise.all([
   readFile(new URL("../assets/favicon-32.png", import.meta.url)),
   readFile(new URL("../assets/favicon-192.png", import.meta.url)),
@@ -100,6 +100,7 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /const CHAOS_EPISODES = \[/);
   assert.equal((app.match(/videoId: "/g) || []).length, 16);
   assert.equal(episodeThumbnails.length, 16);
+  assert.match(app, /assets\/episodes\/\$\{episode\.videoId\}\.jpg/);
   assert.match(app, /youtube-nocookie\.com\/embed\/\$\{episode\.videoId\}/);
   assert.match(app, /function showEpisodeDetails/);
   assert.match(app, /dataset\.playEpisode = String\(index\)/);

@@ -80,7 +80,7 @@ try {
     await watchPage.screenshot({ path: `qa-watch-${viewport.name}.png`, fullPage: true });
     await watchPage.locator(".episode-card").nth(2).click();
     assert.equal(await watchPage.locator(".episode-player-frame iframe").count(), 0);
-    assert.match(await watchPage.locator(".episode-dossier-art").getAttribute("src"), /Oiqgyiskbe8\.png/);
+    assert.match(await watchPage.locator(".episode-dossier-art").getAttribute("src"), /Oiqgyiskbe8\.jpg/);
     assert.match(await watchPage.locator(".episode-dossier-body").innerText(), /Chaos, Assemble/);
     assert.match(await watchPage.locator(".episode-dossier-body").innerText(), /chaotic players/i);
     await watchPage.screenshot({ path: `qa-watch-preview-${viewport.name}.png`, fullPage: true });

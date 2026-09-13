@@ -68,7 +68,7 @@ function renderEpisodePicker() {
     button.setAttribute("aria-pressed", "false");
     button.setAttribute("aria-label", `View Episode ${episode.number}: ${episode.title}`);
     const image = document.createElement("img");
-    image.src = `assets/episodes/${episode.videoId}.png`;
+    image.src = `assets/episodes/${episode.videoId}.jpg`;
     image.alt = "";
     image.loading = "lazy";
     image.width = 320;
@@ -106,7 +106,7 @@ function showEpisodeDetails(index = 0, focusPlay = false) {
   dossier.className = "episode-dossier";
   const artwork = document.createElement("img");
   artwork.className = "episode-dossier-art";
-  artwork.src = `assets/episodes/${episode.videoId}.png`;
+  artwork.src = `assets/episodes/${episode.videoId}.jpg`;
   artwork.alt = `Episode ${episode.number}: ${episode.title}`;
   artwork.width = 320;
   artwork.height = 180;
