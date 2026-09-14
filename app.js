@@ -26,7 +26,6 @@ const BUILT_IN_SCRIPTS = {
   snv: { name: "Sects & Violets", logo: "assets/script-snv.webp" }
 };
 
-const CHAOS_PLAYLIST_ID = "PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra";
 const CHAOS_EPISODES = [
   { number: 16, videoId: "6cLpnO2VfAA", title: "Back To Basics...", description: "The finale returns to two of the foundational scripts—Trouble Brewing and Sects & Violets—before condensing lunar chaos into A Teensy Moon Rising.", scripts: [
     { name: "Trouble Brewing (Base 3)", startSeconds: 501 },
@@ -74,8 +73,8 @@ const CHAOS_EPISODES = [
   ] },
   { number: 7, videoId: "Yi1ZkK774QM", title: "Veiled But Vicious", description: "Organised crime comes to the town square: secret meetings, sharp suits, hidden identities and betrayal. The episode culminates in a veiled game where reading the room becomes much harder.", scripts: [
     { name: "Irrational Behaviour", startSeconds: 76 },
-    { name: "Sleepin With The Fishes (Full Homebrew)", startSeconds: 4119 },
-    { name: "Blind Man’s Bluff (Veiled Game)", startSeconds: 7169 }
+    { name: "Sleepin With The Fishes (Full Homebrew)", startSeconds: 4005 },
+    { name: "Blind Man’s Bluff (Veiled Game)", startSeconds: 8981 }
   ] },
   { number: 6, videoId: "pof-V0Vs334", title: "No ED...But We Do Have Ringworm...", description: "Three full homebrews jump from an isolated retro space station to shabby cabin-horror tension and the gloriously dysfunctional world of Divorced Dads. A final Teensyville game ensures nobody escapes calmly.", scripts: [
     { name: "Struggle On Orbital Station Delta (Full Homebrew)", startSeconds: 142 },
@@ -337,7 +336,7 @@ function loadEpisode(index = 0, startSeconds = 0) {
   frame.classList.add("is-playing");
   const iframe = document.createElement("iframe");
   const start = Math.max(0, Number(startSeconds) || 0);
-  iframe.src = `https://www.youtube-nocookie.com/embed/${episode.videoId}?list=${CHAOS_PLAYLIST_ID}&index=${CHAOS_EPISODES.length - episode.number + 1}&autoplay=1&rel=0&playsinline=1&fs=1${start ? `&start=${Math.floor(start)}` : ""}`;
+  iframe.src = `https://www.youtube-nocookie.com/embed/${episode.videoId}?autoplay=1&rel=0&playsinline=1&fs=1${start ? `&start=${Math.floor(start)}` : ""}`;
   iframe.title = `Chaos on the Clocktower — Episode ${episode.number}: ${episode.title}`;
   iframe.referrerPolicy = "strict-origin-when-cross-origin";
   iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share";

@@ -104,7 +104,7 @@ test("homepage links to the Chaos playlist and complete tutorial", () => {
   assert.match(html, /class="guide-screen guide-watch-screen"/);
 });
 
-test("episodes have a dedicated privacy-enhanced playlist player", () => {
+test("episodes have a dedicated privacy-enhanced single-episode player", () => {
   assert.match(html, /id="watchView"/);
   assert.match(html, /id="episodeStage"/);
   assert.match(html, /id="episodeList"/);
@@ -118,6 +118,8 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /function episodeArtwork\(episode\)/);
   assert.match(app, /episode\.artwork \|\|/);
   assert.match(app, /youtube-nocookie\.com\/embed\/\$\{episode\.videoId\}/);
+  assert.doesNotMatch(app, /\?list=\$\{CHAOS_PLAYLIST_ID\}/);
+  assert.doesNotMatch(app, /&index=\$\{CHAOS_EPISODES/);
   assert.match(app, /playsinline=1&fs=1/);
   assert.match(app, /encrypted-media; fullscreen;/);
   assert.match(css, /iframe:fullscreen/);
@@ -152,6 +154,8 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /name: "Somebody Had To Do It", startSeconds: 5704/);
   assert.match(app, /name: "Hear No Evil, See No Evil, Speak No Evil", startSeconds: 8995/);
   assert.match(app, /name: "Nobody Fucking Move \(Several Games\) \(Teensy\)", startSeconds: 660/);
+  assert.match(app, /name: "Sleepin With The Fishes \(Full Homebrew\)", startSeconds: 4005/);
+  assert.match(app, /name: "Blind Man’s Bluff \(Veiled Game\)", startSeconds: 8981/);
   assert.match(app, /name: "One To Rule Them All \(Full Homebrew\)", startSeconds: 8625/);
   assert.match(app, /name: "A Teensy Moon Rising \(Teensy\)", startSeconds: 7308/);
   assert.match(app, /formatEpisodeTime/);

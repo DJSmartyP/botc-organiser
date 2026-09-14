@@ -93,7 +93,9 @@ try {
     await watchPage.screenshot({ path: `qa-watch-scripts-${viewport.name}.png`, fullPage: true });
     await watchPage.locator(".episode-timestamp").first().click();
     await watchPage.locator(".episode-player-frame iframe").waitFor();
-    assert.match(await watchPage.locator(".episode-player-frame iframe").getAttribute("src"), /start=297/);
+    const chapterPlayerSrc = await watchPage.locator(".episode-player-frame iframe").getAttribute("src");
+    assert.match(chapterPlayerSrc, /start=297/);
+    assert.doesNotMatch(chapterPlayerSrc, /[?&](list|index)=/);
     assert.equal(await watchPage.locator("#episodeScriptsPanel .episode-timestamp").count(), 2);
     await watchPage.locator('.episode-card[aria-label^="View Episode 11:"]').click();
     assert.deepEqual(await watchPage.locator(".episode-script-tag").allTextContents(), ["Game 1", "Special Game Mode", "Game 2"]);
@@ -105,6 +107,10 @@ try {
     const chapterWidths = await watchPage.locator("#episodeScriptsPanel .episode-timestamp").evaluateAll(cards => cards.map(card => Math.round(card.getBoundingClientRect().width)));
     assert.ok(Math.max(...chapterWidths) - Math.min(...chapterWidths) <= 1, `${viewport.name} episode chapter cards should have equal widths`);
     await watchPage.screenshot({ path: `qa-watch-scripts-grid-${viewport.name}.png`, fullPage: true });
+    await watchPage.locator('.episode-card[aria-label^="View Episode 7:"]').click();
+    assert.deepEqual(await watchPage.locator("#episodeScriptsPanel .episode-timestamp").evaluateAll(cards => cards.map(card => card.dataset.startSeconds)), ["76", "4005", "8981"]);
+    assert.match(await watchPage.locator("#episodeScriptsPanel .episode-timestamp").nth(1).getAttribute("aria-label"), /1:06:45/);
+    assert.match(await watchPage.locator("#episodeScriptsPanel .episode-timestamp").nth(2).getAttribute("aria-label"), /2:29:41/);
     await watchPage.locator('.episode-card[aria-label^="View Episode 13:"]').click();
     const longTitleFits = await watchPage.locator(".episode-dossier-body h3").evaluate(title => title.scrollWidth <= title.clientWidth);
     assert.equal(longTitleFits, true, `${viewport.name} long episode title should stay inside its column`);
