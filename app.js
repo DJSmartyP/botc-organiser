@@ -41,9 +41,35 @@ const CHAOS_EPISODES = [
   { number: 6, videoId: "pof-V0Vs334", title: "No ED...But We Do Have Ringworm..." },
   { number: 5, videoId: "s6dfwXIgJfQ", title: "Devious Damsels and Covert Cults" },
   { number: 4, videoId: "rlUBo8nGEIU", title: "Teensyville Turmoil and Trouble" },
-  { number: 3, videoId: "_EVyWJP2fTo", title: "Stuck in Hermit Havoc", artwork: "episode-03-hermit-havoc.jpg" },
-  { number: 2, videoId: "G4DUPryv8Aw", title: "The First Whale Buffet" },
-  { number: 1, videoId: "5w-Ry7TrzvA", title: "The Fastest Game" }
+  {
+    number: 3,
+    videoId: "_EVyWJP2fTo",
+    title: "Stuck in Hermit Havoc",
+    artwork: "episode-03-hermit-havoc.jpg",
+    scripts: [
+      { name: "Trouble in Whoville", startSeconds: 50 },
+      { name: "Somebody Had To Do It", startSeconds: 5704 },
+      { name: "Hear No Evil, See No Evil, Speak No Evil", startSeconds: 8995 }
+    ]
+  },
+  {
+    number: 2,
+    videoId: "G4DUPryv8Aw",
+    title: "The First Whale Buffet",
+    scripts: [
+      { name: "Trouble Brewing", startSeconds: 60, resourceUrl: "https://bloodontheclocktower.com/pages/trouble-brewing", resourceLabel: "View official script" },
+      { name: "Whale Buffet", startSeconds: 5045, resourceUrl: "https://whalebuffet.com/script", resourceLabel: "Download script JSON" }
+    ]
+  },
+  {
+    number: 1,
+    videoId: "5w-Ry7TrzvA",
+    title: "The Fastest Game",
+    scripts: [
+      { name: "Catfishing", startSeconds: 297, resourceUrl: "https://www.botcscripts.com/script/3", resourceLabel: "View / download script" },
+      { name: "Kaboom!", startSeconds: 5176, resourceUrl: "https://www.botcscripts.com/script/1205/1.0.0", resourceLabel: "View / download script" }
+    ]
+  }
 ].sort((left, right) => left.number - right.number).map(episode => ({ scripts: [], ...episode }));
 
 function episodeArtwork(episode) {
@@ -140,16 +166,29 @@ function showEpisodeDetails(index = 0, focusPlay = false) {
         copy.append(notes);
       }
       item.append(copy);
+      const actions = document.createElement("span");
+      actions.className = "episode-script-actions";
       if (Number.isFinite(script.startSeconds)) {
         const timestamp = document.createElement("button");
         timestamp.type = "button";
         timestamp.className = "episode-timestamp";
         timestamp.dataset.playEpisode = String(index);
         timestamp.dataset.startSeconds = String(script.startSeconds);
-        timestamp.textContent = `Play from ${formatEpisodeTime(script.startSeconds)}`;
+        timestamp.textContent = `Watch from ${formatEpisodeTime(script.startSeconds)}`;
         timestamp.setAttribute("aria-label", `Play ${script.name} from ${formatEpisodeTime(script.startSeconds)}`);
-        item.append(timestamp);
+        actions.append(timestamp);
       }
+      if (script.resourceUrl) {
+        const resource = document.createElement("a");
+        resource.className = "episode-script-resource";
+        resource.href = script.resourceUrl;
+        resource.target = "_blank";
+        resource.rel = "noopener noreferrer";
+        resource.textContent = `${script.resourceLabel || "View / download script"} ↗`;
+        resource.setAttribute("aria-label", `${script.resourceLabel || "View or download script"}: ${script.name} (opens in a new tab)`);
+        actions.append(resource);
+      }
+      if (actions.childElementCount) item.append(actions);
       scriptList.append(item);
     });
     scriptPanel.append(scriptList);

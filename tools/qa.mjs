@@ -80,6 +80,14 @@ try {
     await watchPage.screenshot({ path: `qa-watch-${viewport.name}.png`, fullPage: true });
     assert.match(await watchPage.locator(".episode-card").first().getAttribute("aria-label"), /Episode 1:/);
     assert.match(await watchPage.locator(".episode-card").last().getAttribute("aria-label"), /Episode 16:/);
+    await watchPage.locator('.episode-card[aria-label^="View Episode 1:"]').click();
+    assert.match(await watchPage.locator(".episode-dossier-body").innerText(), /Catfishing/);
+    assert.match(await watchPage.locator(".episode-dossier-body").innerText(), /Kaboom!/);
+    assert.equal(await watchPage.locator(".episode-timestamp").count(), 2);
+    assert.equal(await watchPage.locator(".episode-script-resource").count(), 2);
+    assert.deepEqual(await watchPage.locator(".episode-timestamp").evaluateAll(buttons => buttons.map(button => button.dataset.startSeconds)), ["297", "5176"]);
+    await assertFits(watchPage, `${viewport.name} episode scripts`);
+    await watchPage.screenshot({ path: `qa-watch-scripts-${viewport.name}.png`, fullPage: true });
     await watchPage.locator('.episode-card[aria-label^="View Episode 14:"]').click();
     assert.equal(await watchPage.locator(".episode-player-frame iframe").count(), 0);
     assert.match(await watchPage.locator(".episode-dossier-art").getAttribute("src"), /Oiqgyiskbe8\.jpg/);

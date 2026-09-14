@@ -126,6 +126,16 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /scripts: \[\]/);
   assert.match(app, /Scripts this episode/);
   assert.match(app, /dataset\.startSeconds/);
+  assert.match(app, /resourceUrl/);
+  assert.match(app, /episode-script-resource/);
+  assert.match(app, /Watch from \$\{formatEpisodeTime\(script\.startSeconds\)\}/);
+  assert.match(app, /name: "Catfishing", startSeconds: 297/);
+  assert.match(app, /name: "Kaboom!", startSeconds: 5176/);
+  assert.match(app, /name: "Trouble Brewing", startSeconds: 60/);
+  assert.match(app, /name: "Whale Buffet", startSeconds: 5045/);
+  assert.match(app, /name: "Trouble in Whoville", startSeconds: 50/);
+  assert.match(app, /name: "Somebody Had To Do It", startSeconds: 5704/);
+  assert.match(app, /name: "Hear No Evil, See No Evil, Speak No Evil", startSeconds: 8995/);
   assert.match(app, /formatEpisodeTime/);
   assert.match(app, /card\.classList\.toggle\("is-active", active\)/);
   assert.match(html, /data-action="watch"/);
@@ -144,6 +154,7 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.deepEqual([...episodeWaxSeal.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
   assert.match(css, /\.episode-scripts/);
   assert.match(css, /\.episode-timestamp/);
+  assert.match(css, /\.episode-script-resource/);
   assert.match(html, /class="archive-link"/);
   assert.match(html, /class="archive-sigil"/);
   assert.doesNotMatch(html, /class="youtube-link"/);
