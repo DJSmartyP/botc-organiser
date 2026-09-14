@@ -126,6 +126,8 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(css, /\.episode-card\.is-active/);
   assert.match(css, /\.episode-dossier-art/);
   assert.match(css, /\.episode-dossier-body/);
+  assert.match(app, /dataset\.episodeNumber = String\(episode\.number\)/);
+  assert.match(css, /content: attr\(data-episode-number\)/);
   assert.match(css, /\.episode-scripts/);
   assert.match(css, /\.episode-timestamp/);
   assert.match(html, /class="archive-link"/);

@@ -115,6 +115,7 @@ function showEpisodeDetails(index = 0, focusPlay = false) {
   artwork.height = 180;
   const body = document.createElement("div");
   body.className = "episode-dossier-body";
+  body.dataset.episodeNumber = String(episode.number);
   const label = document.createElement("span");
   label.className = "eyebrow";
   label.textContent = `Case file · Episode ${episode.number}`;
