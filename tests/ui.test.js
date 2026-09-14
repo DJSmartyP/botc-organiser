@@ -117,6 +117,7 @@ test("episodes have a dedicated privacy-enhanced single-episode player", () => {
   assert.match(html, /assets\/chaos-theatre\.png/);
   assert.match(app, /function episodeArtwork\(episode\)/);
   assert.match(app, /episode\.artwork \|\|/);
+  assert.match(app, /EPISODE_ART_VERSION/);
   assert.match(app, /youtube-nocookie\.com\/embed\/\$\{episode\.videoId\}/);
   assert.doesNotMatch(app, /\?list=\$\{CHAOS_PLAYLIST_ID\}/);
   assert.doesNotMatch(app, /&index=\$\{CHAOS_EPISODES/);

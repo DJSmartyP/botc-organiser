@@ -26,6 +26,7 @@ const BUILT_IN_SCRIPTS = {
   snv: { name: "Sects & Violets", logo: "assets/script-snv.webp" }
 };
 
+const EPISODE_ART_VERSION = "20260914-2";
 const CHAOS_EPISODES = [
   { number: 16, videoId: "6cLpnO2VfAA", title: "Back To Basics...", description: "The finale returns to two of the foundational scripts—Trouble Brewing and Sects & Violets—before condensing lunar chaos into A Teensy Moon Rising.", scripts: [
     { name: "Trouble Brewing (Base 3)", startSeconds: 501 },
@@ -127,7 +128,7 @@ const CHAOS_EPISODES = [
 ].sort((left, right) => left.number - right.number).map(episode => ({ scripts: [], ...episode }));
 
 function episodeArtwork(episode) {
-  return `assets/episodes/${episode.artwork || `${episode.videoId}.jpg`}`;
+  return `assets/episodes/${episode.artwork || `${episode.videoId}.jpg`}?v=${EPISODE_ART_VERSION}`;
 }
 
 function formatEpisodeTime(totalSeconds = 0) {
