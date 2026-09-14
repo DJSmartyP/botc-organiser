@@ -146,11 +146,21 @@ main:focus { outline: none; }
 .episode-chapters { box-shadow: inset 0 0 0 1px rgba(255,255,255,.018); }
 .episode-scripts h4 { margin: 0; color: var(--gold-bright); font-size: .76rem; letter-spacing: .12em; text-transform: uppercase; }
 .episode-scripts ul { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0; padding: 0; list-style: none; }
-.episode-scripts li { display: block; }
+.episode-scripts li { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .3rem; }
 .episode-scripts small, .episode-scripts-pending { color: var(--muted); font-size: .78rem; }
 .episode-scripts-pending { margin: 0 !important; }
 .episode-timestamp { display: inline-flex; align-items: center; min-height: 36px; padding: .48rem .75rem; border: 1px solid rgba(222,185,100,.42); border-radius: 999px; color: var(--gold-bright); background: linear-gradient(180deg, rgba(133,28,46,.42), rgba(77,15,28,.48)); font: 700 .72rem/1 Inter, system-ui, sans-serif; white-space: nowrap; cursor: pointer; }
 .episode-timestamp:hover, .episode-timestamp:focus-visible { border-color: var(--gold); background: rgba(160,28,51,.48); }
+.episode-script-tag { display: inline-flex; align-items: center; min-height: 24px; padding: .25rem .48rem; border: 1px solid transparent; border-radius: 999px; font: 800 .56rem/1 Inter, system-ui, sans-serif; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
+.episode-script-tag--game-one { border-color: rgba(226,87,99,.52); color: #ffd3d6; background: rgba(151,34,51,.42); }
+.episode-script-tag--game-two { border-color: rgba(102,157,206,.55); color: #d4ebff; background: rgba(35,83,126,.46); }
+.episode-script-tag--game-three { border-color: rgba(112,168,130,.55); color: #d8f5df; background: rgba(42,100,61,.42); }
+.episode-script-tag--veiled { border-color: rgba(187,132,220,.58); color: #efd8ff; background: rgba(91,47,116,.5); }
+.episode-script-tag--smarty { border-color: rgba(231,191,91,.62); color: #fff0b9; background: rgba(123,84,19,.5); }
+.episode-script-tag--extra-0 { border-color: rgba(210,121,167,.5); color: #ffdcef; background: rgba(111,44,79,.44); }
+.episode-script-tag--extra-1 { border-color: rgba(94,184,183,.5); color: #d7ffff; background: rgba(28,91,91,.44); }
+.episode-script-tag--extra-2 { border-color: rgba(208,151,91,.5); color: #ffe4c5; background: rgba(113,66,26,.44); }
+.episode-script-tag--extra-3 { border-color: rgba(148,142,218,.5); color: #e4e1ff; background: rgba(66,59,121,.44); }
 .episode-dossier-play { display: inline-flex; align-items: center; gap: .52rem; margin-top: auto; }
 .dossier-play-mark { position: relative; width: 1.3rem; aspect-ratio: 1; flex: 0 0 auto; border: 1px solid rgba(255,235,207,.55); border-radius: 50%; background: rgba(65,10,19,.45); }
 .dossier-play-mark::after { content: ""; position: absolute; top: 50%; left: 54%; border-width: .22rem 0 .22rem .34rem; border-style: solid; border-color: transparent transparent transparent #fff1df; transform: translate(-50%, -50%); }

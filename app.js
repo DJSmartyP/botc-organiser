@@ -47,9 +47,9 @@ const CHAOS_EPISODES = [
     title: "Stuck in Hermit Havoc",
     artwork: "episode-03-hermit-havoc.jpg",
     scripts: [
-      { name: "Trouble in Whoville", startSeconds: 50 },
-      { name: "Somebody Had To Do It", startSeconds: 5704 },
-      { name: "Hear No Evil, See No Evil, Speak No Evil", startSeconds: 8995 }
+      { name: "Trouble in Whoville", startSeconds: 50, tags: ["Game 1"] },
+      { name: "Somebody Had To Do It", startSeconds: 5704, tags: ["Game 2"] },
+      { name: "Hear No Evil, See No Evil, Speak No Evil", startSeconds: 8995, tags: ["Game 3"] }
     ]
   },
   {
@@ -57,8 +57,8 @@ const CHAOS_EPISODES = [
     videoId: "G4DUPryv8Aw",
     title: "The First Whale Buffet",
     scripts: [
-      { name: "Trouble Brewing", startSeconds: 60 },
-      { name: "Whale Buffet", startSeconds: 5045 }
+      { name: "Trouble Brewing", startSeconds: 60, tags: ["Game 1"] },
+      { name: "Whale Buffet", startSeconds: 5045, tags: ["Game 2"] }
     ]
   },
   {
@@ -66,8 +66,8 @@ const CHAOS_EPISODES = [
     videoId: "5w-Ry7TrzvA",
     title: "The Fastest Game",
     scripts: [
-      { name: "Catfishing", startSeconds: 297 },
-      { name: "Kaboom!", startSeconds: 5176 }
+      { name: "Catfishing", startSeconds: 297, tags: ["Game 1"] },
+      { name: "Kaboom!", startSeconds: 5176, tags: ["Game 2"] }
     ]
   }
 ].sort((left, right) => left.number - right.number).map(episode => ({ scripts: [], ...episode }));
@@ -84,6 +84,31 @@ function formatEpisodeTime(totalSeconds = 0) {
   return hours
     ? `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
     : `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function episodeScriptPresentation(script) {
+  let name = String(script.name || "Untitled script").trim();
+  const parentheticalTags = [];
+  let match = name.match(/\s*\(([^()]+)\)\s*$/);
+  while (match) {
+    parentheticalTags.unshift(match[1].trim());
+    name = name.slice(0, match.index).trim();
+    match = name.match(/\s*\(([^()]+)\)\s*$/);
+  }
+  const suppliedTags = Array.isArray(script.tags) ? script.tags : [];
+  const tags = [...new Set([...suppliedTags, ...parentheticalTags].map(tag => String(tag).trim()).filter(Boolean))];
+  return { name: name || String(script.name || "Untitled script").trim(), tags };
+}
+
+function episodeScriptTagTone(tag) {
+  const normalized = String(tag).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  if (normalized.includes("veiled")) return "veiled";
+  if (normalized.includes("smarty")) return "smarty";
+  if (/^game 1$/.test(normalized)) return "game-one";
+  if (/^game 2$/.test(normalized)) return "game-two";
+  if (/^game 3$/.test(normalized)) return "game-three";
+  const hash = [...normalized].reduce((total, character) => total + character.charCodeAt(0), 0);
+  return `extra-${hash % 4}`;
 }
 
 function renderEpisodePicker() {
@@ -135,6 +160,7 @@ function renderEpisodeScripts(index = 0) {
   if (episode.scripts.length) {
     const scriptList = document.createElement("ul");
     episode.scripts.forEach(script => {
+      const presentation = episodeScriptPresentation(script);
       const item = document.createElement("li");
       if (Number.isFinite(script.startSeconds)) {
         const timestamp = document.createElement("button");
@@ -142,10 +168,16 @@ function renderEpisodeScripts(index = 0) {
         timestamp.className = "episode-timestamp";
         timestamp.dataset.playEpisode = String(index);
         timestamp.dataset.startSeconds = String(script.startSeconds);
-        timestamp.textContent = script.name;
-        timestamp.setAttribute("aria-label", `Play ${script.name} from ${formatEpisodeTime(script.startSeconds)}`);
+        timestamp.textContent = presentation.name;
+        timestamp.setAttribute("aria-label", `Play ${presentation.name} from ${formatEpisodeTime(script.startSeconds)}`);
         item.append(timestamp);
       }
+      presentation.tags.forEach(tag => {
+        const badge = document.createElement("span");
+        badge.className = `episode-script-tag episode-script-tag--${episodeScriptTagTone(tag)}`;
+        badge.textContent = tag;
+        item.append(badge);
+      });
       scriptList.append(item);
     });
     scriptPanel.append(scriptList);

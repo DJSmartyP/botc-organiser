@@ -130,8 +130,12 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /Scripts this episode/);
   assert.match(app, /dataset\.startSeconds/);
   assert.doesNotMatch(app, /resourceUrl|resourceLabel|episode-script-resource/);
-  assert.match(app, /timestamp\.textContent = script\.name/);
+  assert.match(app, /timestamp\.textContent = presentation\.name/);
   assert.doesNotMatch(app, /timestamp\.textContent = `Watch from/);
+  assert.match(app, /function episodeScriptPresentation/);
+  assert.match(app, /function episodeScriptTagTone/);
+  assert.match(app, /parentheticalTags\.unshift/);
+  assert.match(app, /tags: \["Game 1"\]/);
   assert.match(app, /name: "Catfishing", startSeconds: 297/);
   assert.match(app, /name: "Kaboom!", startSeconds: 5176/);
   assert.match(app, /name: "Trouble Brewing", startSeconds: 60/);
@@ -157,6 +161,10 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.deepEqual([...episodeWaxSeal.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
   assert.match(css, /\.episode-scripts/);
   assert.match(css, /\.episode-timestamp/);
+  assert.match(css, /\.episode-script-tag--game-one/);
+  assert.match(css, /\.episode-script-tag--game-two/);
+  assert.match(css, /\.episode-script-tag--veiled/);
+  assert.match(css, /\.episode-script-tag--smarty/);
   assert.doesNotMatch(css, /\.episode-script-resource/);
   assert.match(html, /class="archive-link"/);
   assert.match(html, /class="archive-sigil"/);
