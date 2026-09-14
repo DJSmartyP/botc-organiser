@@ -13,14 +13,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260914-1">
+  <link rel="stylesheet" href="styles.css?v=20260914-2">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
   <div class="ambient ambient-two" aria-hidden="true"></div>
 
   <header class="site-header">
-    <a class="brand" href="./" aria-label="Chaos Planner home">
+    <a class="brand" href="./" data-action="home" aria-label="Chaos Planner home" title="Back to Chaos Planner home">
       <img src="assets/chaos-logo.png?v=20260912-3" alt="Chaos on the Clocktower">
       <span><strong>Chaos Planner</strong><small>A BOTC Planner</small></span>
     </a>
@@ -75,7 +75,6 @@
     </section>
 
     <section id="guideView" class="view guide-view" hidden>
-      <a class="back-link" href="./" data-action="home">← Back to home</a>
       <header class="guide-hero panel">
         <div><div class="eyebrow">Storyteller’s handbook</div><h1>How to use Chaos Planner</h1><p>From choosing possible nights to gathering the final town—and watching the chaos afterwards—this guide shows every part of the site.</p></div>
         <nav class="guide-jump-links" aria-label="Guide sections"><a href="#guide-organise">Organisers</a><a href="#guide-players">Players</a><a href="#guide-finalise">Finalising</a><a href="#guide-watch">Watch episodes</a></nav>
@@ -120,7 +119,6 @@
     </section>
 
     <section id="watchView" class="view watch-view" hidden>
-      <a class="back-link" href="./" data-action="home">← Back to home</a>
       <header class="watch-hero panel">
         <img src="assets/chaos-logo.png?v=20260912-4" alt="Chaos on the Clocktower">
         <div><div class="eyebrow">Watch the story unfold</div><h1>Chaos on the Clocktower</h1><p>Bluffs, betrayals and bodies in the town square. Choose any episode from the playlist and watch without leaving Chaos Planner.</p></div>
@@ -151,7 +149,6 @@
     </section>
 
     <section id="authView" class="view auth-view" hidden>
-      <button class="back-link" data-action="home" type="button">← Back to home</button>
       <div class="panel auth-panel">
         <div class="eyebrow">Organiser portal</div>
         <h1>Enter the storyteller’s chamber</h1>
@@ -182,7 +179,6 @@
     </section>
 
     <section id="sessionView" class="view session-view" hidden>
-      <button class="back-link" data-action="home" type="button">← Back to home</button>
       <div id="sessionContent" aria-live="polite"></div>
     </section>
   </main>

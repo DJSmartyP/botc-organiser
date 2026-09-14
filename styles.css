@@ -82,7 +82,9 @@ h3 { letter-spacing: .02em; }
   box-shadow: 0 1px 0 rgba(0,0,0,.7);
 }
 .site-header > *, .header-actions { min-width: 0; }
-.brand { display: flex; align-items: center; gap: 1.25rem; min-width: 0; color: var(--ink); text-decoration: none; }
+.brand { display: flex; align-items: center; gap: 1.25rem; min-width: 0; border-radius: 6px; color: var(--ink); text-decoration: none; transition: filter .16s ease, transform .16s ease; }
+.brand:hover { filter: brightness(1.14) drop-shadow(0 0 10px rgba(210,74,81,.2)); transform: translateY(-1px); }
+.brand:focus-visible { outline: 3px solid rgba(203,178,123,.5); outline-offset: 4px; }
 .brand img { width: clamp(112px, 20vw, 230px); height: 68px; object-fit: contain; object-position: left center; }
 .brand span { display: none; }
 .brand strong, .brand small { display: block; }
@@ -115,9 +117,9 @@ h3 { letter-spacing: .02em; }
 main { position: relative; z-index: 1; width: min(1400px, calc(100% - 3rem)); margin: 0 auto; }
 main:focus { outline: none; }
 .view { min-height: calc(100vh - 160px); padding: clamp(1.5rem, 4vw, 3.25rem) 0; }
+.guide-view, .watch-view, .auth-view, .session-view { padding-top: clamp(.85rem, 2vw, 1.5rem); }
 .home-view { display: flex; flex-direction: column; justify-content: flex-start; padding-top: .75rem; background: url("assets/village-silhouette.png?v=2") center bottom / min(1180px, 100%) auto no-repeat; }
 .watch-view { display: grid; align-content: start; gap: 1rem; }
-.watch-view > .back-link { justify-self: start; }
 .watch-hero { display: grid; grid-template-columns: minmax(130px, 240px) minmax(0, 1fr); align-items: center; gap: clamp(1rem, 4vw, 3rem); padding: clamp(1rem, 3vw, 1.8rem); overflow: hidden; border-top: 2px solid rgba(210,74,81,.7); background: linear-gradient(135deg, rgba(61,23,36,.92), rgba(14,16,23,.96)), url("assets/texture-velvet.png?v=2") center / 680px auto repeat; }
 .watch-hero img { display: block; width: 100%; max-height: 135px; object-fit: contain; filter: drop-shadow(0 8px 20px rgba(0,0,0,.55)); }
 .watch-hero h1 { margin-bottom: .45rem; }

@@ -33,6 +33,13 @@ test("the site exposes branded favicons and installable app icons", () => {
   assert.equal(JSON.parse(webManifest).name, "Chaos Planner");
 });
 
+test("the header brand is the consistent home control without redundant page rows", () => {
+  assert.match(html, /class="brand" href="\.\/" data-action="home" aria-label="Chaos Planner home"/);
+  assert.equal(html.match(/(?:href="\.\/"|type="button") data-action="home"/g)?.length, 1);
+  assert.match(css, /\.brand:focus-visible/);
+  assert.match(css, /\.guide-view, \.watch-view, \.auth-view, \.session-view \{ padding-top:/);
+});
+
 test("the official Community Created Content badge identifies the site as unofficial", () => {
   assert.match(html, /assets\/community-created-content\.png/);
   assert.match(html, /alt="Community Created Content"/);
