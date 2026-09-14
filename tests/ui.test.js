@@ -115,6 +115,8 @@ test("episodes have a dedicated privacy-enhanced single-episode player", () => {
   assert.match(app, /sort\(\(left, right\) => left\.number - right\.number\)/);
   assert.match(app, /episode-03-hermit-havoc\.jpg/);
   assert.match(html, /assets\/chaos-theatre\.png/);
+  assert.match(css, /\.episode-theatre-copy img \{ width: min\(480px, 82%\)/);
+  assert.match(css, /\.episode-theatre-copy strong::before/);
   assert.match(app, /function episodeArtwork\(episode\)/);
   assert.match(app, /episode\.artwork \|\|/);
   assert.match(app, /EPISODE_ART_VERSION/);
