@@ -118,7 +118,7 @@ function showEpisodeDetails(index = 0, focusPlay = false) {
   body.dataset.episodeNumber = String(episode.number);
   const label = document.createElement("span");
   label.className = "eyebrow";
-  label.textContent = `Case file · Episode ${episode.number}`;
+  label.textContent = `Episode ${episode.number}`;
   const title = document.createElement("h3");
   title.textContent = episode.title;
   const scriptPanel = document.createElement("section");

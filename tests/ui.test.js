@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 
-const [html, css, app, emptyArt, communityBadge, officialBotcLogo, officialAppPuck, officialRoles, tbLogo, bmrLogo, snvLogo] = await Promise.all([
+const [html, css, app, emptyArt, communityBadge, officialBotcLogo, officialAppPuck, officialRoles, tbLogo, bmrLogo, snvLogo, episodeWaxSeal] = await Promise.all([
   readFile(new URL("../index.html", import.meta.url), "utf8"),
   readFile(new URL("../styles.css", import.meta.url), "utf8"),
   readFile(new URL("../app.js", import.meta.url), "utf8"),
@@ -13,7 +13,8 @@ const [html, css, app, emptyArt, communityBadge, officialBotcLogo, officialAppPu
   readFile(new URL("../assets/official-roles.json", import.meta.url), "utf8"),
   readFile(new URL("../assets/script-tb.webp", import.meta.url)),
   readFile(new URL("../assets/script-bmr.webp", import.meta.url)),
-  readFile(new URL("../assets/script-snv.webp", import.meta.url))
+  readFile(new URL("../assets/script-snv.webp", import.meta.url)),
+  readFile(new URL("../assets/episode-wax-seal.png", import.meta.url))
 ]);
 const episodeThumbnails = (await readdir(new URL("../assets/episodes/", import.meta.url))).filter(name => name.endsWith(".jpg"));
 const [favicon32, favicon192, favicon512, appleTouchIcon, webManifest] = await Promise.all([
@@ -135,6 +136,12 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(css, /\.episode-dossier-body/);
   assert.match(app, /dataset\.episodeNumber = String\(episode\.number\)/);
   assert.match(css, /content: attr\(data-episode-number\)/);
+  assert.match(app, /label\.textContent = `Episode \$\{episode\.number\}`/);
+  assert.doesNotMatch(app, /Case file · Episode/);
+  assert.doesNotMatch(css, /content: "EP"/);
+  assert.match(css, /assets\/episode-wax-seal\.png/);
+  assert.match(css, /-webkit-text-stroke:/);
+  assert.deepEqual([...episodeWaxSeal.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
   assert.match(css, /\.episode-scripts/);
   assert.match(css, /\.episode-timestamp/);
   assert.match(html, /class="archive-link"/);
