@@ -136,28 +136,15 @@ function renderEpisodeScripts(index = 0) {
     const scriptList = document.createElement("ul");
     episode.scripts.forEach(script => {
       const item = document.createElement("li");
-      const copy = document.createElement("span");
-      const name = document.createElement("strong");
-      name.textContent = script.name;
-      copy.append(name);
-      if (script.notes) {
-        const notes = document.createElement("small");
-        notes.textContent = script.notes;
-        copy.append(notes);
-      }
-      item.append(copy);
       if (Number.isFinite(script.startSeconds)) {
-        const actions = document.createElement("span");
-        actions.className = "episode-script-actions";
         const timestamp = document.createElement("button");
         timestamp.type = "button";
         timestamp.className = "episode-timestamp";
         timestamp.dataset.playEpisode = String(index);
         timestamp.dataset.startSeconds = String(script.startSeconds);
-        timestamp.textContent = `Watch from ${formatEpisodeTime(script.startSeconds)}`;
+        timestamp.textContent = script.name;
         timestamp.setAttribute("aria-label", `Play ${script.name} from ${formatEpisodeTime(script.startSeconds)}`);
-        actions.append(timestamp);
-        item.append(actions);
+        item.append(timestamp);
       }
       scriptList.append(item);
     });

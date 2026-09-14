@@ -86,6 +86,7 @@ try {
     assert.equal(await watchPage.locator(".episode-timestamp").count(), 2);
     assert.equal(await watchPage.locator(".episode-script-resource").count(), 0);
     assert.deepEqual(await watchPage.locator(".episode-timestamp").evaluateAll(buttons => buttons.map(button => button.dataset.startSeconds)), ["297", "5176"]);
+    assert.deepEqual(await watchPage.locator(".episode-timestamp").allTextContents(), ["Catfishing", "Kaboom!"]);
     await assertFits(watchPage, `${viewport.name} episode scripts`);
     await watchPage.screenshot({ path: `qa-watch-scripts-${viewport.name}.png`, fullPage: true });
     await watchPage.locator(".episode-timestamp").first().click();

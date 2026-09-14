@@ -130,7 +130,8 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /Scripts this episode/);
   assert.match(app, /dataset\.startSeconds/);
   assert.doesNotMatch(app, /resourceUrl|resourceLabel|episode-script-resource/);
-  assert.match(app, /Watch from \$\{formatEpisodeTime\(script\.startSeconds\)\}/);
+  assert.match(app, /timestamp\.textContent = script\.name/);
+  assert.doesNotMatch(app, /timestamp\.textContent = `Watch from/);
   assert.match(app, /name: "Catfishing", startSeconds: 297/);
   assert.match(app, /name: "Kaboom!", startSeconds: 5176/);
   assert.match(app, /name: "Trouble Brewing", startSeconds: 60/);
