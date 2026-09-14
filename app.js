@@ -28,67 +28,67 @@ const BUILT_IN_SCRIPTS = {
 
 const CHAOS_PLAYLIST_ID = "PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra";
 const CHAOS_EPISODES = [
-  { number: 16, videoId: "6cLpnO2VfAA", title: "Back To Basics...", scripts: [
+  { number: 16, videoId: "6cLpnO2VfAA", title: "Back To Basics...", description: "The finale returns to two of the foundational scripts—Trouble Brewing and Sects & Violets—before condensing lunar chaos into A Teensy Moon Rising.", scripts: [
     { name: "Trouble Brewing (Base 3)", startSeconds: 501 },
     { name: "Sects and Violets (Base 3)", startSeconds: 3897 },
     { name: "A Teensy Moon Rising (Teensy)", startSeconds: 7308 }
   ] },
-  { number: 15, videoId: "FMkcNCn9YTk", title: "More Muppet Madness...", scripts: [
+  { number: 15, videoId: "FMkcNCn9YTk", title: "More Muppet Madness...", description: "A compact divine crisis opens the show before the felt-puppet ensemble returns for a full homebrew packed with colourful characters and theatrical disorder.", scripts: [
     { name: "Teensyville: God Is Dead (Teensy)", startSeconds: 396 },
     { name: "Muppets On A Clocktower (Full Homebrew)", startSeconds: 3836 }
   ] },
-  { number: 14, videoId: "Oiqgyiskbe8", title: "Chaos, Assemble...", scripts: [
+  { number: 14, videoId: "Oiqgyiskbe8", title: "Chaos, Assemble...", description: "A huge comic and animated crossover made from entirely original heroes, villains and fairytale archetypes. Three full homebrews move from twisted wonderland logic to super-powered alliances and impossible heroic choices.", scripts: [
     { name: "Troubles In Wonderland (Full Homebrew)", startSeconds: 71 },
     { name: "Avengers Assemble! (Full Homebrew)", startSeconds: 3525 },
     { name: "You Either Die A Hero… (Full Homebrew)", startSeconds: 7384 }
   ] },
-  { number: 13, videoId: "TMPYR60R4P0", title: "The Case For Cannibalism...", scripts: [
+  { number: 13, videoId: "TMPYR60R4P0", title: "The Case For Cannibalism...", description: "Scruffy retro space-comedy collides with grand fantasy adventure. Two games follow Smarty’s player perspective before full homebrews send the group back to Red Dwarf and an epic quest for ultimate power.", scripts: [
     { name: "Catfishing (Smarty Player Perspective)", startSeconds: 432 },
     { name: "Everybody Fucking Run! (Smarty Player Perspective)", startSeconds: 3423 },
     { name: "It’s Cold Outside (Full Homebrew)", startSeconds: 4948 },
     { name: "One To Rule Them All (Full Homebrew)", startSeconds: 8625 }
   ] },
-  { number: 12, videoId: "Dpf0T0v7uPI", title: "Nobody F****** Move...", scripts: [
+  { number: 12, videoId: "Dpf0T0v7uPI", title: "Nobody F****** Move...", description: "One deceptively simple Teensyville concept, played several times. Small towns, fast games and repeated opportunities for everything to go disastrously wrong.", scripts: [
     { name: "Nobody Fucking Move (Several Games) (Teensy)", startSeconds: 660 }
   ] },
-  { number: 11, videoId: "00EaJpX2Tpg", title: "Whale Buffet 2 — More Whale...", scripts: [
+  { number: 11, videoId: "00EaJpX2Tpg", title: "Whale Buffet 2 — More Whale...", description: "Two frantic rounds of Everybody Fucking Run! surround another visit to the unpredictable Whale Buffet special format.", scripts: [
     { name: "Everybody Fucking Run! (Game 1)", startSeconds: 660 },
     { name: "Whale Buffet (Special Game Mode)", startSeconds: 3925 },
     { name: "Everybody Fucking Run! (Game 2)", startSeconds: 9101 }
   ] },
-  { number: 10, videoId: "bLzod4_0okM", title: "Just A Po Girl, Living In A Po World...", scripts: [
+  { number: 10, videoId: "bLzod4_0okM", title: "Just A Po Girl, Living In A Po World...", description: "Bad Moon Rising begins a lethal evening before Trouble With Violets mixes familiar dangers and Kaboom! brings the night to an explosive finish.", scripts: [
     { name: "Bad Moon Rising (Base 3)", startSeconds: 600 },
     { name: "Trouble With Violets", startSeconds: 5791 },
     { name: "Kaboom!", startSeconds: 9101 }
   ] },
-  { number: 9, videoId: "kBd3Rtc6mpM", title: "Waka, Waka, Waka!", scripts: [
+  { number: 9, videoId: "kBd3Rtc6mpM", title: "Waka, Waka, Waka!", description: "Wild-west tension collides with colourful felt-puppet chaos. Four games bring explosions, frontier danger, theatrical mayhem and a final veiled showdown.", scripts: [
     { name: "Kaboom!", startSeconds: 95 },
     { name: "Last Train From Foxdune (Full Homebrew)", startSeconds: 2111 },
     { name: "Muppets On A Clocktower (Full Homebrew)", startSeconds: 6980 },
     { name: "Blind Man’s Bluff (Veiled Game)", startSeconds: 9859 }
   ] },
-  { number: 8, videoId: "zZfY3mDNMzQ", title: "It's Cold Outside...", scripts: [
+  { number: 8, videoId: "zZfY3mDNMzQ", title: "It's Cold Outside...", description: "Frontier grit meets retro science fiction. The games move from scrambled information to a homebrew train journey across Foxdune and finally a familiar red mining ship in deep space...", scripts: [
     { name: "Information Switcheroo", startSeconds: 463 },
     { name: "Last Train From Foxdune (Full Homebrew)", startSeconds: 4421 },
     { name: "It’s Cold Outside (Full Homebrew)", startSeconds: 11232 }
   ] },
-  { number: 7, videoId: "Yi1ZkK774QM", title: "Veiled But Vicious", scripts: [
+  { number: 7, videoId: "Yi1ZkK774QM", title: "Veiled But Vicious", description: "Organised crime comes to the town square: secret meetings, sharp suits, hidden identities and betrayal. The episode culminates in a veiled game where reading the room becomes much harder.", scripts: [
     { name: "Irrational Behaviour", startSeconds: 76 },
     { name: "Sleepin With The Fishes (Full Homebrew)", startSeconds: 4119 },
     { name: "Blind Man’s Bluff (Veiled Game)", startSeconds: 7169 }
   ] },
-  { number: 6, videoId: "pof-V0Vs334", title: "No ED...But We Do Have Ringworm...", scripts: [
+  { number: 6, videoId: "pof-V0Vs334", title: "No ED...But We Do Have Ringworm...", description: "Three full homebrews jump from an isolated retro space station to shabby cabin-horror tension and the gloriously dysfunctional world of Divorced Dads. A final Teensyville game ensures nobody escapes calmly.", scripts: [
     { name: "Struggle On Orbital Station Delta (Full Homebrew)", startSeconds: 142 },
     { name: "Alone In The Woods (Full Homebrew)", startSeconds: 4119 },
     { name: "Divorced Dads (Full Homebrew)", startSeconds: 7169 },
     { name: "Nobody Fucking Move (Teensy)", startSeconds: 11905 }
   ] },
-  { number: 5, videoId: "s6dfwXIgJfQ", title: "Devious Damsels and Covert Cults", scripts: [
+  { number: 5, videoId: "s6dfwXIgJfQ", title: "Devious Damsels and Covert Cults", description: "A three-game descent through punchy confrontations, dangerous drinking and the reliably explosive chaos of Kaboom!", scripts: [
     { name: "Punchy", startSeconds: 85 },
     { name: "Drink and Die", startSeconds: 5910 },
     { name: "Kaboom!", startSeconds: 9547 }
   ] },
-  { number: 4, videoId: "rlUBo8nGEIU", title: "Teensyville Turmoil and Trouble", scripts: [
+  { number: 4, videoId: "rlUBo8nGEIU", title: "Teensyville Turmoil and Trouble", description: "Trouble Brewing opens the case before two compact Teensyville games deliver fast accusations, social chaos and very little room to hide.", scripts: [
     { name: "Trouble Brewing (Base 3)", startSeconds: 85 },
     { name: "Nobody Fucking Move (Teensy)", startSeconds: 2706 },
     { name: "Gaslight, Gatekeep, Giggle (Teensy)", startSeconds: 8995 }
@@ -97,6 +97,7 @@ const CHAOS_EPISODES = [
     number: 3,
     videoId: "_EVyWJP2fTo",
     title: "Stuck in Hermit Havoc",
+    description: "Three increasingly strange scripts take the town from festive trouble to forced decisions and a final game built around silence, signals and suspicion.",
     artwork: "episode-03-hermit-havoc.jpg",
     scripts: [
       { name: "Trouble in Whoville", startSeconds: 50 },
@@ -108,6 +109,7 @@ const CHAOS_EPISODES = [
     number: 2,
     videoId: "G4DUPryv8Aw",
     title: "The First Whale Buffet",
+    description: "A classic Trouble Brewing mystery gives way to the first chaotic Whale Buffet, a special format where the town get to pick their own characters with chaotic results.",
     scripts: [
       { name: "Trouble Brewing (Base 3)", startSeconds: 60 },
       { name: "Whale Buffet (Special Game Mode)", startSeconds: 5045 }
@@ -117,6 +119,7 @@ const CHAOS_EPISODES = [
     number: 1,
     videoId: "5w-Ry7TrzvA",
     title: "The Fastest Game",
+    description: "Deception starts at full speed with Catfishing, before Kaboom! turns the session into a rapid succession of explosive games.",
     scripts: [
       { name: "Catfishing", startSeconds: 297 },
       { name: "Kaboom! (Multiple Games)", startSeconds: 5176 }
@@ -163,6 +166,16 @@ function episodeScriptTagTone(tag) {
   if (/^game \d+$/.test(normalized) || normalized.includes("multiple games") || normalized.includes("several games")) return "game-count";
   const hash = [...normalized].reduce((total, character) => total + character.charCodeAt(0), 0);
   return `extra-${hash % 4}`;
+}
+
+function episodeFormatSummary(episode) {
+  const tags = episode.scripts.flatMap(script => episodeScriptPresentation(script).tags);
+  const formats = [...new Set(tags.filter(tag => !/^(game \d+|multiple games|several games)$/i.test(tag)))];
+  const gameCount = episode.scripts.length;
+  return {
+    count: `${gameCount} ${gameCount === 1 ? "game" : "games"}`,
+    formats: formats.slice(0, 3)
+  };
 }
 
 function renderEpisodePicker() {
@@ -269,12 +282,31 @@ function showEpisodeDetails(index = 0, focusPlay = false) {
   label.textContent = `Episode ${episode.number}`;
   const title = document.createElement("h3");
   title.textContent = episode.title;
+  const overview = document.createElement("section");
+  overview.className = "episode-dossier-overview";
+  const overviewLabel = document.createElement("strong");
+  overviewLabel.textContent = "Inside this episode";
+  const summary = episodeFormatSummary(episode);
+  const meta = document.createElement("div");
+  meta.className = "episode-dossier-meta";
+  const count = document.createElement("span");
+  count.textContent = summary.count;
+  meta.append(count);
+  summary.formats.forEach(format => {
+    const formatBadge = document.createElement("span");
+    formatBadge.className = `episode-dossier-format episode-script-tag--${episodeScriptTagTone(format)}`;
+    formatBadge.textContent = format;
+    meta.append(formatBadge);
+  });
+  const description = document.createElement("p");
+  description.textContent = episode.description;
+  overview.append(overviewLabel, meta, description);
   const play = document.createElement("button");
   play.type = "button";
   play.className = "button button-primary episode-dossier-play";
   play.dataset.playEpisode = String(index);
   play.innerHTML = '<span class="dossier-play-mark" aria-hidden="true"></span><span>Play episode</span>';
-  body.append(label, title, play);
+  body.append(label, title, overview, play);
   dossier.append(artwork, body);
   frame.replaceChildren(dossier);
   renderEpisodeScripts(index);

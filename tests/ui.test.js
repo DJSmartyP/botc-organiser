@@ -135,6 +135,12 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.doesNotMatch(app, /timestamp\.textContent = `Watch from/);
   assert.match(app, /function episodeScriptPresentation/);
   assert.match(app, /function episodeScriptTagTone/);
+  assert.match(app, /function episodeFormatSummary/);
+  assert.equal((app.match(/description: "/g) || []).length, 16);
+  assert.match(app, /Inside this episode/);
+  assert.match(app, /where the town get to pick their own characters with chaotic results/);
+  assert.match(app, /a familiar red mining ship in deep space/);
+  assert.match(app, /send the group back to Red Dwarf and an epic quest for ultimate power/);
   assert.match(app, /parentheticalTags\.unshift/);
   assert.equal((app.match(/startSeconds: \d+/g) || []).length, 46);
   assert.match(app, /name: "Catfishing", startSeconds: 297/);

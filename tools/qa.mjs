@@ -104,6 +104,8 @@ try {
     assert.equal(await watchPage.locator(".episode-player-frame iframe").count(), 0);
     assert.match(await watchPage.locator(".episode-dossier-art").getAttribute("src"), /Oiqgyiskbe8\.jpg/);
     assert.match(await watchPage.locator(".episode-dossier-body").innerText(), /Chaos, Assemble/);
+    assert.match(await watchPage.locator(".episode-dossier-overview").innerText(), /A huge comic and animated crossover/);
+    assert.match(await watchPage.locator(".episode-dossier-meta").innerText(), /3 games/i);
     assert.match(await watchPage.locator("#episodeScriptsPanel").innerText(), /scripts this episode/i);
     await watchPage.screenshot({ path: `qa-watch-preview-${viewport.name}.png`, fullPage: true });
     await watchPage.locator(".episode-dossier-play[data-play-episode='13']").click();
