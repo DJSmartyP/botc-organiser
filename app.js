@@ -28,28 +28,80 @@ const BUILT_IN_SCRIPTS = {
 
 const CHAOS_PLAYLIST_ID = "PLpw9gMGspkwSc155CHY0HjyAq5_BYGGra";
 const CHAOS_EPISODES = [
-  { number: 16, videoId: "6cLpnO2VfAA", title: "Back To Basics..." },
-  { number: 15, videoId: "FMkcNCn9YTk", title: "More Muppet Madness..." },
-  { number: 14, videoId: "Oiqgyiskbe8", title: "Chaos, Assemble..." },
-  { number: 13, videoId: "TMPYR60R4P0", title: "The Case For Cannibalism..." },
-  { number: 12, videoId: "Dpf0T0v7uPI", title: "Nobody F****** Move..." },
-  { number: 11, videoId: "00EaJpX2Tpg", title: "Whale Buffet 2 — More Whale..." },
-  { number: 10, videoId: "bLzod4_0okM", title: "Just A Po Girl, Living In A Po World..." },
-  { number: 9, videoId: "kBd3Rtc6mpM", title: "Waka, Waka, Waka!" },
-  { number: 8, videoId: "zZfY3mDNMzQ", title: "It's Cold Outside..." },
-  { number: 7, videoId: "Yi1ZkK774QM", title: "Veiled But Vicious" },
-  { number: 6, videoId: "pof-V0Vs334", title: "No ED...But We Do Have Ringworm..." },
-  { number: 5, videoId: "s6dfwXIgJfQ", title: "Devious Damsels and Covert Cults" },
-  { number: 4, videoId: "rlUBo8nGEIU", title: "Teensyville Turmoil and Trouble" },
+  { number: 16, videoId: "6cLpnO2VfAA", title: "Back To Basics...", scripts: [
+    { name: "Trouble Brewing (Base 3)", startSeconds: 501 },
+    { name: "Sects and Violets (Base 3)", startSeconds: 3897 },
+    { name: "A Teensy Moon Rising (Teensy)", startSeconds: 7308 }
+  ] },
+  { number: 15, videoId: "FMkcNCn9YTk", title: "More Muppet Madness...", scripts: [
+    { name: "Teensyville: God Is Dead (Teensy)", startSeconds: 396 },
+    { name: "Muppets On A Clocktower (Full Homebrew)", startSeconds: 3836 }
+  ] },
+  { number: 14, videoId: "Oiqgyiskbe8", title: "Chaos, Assemble...", scripts: [
+    { name: "Troubles In Wonderland (Full Homebrew)", startSeconds: 71 },
+    { name: "Avengers Assemble! (Full Homebrew)", startSeconds: 3525 },
+    { name: "You Either Die A Hero… (Full Homebrew)", startSeconds: 7384 }
+  ] },
+  { number: 13, videoId: "TMPYR60R4P0", title: "The Case For Cannibalism...", scripts: [
+    { name: "Catfishing (Smarty Player Perspective)", startSeconds: 432 },
+    { name: "Everybody Fucking Run! (Smarty Player Perspective)", startSeconds: 3423 },
+    { name: "It’s Cold Outside (Full Homebrew)", startSeconds: 4948 },
+    { name: "One To Rule Them All (Full Homebrew)", startSeconds: 8625 }
+  ] },
+  { number: 12, videoId: "Dpf0T0v7uPI", title: "Nobody F****** Move...", scripts: [
+    { name: "Nobody Fucking Move (Several Games) (Teensy)", startSeconds: 660 }
+  ] },
+  { number: 11, videoId: "00EaJpX2Tpg", title: "Whale Buffet 2 — More Whale...", scripts: [
+    { name: "Everybody Fucking Run! (Game 1)", startSeconds: 660 },
+    { name: "Whale Buffet (Special Game Mode)", startSeconds: 3925 },
+    { name: "Everybody Fucking Run! (Game 2)", startSeconds: 9101 }
+  ] },
+  { number: 10, videoId: "bLzod4_0okM", title: "Just A Po Girl, Living In A Po World...", scripts: [
+    { name: "Bad Moon Rising (Base 3)", startSeconds: 600 },
+    { name: "Trouble With Violets", startSeconds: 5791 },
+    { name: "Kaboom!", startSeconds: 9101 }
+  ] },
+  { number: 9, videoId: "kBd3Rtc6mpM", title: "Waka, Waka, Waka!", scripts: [
+    { name: "Kaboom!", startSeconds: 95 },
+    { name: "Last Train From Foxdune (Full Homebrew)", startSeconds: 2111 },
+    { name: "Muppets On A Clocktower (Full Homebrew)", startSeconds: 6980 },
+    { name: "Blind Man’s Bluff (Veiled Game)", startSeconds: 9859 }
+  ] },
+  { number: 8, videoId: "zZfY3mDNMzQ", title: "It's Cold Outside...", scripts: [
+    { name: "Information Switcheroo", startSeconds: 463 },
+    { name: "Last Train From Foxdune (Full Homebrew)", startSeconds: 4421 },
+    { name: "It’s Cold Outside (Full Homebrew)", startSeconds: 11232 }
+  ] },
+  { number: 7, videoId: "Yi1ZkK774QM", title: "Veiled But Vicious", scripts: [
+    { name: "Irrational Behaviour", startSeconds: 76 },
+    { name: "Sleepin With The Fishes (Full Homebrew)", startSeconds: 4119 },
+    { name: "Blind Man’s Bluff (Veiled Game)", startSeconds: 7169 }
+  ] },
+  { number: 6, videoId: "pof-V0Vs334", title: "No ED...But We Do Have Ringworm...", scripts: [
+    { name: "Struggle On Orbital Station Delta (Full Homebrew)", startSeconds: 142 },
+    { name: "Alone In The Woods (Full Homebrew)", startSeconds: 4119 },
+    { name: "Divorced Dads (Full Homebrew)", startSeconds: 7169 },
+    { name: "Nobody Fucking Move (Teensy)", startSeconds: 11905 }
+  ] },
+  { number: 5, videoId: "s6dfwXIgJfQ", title: "Devious Damsels and Covert Cults", scripts: [
+    { name: "Punchy", startSeconds: 85 },
+    { name: "Drink and Die", startSeconds: 5910 },
+    { name: "Kaboom!", startSeconds: 9547 }
+  ] },
+  { number: 4, videoId: "rlUBo8nGEIU", title: "Teensyville Turmoil and Trouble", scripts: [
+    { name: "Trouble Brewing (Base 3)", startSeconds: 85 },
+    { name: "Nobody Fucking Move (Teensy)", startSeconds: 2706 },
+    { name: "Gaslight, Gatekeep, Giggle (Teensy)", startSeconds: 8995 }
+  ] },
   {
     number: 3,
     videoId: "_EVyWJP2fTo",
     title: "Stuck in Hermit Havoc",
     artwork: "episode-03-hermit-havoc.jpg",
     scripts: [
-      { name: "Trouble in Whoville", startSeconds: 50, tags: ["Game 1"] },
-      { name: "Somebody Had To Do It", startSeconds: 5704, tags: ["Game 2"] },
-      { name: "Hear No Evil, See No Evil, Speak No Evil", startSeconds: 8995, tags: ["Game 3"] }
+      { name: "Trouble in Whoville", startSeconds: 50 },
+      { name: "Somebody Had To Do It", startSeconds: 5704 },
+      { name: "Hear No Evil, See No Evil, Speak No Evil", startSeconds: 8995 }
     ]
   },
   {
@@ -57,8 +109,8 @@ const CHAOS_EPISODES = [
     videoId: "G4DUPryv8Aw",
     title: "The First Whale Buffet",
     scripts: [
-      { name: "Trouble Brewing", startSeconds: 60, tags: ["Game 1"] },
-      { name: "Whale Buffet", startSeconds: 5045, tags: ["Game 2"] }
+      { name: "Trouble Brewing (Base 3)", startSeconds: 60 },
+      { name: "Whale Buffet (Special Game Mode)", startSeconds: 5045 }
     ]
   },
   {
@@ -66,8 +118,8 @@ const CHAOS_EPISODES = [
     videoId: "5w-Ry7TrzvA",
     title: "The Fastest Game",
     scripts: [
-      { name: "Catfishing", startSeconds: 297, tags: ["Game 1"] },
-      { name: "Kaboom!", startSeconds: 5176, tags: ["Game 2"] }
+      { name: "Catfishing", startSeconds: 297 },
+      { name: "Kaboom! (Multiple Games)", startSeconds: 5176 }
     ]
   }
 ].sort((left, right) => left.number - right.number).map(episode => ({ scripts: [], ...episode }));
@@ -104,9 +156,11 @@ function episodeScriptTagTone(tag) {
   const normalized = String(tag).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   if (normalized.includes("veiled")) return "veiled";
   if (normalized.includes("smarty")) return "smarty";
-  if (/^game 1$/.test(normalized)) return "game-one";
-  if (/^game 2$/.test(normalized)) return "game-two";
-  if (/^game 3$/.test(normalized)) return "game-three";
+  if (normalized === "base 3") return "base-three";
+  if (normalized.includes("special game mode")) return "special-mode";
+  if (normalized.includes("full homebrew")) return "homebrew";
+  if (normalized.includes("teensy")) return "teensy";
+  if (/^game \d+$/.test(normalized) || normalized.includes("multiple games") || normalized.includes("several games")) return "game-count";
   const hash = [...normalized].reduce((total, character) => total + character.charCodeAt(0), 0);
   return `extra-${hash % 4}`;
 }
@@ -168,16 +222,19 @@ function renderEpisodeScripts(index = 0) {
         timestamp.className = "episode-timestamp";
         timestamp.dataset.playEpisode = String(index);
         timestamp.dataset.startSeconds = String(script.startSeconds);
-        timestamp.textContent = presentation.name;
+        const buttonLabel = document.createElement("span");
+        buttonLabel.className = "episode-script-name";
+        buttonLabel.textContent = presentation.name;
+        timestamp.append(buttonLabel);
+        presentation.tags.forEach(tag => {
+          const badge = document.createElement("span");
+          badge.className = `episode-script-tag episode-script-tag--${episodeScriptTagTone(tag)}`;
+          badge.textContent = tag;
+          timestamp.append(badge);
+        });
         timestamp.setAttribute("aria-label", `Play ${presentation.name} from ${formatEpisodeTime(script.startSeconds)}`);
         item.append(timestamp);
       }
-      presentation.tags.forEach(tag => {
-        const badge = document.createElement("span");
-        badge.className = `episode-script-tag episode-script-tag--${episodeScriptTagTone(tag)}`;
-        badge.textContent = tag;
-        item.append(badge);
-      });
       scriptList.append(item);
     });
     scriptPanel.append(scriptList);

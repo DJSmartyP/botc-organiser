@@ -149,12 +149,15 @@ main:focus { outline: none; }
 .episode-scripts li { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .3rem; }
 .episode-scripts small, .episode-scripts-pending { color: var(--muted); font-size: .78rem; }
 .episode-scripts-pending { margin: 0 !important; }
-.episode-timestamp { display: inline-flex; align-items: center; min-height: 36px; padding: .48rem .75rem; border: 1px solid rgba(222,185,100,.42); border-radius: 999px; color: var(--gold-bright); background: linear-gradient(180deg, rgba(133,28,46,.42), rgba(77,15,28,.48)); font: 700 .72rem/1 Inter, system-ui, sans-serif; white-space: nowrap; cursor: pointer; }
-.episode-timestamp:hover, .episode-timestamp:focus-visible { border-color: var(--gold); background: rgba(160,28,51,.48); }
-.episode-script-tag { display: inline-flex; align-items: center; min-height: 24px; padding: .25rem .48rem; border: 1px solid transparent; border-radius: 999px; font: 800 .56rem/1 Inter, system-ui, sans-serif; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
-.episode-script-tag--game-one { border-color: rgba(226,87,99,.52); color: #ffd3d6; background: rgba(151,34,51,.42); }
-.episode-script-tag--game-two { border-color: rgba(102,157,206,.55); color: #d4ebff; background: rgba(35,83,126,.46); }
-.episode-script-tag--game-three { border-color: rgba(112,168,130,.55); color: #d8f5df; background: rgba(42,100,61,.42); }
+.episode-timestamp { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .45rem; min-height: 40px; padding: .38rem .42rem .38rem .78rem; border: 1px solid rgba(222,185,100,.42); border-radius: 9px; color: var(--gold-bright); background: linear-gradient(180deg, rgba(133,28,46,.38), rgba(56,14,25,.58)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.018); font: 700 .72rem/1 Inter, system-ui, sans-serif; cursor: pointer; }
+.episode-script-name { white-space: nowrap; }
+.episode-timestamp:hover, .episode-timestamp:focus-visible { border-color: var(--gold); background: linear-gradient(180deg, rgba(160,38,56,.52), rgba(76,17,31,.68)); }
+.episode-script-tag { display: inline-flex; align-items: center; min-height: 24px; padding: .25rem .48rem; border: 1px solid transparent; border-radius: 6px; font: 800 .56rem/1 Inter, system-ui, sans-serif; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
+.episode-script-tag--game-count { border-color: rgba(226,87,99,.52); color: #ffd3d6; background: rgba(151,34,51,.42); }
+.episode-script-tag--base-three { border-color: rgba(102,157,206,.55); color: #d4ebff; background: rgba(35,83,126,.46); }
+.episode-script-tag--special-mode { border-color: rgba(224,150,77,.58); color: #ffe2bd; background: rgba(123,67,22,.5); }
+.episode-script-tag--teensy { border-color: rgba(94,184,183,.55); color: #d7ffff; background: rgba(28,91,91,.48); }
+.episode-script-tag--homebrew { border-color: rgba(174,116,207,.58); color: #efd8ff; background: rgba(82,44,105,.5); }
 .episode-script-tag--veiled { border-color: rgba(187,132,220,.58); color: #efd8ff; background: rgba(91,47,116,.5); }
 .episode-script-tag--smarty { border-color: rgba(231,191,91,.62); color: #fff0b9; background: rgba(123,84,19,.5); }
 .episode-script-tag--extra-0 { border-color: rgba(210,121,167,.5); color: #ffdcef; background: rgba(111,44,79,.44); }
