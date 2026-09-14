@@ -171,9 +171,9 @@ function episodeScriptTagTone(tag) {
 function episodeFormatSummary(episode) {
   const tags = episode.scripts.flatMap(script => episodeScriptPresentation(script).tags);
   const formats = [...new Set(tags.filter(tag => !/^(game \d+|multiple games|several games)$/i.test(tag)))];
-  const gameCount = episode.scripts.length;
+  const scriptCount = episode.scripts.length;
   return {
-    count: `${gameCount} ${gameCount === 1 ? "game" : "games"}`,
+    count: `${scriptCount} ${scriptCount === 1 ? "script" : "scripts"}`,
     formats: formats.slice(0, 3)
   };
 }

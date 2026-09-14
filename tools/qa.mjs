@@ -105,12 +105,16 @@ try {
     const chapterWidths = await watchPage.locator("#episodeScriptsPanel .episode-timestamp").evaluateAll(cards => cards.map(card => Math.round(card.getBoundingClientRect().width)));
     assert.ok(Math.max(...chapterWidths) - Math.min(...chapterWidths) <= 1, `${viewport.name} episode chapter cards should have equal widths`);
     await watchPage.screenshot({ path: `qa-watch-scripts-grid-${viewport.name}.png`, fullPage: true });
+    await watchPage.locator('.episode-card[aria-label^="View Episode 13:"]').click();
+    const longTitleFits = await watchPage.locator(".episode-dossier-body h3").evaluate(title => title.scrollWidth <= title.clientWidth);
+    assert.equal(longTitleFits, true, `${viewport.name} long episode title should stay inside its column`);
+    await watchPage.screenshot({ path: `qa-watch-long-title-${viewport.name}.png`, fullPage: true });
     await watchPage.locator('.episode-card[aria-label^="View Episode 14:"]').click();
     assert.equal(await watchPage.locator(".episode-player-frame iframe").count(), 0);
     assert.match(await watchPage.locator(".episode-dossier-art").getAttribute("src"), /Oiqgyiskbe8\.jpg/);
     assert.match(await watchPage.locator(".episode-dossier-body").innerText(), /Chaos, Assemble/);
     assert.match(await watchPage.locator(".episode-dossier-overview").innerText(), /A huge comic and animated crossover/);
-    assert.match(await watchPage.locator(".episode-dossier-meta").innerText(), /3 games/i);
+    assert.match(await watchPage.locator(".episode-dossier-meta").innerText(), /3 scripts/i);
     assert.match(await watchPage.locator("#episodeScriptsPanel").innerText(), /scripts this episode/i);
     await watchPage.screenshot({ path: `qa-watch-preview-${viewport.name}.png`, fullPage: true });
     await watchPage.locator(".episode-dossier-play[data-play-episode='13']").click();
