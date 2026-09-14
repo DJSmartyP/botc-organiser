@@ -140,7 +140,7 @@ main:focus { outline: none; }
 .episode-dossier-body { position: relative; display: flex; min-width: 0; flex-direction: column; align-items: flex-start; padding: clamp(1rem, 2.3vw, 1.65rem); border-left: 1px solid rgba(216,189,124,.2); background: linear-gradient(160deg, rgba(53,25,36,.96), rgba(18,16,22,.98)); }
 .episode-dossier-body::before { content: attr(data-episode-number); position: absolute; top: .55rem; right: .65rem; display: grid; width: clamp(62px, 6vw, 72px); aspect-ratio: 1; place-items: center; padding-bottom: .05em; color: #e8c66f; background: url("assets/episode-wax-seal.png?v=1") center / contain no-repeat; filter: drop-shadow(0 6px 8px rgba(0,0,0,.5)); font: 700 clamp(1.1rem, 2vw, 1.35rem)/1 "Cinzel Decorative", Cinzel, Georgia, serif; -webkit-text-stroke: .35px #76501f; text-shadow: 0 -1px 0 #fff0ac, 1px 1px 0 #8d5c24, 0 2px 1px #3a1608, 0 0 6px rgba(255,215,119,.32); }
 .episode-dossier-body > .eyebrow { max-width: calc(100% - 5rem); white-space: nowrap; }
-.episode-dossier-body h3 { margin: .45rem 0 .7rem; font-size: clamp(1.25rem, 2.4vw, 1.8rem); }
+.episode-dossier-body h3 { max-width: calc(100% - 5.35rem); margin: .45rem 0 .7rem; font-size: clamp(1.25rem, 2.4vw, 1.8rem); }
 .episode-dossier-body p { margin-bottom: 1rem; color: #cfc1bd; font: .87rem/1.52 "IM Fell English", Georgia, serif; }
 .episode-dossier-overview { display: grid; gap: .55rem; width: 100%; margin: .15rem 0 1rem; padding: .75rem; border: 1px solid rgba(216,189,124,.2); border-radius: 8px; background: linear-gradient(145deg, rgba(12,12,17,.52), rgba(76,25,39,.22)); }
 .episode-dossier-overview > strong { color: var(--gold-bright); font: 800 .68rem/1 Inter, sans-serif; letter-spacing: .13em; text-transform: uppercase; }
@@ -151,12 +151,13 @@ main:focus { outline: none; }
 .episode-scripts { display: grid; gap: .45rem; width: 100%; margin: .6rem 0 0; padding: .7rem .8rem; border: 1px solid rgba(222,185,100,.28); border-radius: 8px; background: linear-gradient(135deg, rgba(50,22,34,.82), rgba(4,7,12,.7)); }
 .episode-chapters { box-shadow: inset 0 0 0 1px rgba(255,255,255,.018); }
 .episode-scripts h4 { margin: 0; color: var(--gold-bright); font-size: .76rem; letter-spacing: .12em; text-transform: uppercase; }
-.episode-scripts ul { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0; padding: 0; list-style: none; }
-.episode-scripts li { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .3rem; }
+.episode-scripts ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; margin: 0; padding: 0; list-style: none; }
+.episode-scripts li { display: flex; min-width: 0; }
 .episode-scripts small, .episode-scripts-pending { color: var(--muted); font-size: .78rem; }
 .episode-scripts-pending { margin: 0 !important; }
-.episode-timestamp { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .45rem; min-height: 40px; padding: .38rem .42rem .38rem .78rem; border: 1px solid rgba(222,185,100,.42); border-radius: 9px; color: var(--gold-bright); background: linear-gradient(180deg, rgba(133,28,46,.38), rgba(56,14,25,.58)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.018); font: 700 .72rem/1 Inter, system-ui, sans-serif; cursor: pointer; }
-.episode-script-name { white-space: nowrap; }
+.episode-timestamp { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .55rem; width: 100%; min-height: 44px; padding: .4rem .45rem .4rem .75rem; border: 1px solid rgba(222,185,100,.42); border-radius: 9px; color: var(--gold-bright); background: linear-gradient(180deg, rgba(133,28,46,.38), rgba(56,14,25,.58)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.018); font: 700 .72rem/1.2 Inter, system-ui, sans-serif; text-align: left; cursor: pointer; }
+.episode-script-name { min-width: 0; overflow-wrap: anywhere; }
+.episode-script-tags { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: .28rem; }
 .episode-timestamp:hover, .episode-timestamp:focus-visible { border-color: var(--gold); background: linear-gradient(180deg, rgba(160,38,56,.52), rgba(76,17,31,.68)); }
 .episode-script-tag { display: inline-flex; align-items: center; min-height: 24px; padding: .25rem .48rem; border: 1px solid transparent; border-radius: 6px; font: 800 .56rem/1 Inter, system-ui, sans-serif; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
 .episode-script-tag--game-count { border-color: rgba(226,87,99,.52); color: #ffd3d6; background: rgba(151,34,51,.42); }
@@ -780,6 +781,7 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
 }
 
 @media (max-width: 679px) {
+  .episode-scripts ul { grid-template-columns: 1fr; }
   .watch-hero { grid-template-columns: 1fr; text-align: left; }
   .watch-hero img { width: min(230px, 76vw); max-height: 100px; object-position: left center; }
   .episode-player-heading, .episode-player-footer { align-items: flex-start; flex-direction: column; }
@@ -807,6 +809,7 @@ legend { padding: 0 .35rem; color: #d8cfc4; font-size: .9rem; font-weight: 600; 
 }
 
 @media (min-width: 680px) {
+  .episode-dossier-body h3 { max-width: 100%; margin-top: 2.9rem; }
   .brand span { display: block; }
   .inline-form { grid-template-columns: 1fr auto; }
   .home-grid, .choice-grid { grid-template-columns: repeat(2, 1fr); }

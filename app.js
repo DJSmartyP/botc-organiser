@@ -239,12 +239,17 @@ function renderEpisodeScripts(index = 0) {
         buttonLabel.className = "episode-script-name";
         buttonLabel.textContent = presentation.name;
         timestamp.append(buttonLabel);
-        presentation.tags.forEach(tag => {
-          const badge = document.createElement("span");
-          badge.className = `episode-script-tag episode-script-tag--${episodeScriptTagTone(tag)}`;
-          badge.textContent = tag;
-          timestamp.append(badge);
-        });
+        if (presentation.tags.length) {
+          const tagGroup = document.createElement("span");
+          tagGroup.className = "episode-script-tags";
+          presentation.tags.forEach(tag => {
+            const badge = document.createElement("span");
+            badge.className = `episode-script-tag episode-script-tag--${episodeScriptTagTone(tag)}`;
+            badge.textContent = tag;
+            tagGroup.append(badge);
+          });
+          timestamp.append(tagGroup);
+        }
         timestamp.setAttribute("aria-label", `Play ${presentation.name} from ${formatEpisodeTime(script.startSeconds)}`);
         item.append(timestamp);
       }

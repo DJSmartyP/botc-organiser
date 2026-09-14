@@ -100,6 +100,11 @@ try {
     const gameTagColours = await watchPage.locator(".episode-script-tag--game-count").evaluateAll(tags => tags.map(tag => getComputedStyle(tag).backgroundColor));
     assert.equal(gameTagColours.length, 2);
     assert.equal(gameTagColours[0], gameTagColours[1]);
+    await watchPage.locator('.episode-card[aria-label^="View Episode 6:"]').click();
+    assert.equal(await watchPage.locator("#episodeScriptsPanel .episode-timestamp").count(), 4);
+    const chapterWidths = await watchPage.locator("#episodeScriptsPanel .episode-timestamp").evaluateAll(cards => cards.map(card => Math.round(card.getBoundingClientRect().width)));
+    assert.ok(Math.max(...chapterWidths) - Math.min(...chapterWidths) <= 1, `${viewport.name} episode chapter cards should have equal widths`);
+    await watchPage.screenshot({ path: `qa-watch-scripts-grid-${viewport.name}.png`, fullPage: true });
     await watchPage.locator('.episode-card[aria-label^="View Episode 14:"]').click();
     assert.equal(await watchPage.locator(".episode-player-frame iframe").count(), 0);
     assert.match(await watchPage.locator(".episode-dossier-art").getAttribute("src"), /Oiqgyiskbe8\.jpg/);
