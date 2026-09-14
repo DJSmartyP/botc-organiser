@@ -127,11 +127,12 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /dataset\.playEpisode = String\(index\)/);
   assert.doesNotMatch(app, /CHAOS_SERIES_DESCRIPTION/);
   assert.match(app, /scripts: \[\]/);
-  assert.match(app, /Scripts this episode/);
+  assert.match(app, /Script chapter marks/);
+  assert.match(app, /Select a script to jump straight to the moment it begins/);
   assert.match(app, /dataset\.startSeconds/);
   assert.doesNotMatch(app, /resourceUrl|resourceLabel|episode-script-resource/);
   assert.match(app, /buttonLabel\.textContent = presentation\.name/);
-  assert.match(app, /timestamp\.append\(buttonLabel\)/);
+  assert.match(app, /timestamp\.append\(playMark, buttonLabel\)/);
   assert.doesNotMatch(app, /timestamp\.textContent = `Watch from/);
   assert.match(app, /function episodeScriptPresentation/);
   assert.match(app, /function episodeScriptTagTone/);

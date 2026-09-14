@@ -221,9 +221,14 @@ function renderEpisodeScripts(index = 0) {
   const episode = CHAOS_EPISODES[index] || CHAOS_EPISODES[0];
   const scriptPanel = $("#episodeScriptsPanel");
   if (!scriptPanel) return;
+  const scriptHeader = document.createElement("div");
+  scriptHeader.className = "episode-scripts-heading";
   const scriptHeading = document.createElement("h4");
-  scriptHeading.textContent = "Scripts this episode";
-  scriptPanel.replaceChildren(scriptHeading);
+  scriptHeading.textContent = "Script chapter marks";
+  const scriptHint = document.createElement("p");
+  scriptHint.textContent = "Select a script to jump straight to the moment it begins.";
+  scriptHeader.append(scriptHeading, scriptHint);
+  scriptPanel.replaceChildren(scriptHeader);
   if (episode.scripts.length) {
     const scriptList = document.createElement("ul");
     episode.scripts.forEach(script => {
@@ -235,10 +240,13 @@ function renderEpisodeScripts(index = 0) {
         timestamp.className = "episode-timestamp";
         timestamp.dataset.playEpisode = String(index);
         timestamp.dataset.startSeconds = String(script.startSeconds);
+        const playMark = document.createElement("span");
+        playMark.className = "episode-timestamp-play";
+        playMark.setAttribute("aria-hidden", "true");
         const buttonLabel = document.createElement("span");
         buttonLabel.className = "episode-script-name";
         buttonLabel.textContent = presentation.name;
-        timestamp.append(buttonLabel);
+        timestamp.append(playMark, buttonLabel);
         if (presentation.tags.length) {
           const tagGroup = document.createElement("span");
           tagGroup.className = "episode-script-tags";
