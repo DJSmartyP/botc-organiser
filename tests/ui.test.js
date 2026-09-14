@@ -108,6 +108,7 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(html, /id="watchView"/);
   assert.match(html, /id="episodeStage"/);
   assert.match(html, /id="episodeList"/);
+  assert.match(html, /id="episodeScriptsPanel"/);
   assert.match(app, /const CHAOS_EPISODES = \[/);
   assert.equal((app.match(/videoId: "/g) || []).length, 16);
   assert.equal(episodeThumbnails.length, 16);
@@ -121,13 +122,14 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.match(app, /encrypted-media; fullscreen;/);
   assert.match(css, /iframe:fullscreen/);
   assert.match(app, /function showEpisodeDetails/);
+  assert.match(app, /function renderEpisodeScripts/);
+  assert.match(app, /renderEpisodeScripts\(index\)/);
   assert.match(app, /dataset\.playEpisode = String\(index\)/);
   assert.doesNotMatch(app, /CHAOS_SERIES_DESCRIPTION/);
   assert.match(app, /scripts: \[\]/);
   assert.match(app, /Scripts this episode/);
   assert.match(app, /dataset\.startSeconds/);
-  assert.match(app, /resourceUrl/);
-  assert.match(app, /episode-script-resource/);
+  assert.doesNotMatch(app, /resourceUrl|resourceLabel|episode-script-resource/);
   assert.match(app, /Watch from \$\{formatEpisodeTime\(script\.startSeconds\)\}/);
   assert.match(app, /name: "Catfishing", startSeconds: 297/);
   assert.match(app, /name: "Kaboom!", startSeconds: 5176/);
@@ -154,7 +156,7 @@ test("episodes have a dedicated privacy-enhanced playlist player", () => {
   assert.deepEqual([...episodeWaxSeal.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
   assert.match(css, /\.episode-scripts/);
   assert.match(css, /\.episode-timestamp/);
-  assert.match(css, /\.episode-script-resource/);
+  assert.doesNotMatch(css, /\.episode-script-resource/);
   assert.match(html, /class="archive-link"/);
   assert.match(html, /class="archive-sigil"/);
   assert.doesNotMatch(html, /class="youtube-link"/);

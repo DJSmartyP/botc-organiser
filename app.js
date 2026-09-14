@@ -57,8 +57,8 @@ const CHAOS_EPISODES = [
     videoId: "G4DUPryv8Aw",
     title: "The First Whale Buffet",
     scripts: [
-      { name: "Trouble Brewing", startSeconds: 60, resourceUrl: "https://bloodontheclocktower.com/pages/trouble-brewing", resourceLabel: "View official script" },
-      { name: "Whale Buffet", startSeconds: 5045, resourceUrl: "https://whalebuffet.com/script", resourceLabel: "Download script JSON" }
+      { name: "Trouble Brewing", startSeconds: 60 },
+      { name: "Whale Buffet", startSeconds: 5045 }
     ]
   },
   {
@@ -66,8 +66,8 @@ const CHAOS_EPISODES = [
     videoId: "5w-Ry7TrzvA",
     title: "The Fastest Game",
     scripts: [
-      { name: "Catfishing", startSeconds: 297, resourceUrl: "https://www.botcscripts.com/script/3", resourceLabel: "View / download script" },
-      { name: "Kaboom!", startSeconds: 5176, resourceUrl: "https://www.botcscripts.com/script/1205/1.0.0", resourceLabel: "View / download script" }
+      { name: "Catfishing", startSeconds: 297 },
+      { name: "Kaboom!", startSeconds: 5176 }
     ]
   }
 ].sort((left, right) => left.number - right.number).map(episode => ({ scripts: [], ...episode }));
@@ -125,6 +125,52 @@ function setActiveEpisode(index) {
   });
 }
 
+function renderEpisodeScripts(index = 0) {
+  const episode = CHAOS_EPISODES[index] || CHAOS_EPISODES[0];
+  const scriptPanel = $("#episodeScriptsPanel");
+  if (!scriptPanel) return;
+  const scriptHeading = document.createElement("h4");
+  scriptHeading.textContent = "Scripts this episode";
+  scriptPanel.replaceChildren(scriptHeading);
+  if (episode.scripts.length) {
+    const scriptList = document.createElement("ul");
+    episode.scripts.forEach(script => {
+      const item = document.createElement("li");
+      const copy = document.createElement("span");
+      const name = document.createElement("strong");
+      name.textContent = script.name;
+      copy.append(name);
+      if (script.notes) {
+        const notes = document.createElement("small");
+        notes.textContent = script.notes;
+        copy.append(notes);
+      }
+      item.append(copy);
+      if (Number.isFinite(script.startSeconds)) {
+        const actions = document.createElement("span");
+        actions.className = "episode-script-actions";
+        const timestamp = document.createElement("button");
+        timestamp.type = "button";
+        timestamp.className = "episode-timestamp";
+        timestamp.dataset.playEpisode = String(index);
+        timestamp.dataset.startSeconds = String(script.startSeconds);
+        timestamp.textContent = `Watch from ${formatEpisodeTime(script.startSeconds)}`;
+        timestamp.setAttribute("aria-label", `Play ${script.name} from ${formatEpisodeTime(script.startSeconds)}`);
+        actions.append(timestamp);
+        item.append(actions);
+      }
+      scriptList.append(item);
+    });
+    scriptPanel.append(scriptList);
+  } else {
+    const pending = document.createElement("p");
+    pending.className = "episode-scripts-pending";
+    pending.textContent = "Script details coming soon.";
+    scriptPanel.append(pending);
+  }
+  scriptPanel.hidden = false;
+}
+
 function showEpisodeDetails(index = 0, focusPlay = false) {
   const episode = CHAOS_EPISODES[index] || CHAOS_EPISODES[0];
   const frame = $("#episodeStage");
@@ -147,65 +193,15 @@ function showEpisodeDetails(index = 0, focusPlay = false) {
   label.textContent = `Episode ${episode.number}`;
   const title = document.createElement("h3");
   title.textContent = episode.title;
-  const scriptPanel = document.createElement("section");
-  scriptPanel.className = "episode-scripts";
-  const scriptHeading = document.createElement("h4");
-  scriptHeading.textContent = "Scripts this episode";
-  scriptPanel.append(scriptHeading);
-  if (episode.scripts.length) {
-    const scriptList = document.createElement("ul");
-    episode.scripts.forEach(script => {
-      const item = document.createElement("li");
-      const copy = document.createElement("span");
-      const name = document.createElement("strong");
-      name.textContent = script.name;
-      copy.append(name);
-      if (script.notes) {
-        const notes = document.createElement("small");
-        notes.textContent = script.notes;
-        copy.append(notes);
-      }
-      item.append(copy);
-      const actions = document.createElement("span");
-      actions.className = "episode-script-actions";
-      if (Number.isFinite(script.startSeconds)) {
-        const timestamp = document.createElement("button");
-        timestamp.type = "button";
-        timestamp.className = "episode-timestamp";
-        timestamp.dataset.playEpisode = String(index);
-        timestamp.dataset.startSeconds = String(script.startSeconds);
-        timestamp.textContent = `Watch from ${formatEpisodeTime(script.startSeconds)}`;
-        timestamp.setAttribute("aria-label", `Play ${script.name} from ${formatEpisodeTime(script.startSeconds)}`);
-        actions.append(timestamp);
-      }
-      if (script.resourceUrl) {
-        const resource = document.createElement("a");
-        resource.className = "episode-script-resource";
-        resource.href = script.resourceUrl;
-        resource.target = "_blank";
-        resource.rel = "noopener noreferrer";
-        resource.textContent = `${script.resourceLabel || "View / download script"} ↗`;
-        resource.setAttribute("aria-label", `${script.resourceLabel || "View or download script"}: ${script.name} (opens in a new tab)`);
-        actions.append(resource);
-      }
-      if (actions.childElementCount) item.append(actions);
-      scriptList.append(item);
-    });
-    scriptPanel.append(scriptList);
-  } else {
-    const pending = document.createElement("p");
-    pending.className = "episode-scripts-pending";
-    pending.textContent = "Script details coming soon.";
-    scriptPanel.append(pending);
-  }
   const play = document.createElement("button");
   play.type = "button";
   play.className = "button button-primary episode-dossier-play";
   play.dataset.playEpisode = String(index);
   play.innerHTML = '<span class="dossier-play-mark" aria-hidden="true"></span><span>Play episode</span>';
-  body.append(label, title, scriptPanel, play);
+  body.append(label, title, play);
   dossier.append(artwork, body);
   frame.replaceChildren(dossier);
+  renderEpisodeScripts(index);
   setActiveEpisode(index);
   const status = $("#episodeNowPlaying");
   if (status) status.textContent = `Selected · Episode ${episode.number} · Press Play episode to begin.`;
@@ -226,6 +222,7 @@ function loadEpisode(index = 0, startSeconds = 0) {
   iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share";
   iframe.allowFullscreen = true;
   frame.replaceChildren(iframe);
+  renderEpisodeScripts(index);
   setActiveEpisode(index);
   const status = $("#episodeNowPlaying");
   if (status) status.textContent = `Now playing · Episode ${episode.number} · ${episode.title}`;
